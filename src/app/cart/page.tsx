@@ -56,6 +56,9 @@ export default function CartPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [lastOrderId, setLastOrderId] = useState('')
   
+  // --- ФИКС: Состояние для сохранения суммы перед очисткой корзины ---
+  const [confirmedPrice, setConfirmedPrice] = useState(0)
+  
   // Бонусы и Уведомления
   const [userBonuses, setUserBonuses] = useState(0)
   const [useBonuses, setUseBonuses] = useState(false)
@@ -260,6 +263,8 @@ export default function CartPage() {
         await supabase.from('bonus_history').insert(historyRecords)
       }
 
+      // --- ФИКС: Сохраняем цену в подтвержденное состояние перед очисткой ---
+      setConfirmedPrice(finalPrice)
       setLastOrderId(finalOrder?.id.slice(0, 8) || 'ERROR')
       setShowPaymentModal(true)
       clearCart()
@@ -307,7 +312,8 @@ export default function CartPage() {
               
               <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4 text-left">
                 <p className="text-[11px] font-bold leading-relaxed uppercase tracking-tight">
-                  Для подтверждения переведите <span className="text-[#d67a9d]">{finalPrice.toLocaleString()} ₽</span> по СБП:
+                  {/* ФИКС: Используем confirmedPrice вместо finalPrice */}
+                  Для подтверждения переведите <span className="text-[#d67a9d]">{confirmedPrice.toLocaleString()} ₽</span> по СБП:
                 </p>
                 <div className="py-4 px-4 bg-black rounded-2xl border border-[#d67a9d]/30 select-all font-black text-center text-lg tracking-wider">
                   +7 (927) 855-23-24
@@ -345,7 +351,7 @@ export default function CartPage() {
         </div>
 
         <AnimatePresence mode="wait">
-          {cart.length === 0 ? (
+          {cart.length === 0 && !showPaymentModal ? (
             <motion.div 
               key="empty-cart"
               initial={{ opacity: 0, y: 20 }}
