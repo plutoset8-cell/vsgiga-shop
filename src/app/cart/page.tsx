@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation'
 import { 
   Trash2, Plus, Minus, ShoppingBag, ArrowRight, 
   ShoppingCart, ShieldCheck, AlertCircle, CheckCircle2, X,
-  Truck, Package, Coins, MapPin, User, Phone, Ticket 
+  Truck, Package, Coins, MapPin, User, Phone, Ticket, Zap // Добавил Zap для иконки
 } from 'lucide-react'
 
 // --- КОМПОНЕНТ УВЕДОМЛЕНИЯ (TOAST) ---
@@ -51,6 +51,10 @@ export default function CartPage() {
   const [isOrdering, setIsOrdering] = useState(false)
   const [showCheckoutFields, setShowCheckoutFields] = useState(false)
   const [deliveryMethod, setDeliveryMethod] = useState<'mail' | 'pickup'>('mail')
+
+  // --- НОВОЕ: Оплата СБП ---
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [lastOrderId, setLastOrderId] = useState('')
   
   // Бонусы и Уведомления
   const [userBonuses, setUserBonuses] = useState(0)
@@ -165,7 +169,6 @@ export default function CartPage() {
 
     if (fullName.trim().length < 2) return addToast('ВВЕДИТЕ ВАШЕ ИМЯ', 'error')
     
-    // Продвинутая проверка номера (ровно 11 цифр: 7 + 10 цифр номера)
     const digitsOnly = phone.replace(/\D/g, '');
     if (digitsOnly.length < 11) return addToast('ВВЕДИТЕ КОРРЕКТНЫЙ НОМЕР ТЕЛЕФОНА', 'error')
     
@@ -252,9 +255,10 @@ export default function CartPage() {
         await supabase.from('bonus_history').insert(historyRecords)
       }
 
-      addToast(`ЗАКАЗ #${finalOrder.id.slice(0,8)} ОФОРМЛЕН!`, 'success')
+      // --- ИЗМЕНЕНО: Показываем модалку оплаты вместо редиректа сразу ---
+      setLastOrderId(finalOrder.id.slice(0, 8))
+      setShowPaymentModal(true)
       clearCart()
-      setTimeout(() => router.push('/profile'), 2500)
       
     } catch (error: any) {
       console.error('Checkout Error:', error)
@@ -275,6 +279,47 @@ export default function CartPage() {
             onClose={() => setToasts(prev => prev.filter(x => x.id !== t.id))} 
           />
         ))}
+
+        {/* --- МОДАЛЬНОЕ ОКНО ОПЛАТЫ --- */}
+        {showPaymentModal && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-[#111111] border border-white/10 p-8 rounded-[3rem] max-w-sm w-full text-center space-y-6 shadow-2xl"
+            >
+              <div className="w-20 h-20 bg-[#d67a9d] rounded-full mx-auto flex items-center justify-center shadow-[0_0_30px_rgba(214,122,157,0.5)]">
+                <Zap size={40} className="text-white fill-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-black uppercase italic italic tracking-tighter">Заказ принят!</h2>
+                <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-2">ID: #{lastOrderId}</p>
+              </div>
+              
+              <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4 text-left">
+                <p className="text-[11px] font-bold leading-relaxed uppercase tracking-tight">
+                  Для подтверждения переведите <span className="text-[#d67a9d]">{finalPrice.toLocaleString()} ₽</span> по СБП:
+                </p>
+                <div className="py-4 px-4 bg-black rounded-2xl border border-[#d67a9d]/30 select-all font-black text-center text-lg tracking-wider">
+                  +7 (927) 855-23-24 {/* ЗАМЕНИ НА СВОЙ НОМЕР ТУТ */}
+                </div>
+                <p className="text-[9px] text-white/30 uppercase text-center font-black italic tracking-widest">озон банк / ozon bank</p>
+              </div>
+
+              <button 
+                onClick={() => router.push('/profile')}
+                className="w-full py-5 bg-white text-black rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-[#d67a9d] hover:text-white transition-all"
+              >
+                Я ОПЛАТИЛ
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       <div className="max-w-7xl mx-auto">
