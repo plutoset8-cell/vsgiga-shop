@@ -52,12 +52,13 @@ export default function CartPage() {
   const [showCheckoutFields, setShowCheckoutFields] = useState(false)
   const [deliveryMethod, setDeliveryMethod] = useState<'mail' | 'pickup'>('mail')
 
-  // --- НОВОЕ: Оплата СБП ---
+  // --- Оплата СБП ---
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [lastOrderId, setLastOrderId] = useState('')
   
-  // --- ФИКС: Состояние для сохранения суммы перед очисткой корзины ---
+  // --- Состояния для сохранения суммы перед очисткой корзины ---
   const [confirmedPrice, setConfirmedPrice] = useState(0)
+  const [displayPrice, setDisplayPrice] = useState(0) // Исправлено: добавлено недостающее состояние
   
   // Бонусы и Уведомления
   const [userBonuses, setUserBonuses] = useState(0)
@@ -224,7 +225,6 @@ export default function CartPage() {
         throw orderError
       }
 
-      // Используем данные созданного заказа
       const finalOrder = orderData
 
       if (appliedPromo) {
@@ -234,11 +234,9 @@ export default function CartPage() {
           .eq('id', appliedPromo.id)
       }
 
-      // Обновляем баланс пользователя
       const newBalance = userBonuses - spendAmount + earnedBonuses
       await supabase.from('profiles').update({ bonuses: newBalance }).eq('id', user.id)
 
-      // Запись в историю бонусов
       const historyRecords = []
       if (finalOrder) {
         if (earnedBonuses > 0) {
@@ -263,17 +261,19 @@ export default function CartPage() {
         await supabase.from('bonus_history').insert(historyRecords)
       }
 
-      // --- ФИКС: Сохраняем цену в подтвержденное состояние перед очисткой ---
-      setConfirmedPrice(finalPrice)
-      setLastOrderId(finalOrder?.id.slice(0, 8) || 'ERROR')
-      setShowPaymentModal(true)
-      clearCart()
+      const priceToDisplay = finalPrice;
+      setDisplayPrice(priceToDisplay); 
+      setConfirmedPrice(priceToDisplay); 
+      setLastOrderId(finalOrder?.id.slice(0, 8) || 'ERROR');
+      
+      setShowPaymentModal(true);
+      clearCart();
       
     } catch (error: any) {
-      console.error('Checkout Error:', error)
-      addToast(error.message || 'ОШИБКА ОФОРМЛЕНИЯ', 'error')
+      console.error('Checkout Error:', error);
+      addToast(error.message || 'ОШИБКА ОФОРМЛЕНИЯ', 'error');
     } finally {
-      setIsOrdering(false)
+      setIsOrdering(false);
     }
   }
 
@@ -289,41 +289,50 @@ export default function CartPage() {
           />
         ))}
 
-        {/* --- МОДАЛЬНОЕ ОКНО ОПЛАТЫ --- */}
         {showPaymentModal && (
           <motion.div 
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md"
           >
             <motion.div 
-              initial={{ scale: 0.9, y: 20 }}
+              initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              className="bg-[#111111] border border-white/10 p-8 rounded-[3rem] max-w-sm w-full text-center space-y-6 shadow-2xl"
+              className="bg-[#111111] border border-white/10 p-6 md:p-8 rounded-[2.5rem] max-w-[90%] md:max-w-sm w-full text-center space-y-6 shadow-2xl"
             >
-              <div className="w-20 h-20 bg-[#d67a9d] rounded-full mx-auto flex items-center justify-center shadow-[0_0_30px_rgba(214,122,157,0.5)]">
-                <Zap size={40} className="text-white fill-white" />
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-[#d67a9d] rounded-full mx-auto flex items-center justify-center shadow-[0_0_30px_rgba(214,122,157,0.4)]">
+                <Zap size={32} className="text-white fill-white" />
               </div>
+
               <div>
-                <h2 className="text-2xl font-black uppercase italic tracking-tighter">Заказ принят!</h2>
-                <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-2">ID: #{lastOrderId}</p>
+                <h2 className="text-xl md:text-2xl font-black uppercase italic tracking-tighter text-white">
+                  Заказ принят!
+                </h2>
+                <p className="text-[9px] md:text-[10px] font-bold text-white/40 uppercase tracking-widest mt-2">
+                  ID: #{lastOrderId || 'LOADING...'}
+                </p>
               </div>
               
-              <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4 text-left">
-                <p className="text-[11px] font-bold leading-relaxed uppercase tracking-tight">
-                  {/* ФИКС: Используем confirmedPrice вместо finalPrice */}
-                  Для подтверждения переведите <span className="text-[#d67a9d]">{confirmedPrice.toLocaleString()} ₽</span> по СБП:
+              <div className="bg-white/5 p-5 md:p-6 rounded-3xl border border-white/5 space-y-4 text-left">
+                <p className="text-[10px] md:text-[11px] font-bold leading-relaxed uppercase tracking-tight text-white/90">
+                  Для подтверждения переведите <span className="text-[#d67a9d] text-sm md:text-base">
+                    {(displayPrice > 0 ? displayPrice : confirmedPrice).toLocaleString()} ₽
+                  </span> по СБП:
                 </p>
-                <div className="py-4 px-4 bg-black rounded-2xl border border-[#d67a9d]/30 select-all font-black text-center text-lg tracking-wider">
+                
+                <div className="py-4 px-2 bg-black rounded-2xl border border-[#d67a9d]/30 select-all font-black text-center text-base md:text-lg tracking-wider text-white">
                   +7 (927) 855-23-24
                 </div>
-                <p className="text-[9px] text-white/30 uppercase text-center font-black italic tracking-widest">озон банк / ozon bank</p>
+                
+                <p className="text-[8px] md:text-[9px] text-white/30 uppercase text-center font-black italic tracking-widest">
+                  озон банк / ozon bank
+                </p>
               </div>
 
               <button 
                 onClick={() => router.push('/profile')}
-                className="w-full py-5 bg-white text-black rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-[#d67a9d] hover:text-white transition-all"
+                className="w-full py-4 md:py-5 bg-white text-black rounded-2xl font-black uppercase tracking-widest text-[11px] md:text-[12px] active:scale-95 hover:bg-[#d67a9d] hover:text-white transition-all shadow-lg"
               >
                 Я ОПЛАТИЛ
               </button>
