@@ -49,7 +49,7 @@ export default function AuthPage() {
         animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-md bg-[#0a0a0a] p-8 md:p-10 rounded-[3rem] border border-white/10 backdrop-blur-3xl shadow-[0_0_50px_rgba(0,0,0,1)]"
       >
-        {/* НЕОНОВЫЙ ЗАГОЛОВОК */}
+        {/* ОБНОВЛЕННЫЙ НЕОНОВЫЙ ЗАГОЛОВОК */}
         <motion.h1 
           key={isLogin ? 'login' : 'reg'}
           initial={{ opacity: 0 }}
@@ -62,9 +62,9 @@ export default function AuthPage() {
             ]
           }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          className="text-2xl md:text-3xl font-black italic text-[#d67a9d] mb-10 uppercase tracking-[ -0.05em] text-center leading-tight"
+          className="text-3xl md:text-4xl font-black italic text-[#d67a9d] mb-10 uppercase tracking-tighter text-center leading-tight"
         >
-          {isLogin ? 'ПРОТОКОЛ_ДОСТУПА' : 'РЕГИСТРАЦИЯ_АГЕНТА'}
+          {isLogin ? 'ВХОД' : 'РЕГИСТРАЦИЯ'}
         </motion.h1>
         
         <form onSubmit={handleAuth} className="space-y-4">
@@ -91,7 +91,7 @@ export default function AuthPage() {
             disabled={loading}
             className="w-full bg-white text-black py-5 mt-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-[#d67a9d] hover:text-white transition-all shadow-lg active:scale-95 disabled:opacity-50"
           >
-            {loading ? 'ЗАГРУЗКА...' : isLogin ? 'АВТОРИЗОВАТЬСЯ' : 'СОЗДАТЬ АККАУНТ'}
+            {loading ? 'ЗАГРУЗКА...' : isLogin ? 'ВОЙТИ' : 'ЗАРЕГИСТРИРОВАТЬСЯ'}
           </button>
         </form>
 
