@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation'
 import { 
   Trash2, Plus, Minus, ShoppingBag, ArrowRight, 
   ShoppingCart, ShieldCheck, AlertCircle, CheckCircle2, X,
-  Truck, Package, Coins, MapPin, User, Phone, Ticket, Zap // Добавил Zap для иконки
+  Truck, Package, Coins, MapPin, User, Phone, Ticket, Zap 
 } from 'lucide-react'
 
 // --- КОМПОНЕНТ УВЕДОМЛЕНИЯ (TOAST) ---
@@ -221,6 +221,7 @@ export default function CartPage() {
         throw orderError
       }
 
+      // Используем данные созданного заказа
       const finalOrder = orderData
 
       if (appliedPromo) {
@@ -230,33 +231,36 @@ export default function CartPage() {
           .eq('id', appliedPromo.id)
       }
 
+      // Обновляем баланс пользователя
       const newBalance = userBonuses - spendAmount + earnedBonuses
       await supabase.from('profiles').update({ bonuses: newBalance }).eq('id', user.id)
 
+      // Запись в историю бонусов
       const historyRecords = []
-      if (earnedBonuses > 0) {
-        historyRecords.push({
-          user_id: user.id,
-          amount: earnedBonuses,
-          reason: `Начисление за заказ #${finalOrder.id.slice(0, 8)}`,
-          type: 'earn'
-        })
-      }
-      if (spendAmount > 0) {
-        historyRecords.push({
-          user_id: user.id,
-          amount: -spendAmount,
-          reason: `Списание в заказе #${finalOrder.id.slice(0, 8)}`,
-          type: 'spend'
-        })
+      if (finalOrder) {
+        if (earnedBonuses > 0) {
+          historyRecords.push({
+            user_id: user.id,
+            amount: earnedBonuses,
+            reason: `Начисление за заказ #${finalOrder.id.slice(0, 8)}`,
+            type: 'earn'
+          })
+        }
+        if (spendAmount > 0) {
+          historyRecords.push({
+            user_id: user.id,
+            amount: -spendAmount,
+            reason: `Списание в заказе #${finalOrder.id.slice(0, 8)}`,
+            type: 'spend'
+          })
+        }
       }
 
       if (historyRecords.length > 0) {
         await supabase.from('bonus_history').insert(historyRecords)
       }
 
-      // --- ИЗМЕНЕНО: Показываем модалку оплаты вместо редиректа сразу ---
-      setLastOrderId(finalOrder.id.slice(0, 8))
+      setLastOrderId(finalOrder?.id.slice(0, 8) || 'ERROR')
       setShowPaymentModal(true)
       clearCart()
       
@@ -297,7 +301,7 @@ export default function CartPage() {
                 <Zap size={40} className="text-white fill-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-black uppercase italic italic tracking-tighter">Заказ принят!</h2>
+                <h2 className="text-2xl font-black uppercase italic tracking-tighter">Заказ принят!</h2>
                 <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-2">ID: #{lastOrderId}</p>
               </div>
               
@@ -306,7 +310,7 @@ export default function CartPage() {
                   Для подтверждения переведите <span className="text-[#d67a9d]">{finalPrice.toLocaleString()} ₽</span> по СБП:
                 </p>
                 <div className="py-4 px-4 bg-black rounded-2xl border border-[#d67a9d]/30 select-all font-black text-center text-lg tracking-wider">
-                  +7 (927) 855-23-24 {/* ЗАМЕНИ НА СВОЙ НОМЕР ТУТ */}
+                  +7 (927) 855-23-24
                 </div>
                 <p className="text-[9px] text-white/30 uppercase text-center font-black italic tracking-widest">озон банк / ozon bank</p>
               </div>
@@ -333,7 +337,7 @@ export default function CartPage() {
           <div>
             <h2 className="text-4xl font-black italic uppercase tracking-tighter leading-none mb-2">КОРЗИНА</h2>
             <div className="flex items-center gap-3">
-              <span className="text-[10px] font-black text-[#d67a9d] uppercase tracking-[0.2em]">vsgiga_shop</span>
+              <span className="text-[10px] font-black text-[#d67a9d] uppercase tracking-[0.2em]">vsgiga shop</span>
               <div className="w-1 h-1 bg-white/20 rounded-full" />
               <span className="text-[10px] font-medium text-white/40 uppercase tracking-widest">{totalItems} ТОВАРА(ОВ)</span>
             </div>

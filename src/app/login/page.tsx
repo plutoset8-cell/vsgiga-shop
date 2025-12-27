@@ -16,23 +16,21 @@ export default function AuthPage() {
     setLoading(true)
 
     if (isLogin) {
-      // ВХОД
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
         alert(error.message)
       } else {
-        router.push('/') // Перекидываем на главную
+        router.push('/')
         router.refresh()
       }
     } else {
-      // РЕГИСТРАЦИЯ
       const { error } = await supabase.auth.signUp({ 
         email, 
         password,
         options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
       })
       if (error) alert(error.message)
-      else alert('Check your email for confirmation!')
+      else alert('Проверьте почту для подтверждения регистрации!')
     }
     setLoading(false)
   }
@@ -47,51 +45,84 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-6">
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-white/5 p-10 rounded-[3rem] border border-white/10 backdrop-blur-3xl"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-md bg-[#0a0a0a] p-8 md:p-10 rounded-[3rem] border border-white/10 backdrop-blur-3xl shadow-[0_0_50px_rgba(0,0,0,1)]"
       >
-        <h1 className="text-3xl font-black italic text-white mb-8 uppercase tracking-tighter text-center">
-          {isLogin ? 'Auth_Protocol' : 'New_Agent_Registration'}
-        </h1>
+        {/* НЕОНОВЫЙ ЗАГОЛОВОК */}
+        <motion.h1 
+          key={isLogin ? 'login' : 'reg'}
+          initial={{ opacity: 0 }}
+          animate={{ 
+            opacity: [0.7, 1, 0.8, 1, 0.7],
+            textShadow: [
+              "0 0 10px #d67a9d, 0 0 20px #d67a9d",
+              "0 0 20px #d67a9d, 0 0 40px #d67a9d",
+              "0 0 10px #d67a9d, 0 0 20px #d67a9d"
+            ]
+          }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          className="text-2xl md:text-3xl font-black italic text-[#d67a9d] mb-10 uppercase tracking-[ -0.05em] text-center leading-tight"
+        >
+          {isLogin ? 'ПРОТОКОЛ_ДОСТУПА' : 'РЕГИСТРАЦИЯ_АГЕНТА'}
+        </motion.h1>
         
         <form onSubmit={handleAuth} className="space-y-4">
-          <input 
-            type="email" placeholder="EMAIL" required
-            className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl outline-none text-white focus:border-[#d67a9d] transition-all"
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <input 
-            type="password" placeholder="PASSWORD" required
-            className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl outline-none text-white focus:border-[#d67a9d] transition-all"
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div className="space-y-1">
+             <p className="text-[8px] font-black text-white/20 ml-4 uppercase tracking-[0.2em]">User_Email</p>
+             <input 
+              type="email" placeholder="ПОЧТА" required
+              className="w-full bg-white/5 border border-white/5 p-5 rounded-2xl outline-none text-white focus:border-[#d67a9d]/50 focus:bg-white/10 transition-all text-[11px] font-bold uppercase tracking-widest"
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          
+          <div className="space-y-1">
+             <p className="text-[8px] font-black text-white/20 ml-4 uppercase tracking-[0.2em]">Access_Key</p>
+             <input 
+              type="password" placeholder="ПАРОЛЬ" required
+              className="w-full bg-white/5 border border-white/5 p-5 rounded-2xl outline-none text-white focus:border-[#d67a9d]/50 focus:bg-white/10 transition-all text-[11px] font-bold uppercase tracking-widest"
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
           
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full bg-white text-black py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-[#71b3c9] transition-all"
+            className="w-full bg-white text-black py-5 mt-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-[#d67a9d] hover:text-white transition-all shadow-lg active:scale-95 disabled:opacity-50"
           >
-            {loading ? 'Processing...' : isLogin ? 'Sign_In' : 'Register_Now'}
+            {loading ? 'ЗАГРУЗКА...' : isLogin ? 'АВТОРИЗОВАТЬСЯ' : 'СОЗДАТЬ АККАУНТ'}
           </button>
         </form>
 
-        <div className="relative py-8">
-          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
-          <div className="relative flex justify-center text-[8px] uppercase font-black text-white/30"><span className="bg-[#0a0a0a] px-2 text-white">Or_Connect_Via</span></div>
+        <div className="relative py-10">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-white/5"></div>
+          </div>
+          <div className="relative flex justify-center text-[8px] uppercase font-black text-white/20">
+            <span className="bg-[#0a0a0a] px-4 tracking-[0.3em]">ИЛИ_ЧЕРЕЗ</span>
+          </div>
         </div>
 
-        <button onClick={handleGoogleLogin} className="w-full bg-white/10 text-white py-4 rounded-2xl font-black uppercase text-[10px] flex items-center justify-center gap-3 hover:bg-white/20 transition-all mb-6">
+        <button 
+          onClick={handleGoogleLogin} 
+          className="w-full bg-white/5 text-white py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-3 hover:bg-white/10 border border-white/5 transition-all mb-8"
+        >
            <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-4 h-4" alt="google" />
-           Google_Account
+           GOOGLE_ID
         </button>
 
-        <p className="text-center text-[10px] font-bold text-white/30 uppercase">
-          {isLogin ? "No account?" : "Already a member?"}
-          <button onClick={() => setIsLogin(!isLogin)} className="ml-2 text-[#d67a9d] hover:underline">
-            {isLogin ? "Create_One" : "Login_Instead"}
+        <div className="flex flex-col items-center gap-2">
+          <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">
+            {isLogin ? "НЕТ АККАУНТА?" : "УЖЕ ЕСТЬ АККАУНТ?"}
+          </p>
+          <button 
+            onClick={() => setIsLogin(!isLogin)} 
+            className="text-[#d67a9d] text-[10px] font-black uppercase tracking-widest hover:brightness-125 transition-all underline underline-offset-4"
+          >
+            {isLogin ? "СОЗДАТЬ НОВЫЙ" : "ВЕРНУТЬСЯ КО ВХОДУ"}
           </button>
-        </p>
+        </div>
       </motion.div>
     </div>
   )
