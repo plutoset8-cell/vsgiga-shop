@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useCart } from '@/context/CartContext'
 import { supabase } from '@/lib/supabase'
-import Link from 'next/link'
+import Link from 'next/link' // ИСПРАВЛЕНО: Для компонентов используется next/link
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { 
@@ -58,7 +58,7 @@ export default function CartPage() {
   
   // --- Состояния для сохранения суммы перед очисткой корзины ---
   const [confirmedPrice, setConfirmedPrice] = useState(0)
-  const [displayPrice, setDisplayPrice] = useState(0) // Исправлено: добавлено недостающее состояние
+  const [displayPrice, setDisplayPrice] = useState(0) 
   
   // Бонусы и Уведомления
   const [userBonuses, setUserBonuses] = useState(0)
@@ -108,6 +108,25 @@ export default function CartPage() {
     }
     fetchUserData()
   }, [])
+
+  // --- НОВЫЙ ЭФФЕКТ: СИНХРОНИЗАЦИЯ ЦЕНЫ С БД ---
+  useEffect(() => {
+    const syncPrice = async () => {
+      if (showPaymentModal && lastOrderId && lastOrderId !== 'ERROR') {
+        const { data } = await supabase
+          .from('orders')
+          .select('total_amount')
+          .ilike('id', `${lastOrderId}%`)
+          .single()
+        
+        if (data) {
+          setConfirmedPrice(data.total_amount)
+          setDisplayPrice(data.total_amount)
+        }
+      }
+    }
+    syncPrice()
+  }, [showPaymentModal, lastOrderId])
 
   // Применение промокода
   const handleApplyPromo = async () => {
@@ -261,13 +280,18 @@ export default function CartPage() {
         await supabase.from('bonus_history').insert(historyRecords)
       }
 
-      const priceToDisplay = finalPrice;
-      setDisplayPrice(priceToDisplay); 
-      setConfirmedPrice(priceToDisplay); 
+      // ФИКСАЦИЯ ДАННЫХ ПЕРЕД ОЧИСТКОЙ
+      const savedPrice = finalOrder?.total_amount || finalPrice;
+      setConfirmedPrice(savedPrice); 
+      setDisplayPrice(savedPrice);
       setLastOrderId(finalOrder?.id.slice(0, 8) || 'ERROR');
       
       setShowPaymentModal(true);
-      clearCart();
+      
+      // Небольшая задержка перед очисткой для стабильности стейта
+      setTimeout(() => {
+        clearCart();
+      }, 100);
       
     } catch (error: any) {
       console.error('Checkout Error:', error);
@@ -317,7 +341,7 @@ export default function CartPage() {
               <div className="bg-white/5 p-5 md:p-6 rounded-3xl border border-white/5 space-y-4 text-left">
                 <p className="text-[10px] md:text-[11px] font-bold leading-relaxed uppercase tracking-tight text-white/90">
                   Для подтверждения переведите <span className="text-[#d67a9d] text-sm md:text-base">
-                    {(displayPrice > 0 ? displayPrice : confirmedPrice).toLocaleString()} ₽
+                    {(displayPrice || confirmedPrice || finalPrice).toLocaleString()} ₽
                   </span> по СБП:
                 </p>
                 
