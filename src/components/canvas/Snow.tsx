@@ -9,7 +9,7 @@ export default function Snow() {
   const count = 35000 // Оптимально для густоты
 
   // Увеличиваем диапазон, чтобы при поворотах углы не вылезали
-  const range = 120 
+  const range = 120
   const halfRange = range / 2
 
   const [positions, speeds] = useMemo(() => {
@@ -32,9 +32,10 @@ export default function Snow() {
     canvas.width = 64; canvas.height = 64
     const ctx = canvas.getContext('2d')!
     const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32)
-    gradient.addColorStop(0, 'rgba(255, 255, 255, 1)')
-    gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.5)')
-    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
+    // В твоем файле Snow.tsx измени эти строки:
+    gradient.addColorStop(0, 'rgba(255, 0, 127, 1)')   // Ярко-розовый в центре
+    gradient.addColorStop(0.3, 'rgba(255, 0, 127, 0.5)') // Полупрозрачный розовый
+    gradient.addColorStop(1, 'rgba(255, 0, 127, 0)')   // Прозрачный край
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, 64, 64)
     return new THREE.CanvasTexture(canvas)
@@ -44,13 +45,13 @@ export default function Snow() {
     if (!meshRef.current) return
     const attr = meshRef.current.geometry.attributes.position
     const time = state.clock.elapsedTime
-    
+
     // Ограничиваем delta, чтобы снег не "прыгал" при лагах
     const d = Math.min(delta, 0.05)
 
     for (let i = 0; i < count; i++) {
       const i3 = i * 3
-      
+
       // 1. Движение вниз
       attr.array[i3 + 1] -= speeds[i] * d * 3
 
@@ -62,18 +63,18 @@ export default function Snow() {
       if (attr.array[i3 + 1] < -halfRange) {
         attr.array[i3 + 1] = halfRange
       }
-      
+
       // Проверка по X и Z (на случай сильных поворотов мыши)
       if (attr.array[i3] < -halfRange) attr.array[i3] = halfRange
       if (attr.array[i3] > halfRange) attr.array[i3] = -halfRange
     }
-    
+
     attr.needsUpdate = true
 
     // Уменьшаем интенсивность вращения, чтобы края облака не заходили в экран
     const targetRY = state.mouse.x * 0.12
     const targetRX = -state.mouse.y * 0.08
-    
+
     meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, targetRY, 0.02)
     meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, targetRX, 0.02)
   })
@@ -81,20 +82,20 @@ export default function Snow() {
   return (
     <points ref={meshRef}>
       <bufferGeometry>
-        <bufferAttribute 
-          attach="attributes-position" 
-          count={count} 
-          array={positions} 
-          itemSize={3} 
+        <bufferAttribute
+          attach="attributes-position"
+          count={count}
+          array={positions}
+          itemSize={3}
         />
       </bufferGeometry>
-      <pointsMaterial 
-        size={0.16} 
-        map={snowTexture} 
-        transparent 
-        depthWrite={false} 
-        blending={THREE.AdditiveBlending} 
-        sizeAttenuation={true} 
+      <pointsMaterial
+        size={0.16}
+        map={snowTexture}
+        transparent
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        sizeAttenuation={true}
         opacity={0.5}
       />
     </points>

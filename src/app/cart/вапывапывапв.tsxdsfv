@@ -1,0 +1,7763 @@
+/**
+ * ============================================================================
+ * [VSGIGA_OS_PRO] - INDUSTRIAL E-COMMERCE CORE
+ * PROJECT: vsgiga shop
+ * VERSION: 12.0.1 (STABLE)
+ * ENHANCED: INDUSTRIAL CART SYSTEM v6.0 WITH DATABASE INTEGRATION
+ * LINES: 6200+
+ * ============================================================================
+ */
+
+"use client";
+
+import React, {
+  useReducer, useContext, createContext, useEffect,
+  useMemo, useCallback, useRef, useState, Suspense, lazy,
+  Fragment
+} from 'react';
+import {
+  motion, AnimatePresence, LayoutGroup,
+  useTransform, useSpring, useScroll,
+  useMotionValue, useAnimationControls
+} from 'framer-motion';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import * as LucideIcons from 'lucide-react';
+
+// Деструктурируем только нужные иконки
+const {
+  Cpu, Zap, ShieldCheck, ShoppingCart, Trash2, Plus, Minus,
+  ShoppingBag, ArrowRight, AlertCircle, CheckCircle2, X,
+  Truck, Package, Coins, MapPin, User, Phone, Ticket,
+  Database, Activity, HardDrive, Terminal, Server, Cloud,
+  Clock, Battery, Wifi, Camera, Thermometer, Gauge, BarChart,
+  Filter, Settings, Download, Upload, Lock, Unlock, Eye,
+  EyeOff, CreditCard, Bitcoin, Wallet, RefreshCw, RotateCcw,
+  Star, Heart, Share2, MessageSquare, Bell, Calendar,
+  ChevronRight, ChevronLeft, Home, Grid, List, Maximize,
+  Minimize, Volume2, VolumeX, Video, Mic, Headphones,
+  Keyboard, Mouse, Monitor, Smartphone, Tablet, Watch,
+  MemoryStick, Fan, Power, Network, Router, Satellite,
+  Radar, Globe, Map, Navigation, Compass, Wind, Droplets,
+  Sun, Moon, Flashlight, BatteryCharging, PowerOff, Recycle,
+  Factory, Warehouse, Forklift, Palette, Brush, PenTool,
+  Scissors, Ruler, Wrench, Hammer, Clipboard, FileText,
+  Archive, Folder, Search, Hash, Percent, DollarSign,
+  Euro, TrendingUp, TrendingDown, Users, Mail,
+  Printer, Bluetooth, UploadCloud, DownloadCloud,
+  Edit, Info, Brain,
+} = LucideIcons;
+
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  // ... другие поля
+}
+
+interface SystemMetrics {
+  cpuUsage: number;
+  memoryUsage: number;
+  networkLatency: number;
+  responseTime: number;
+  errorRate: number;
+  concurrentUsers: number;
+  transactionsPerMinute: number;
+}
+
+// ============================================================================
+// [DATABASE_SCHEMAS] - Полные схемы баз данных
+// ============================================================================
+
+// Основная база данных продуктов
+export interface Product {
+  id: string;
+  sku: string;
+  upc: string;
+  ean: string;
+  name: string;
+  name_en: string;
+  description: string;
+  description_en: string;
+  short_description: string;
+  meta_title: string;
+  meta_description: string;
+  meta_keywords: string[];
+  price: number;
+  cost_price: number;
+  original_price?: number;
+  wholesale_price?: number;
+  discount_price?: number;
+  discount_percent?: number;
+  discount_start?: Date;
+  discount_end?: Date;
+  image: string;
+  images: ProductImage[];
+  videos: ProductVideo[];
+  documents: ProductDocument[];
+  category: ProductCategory;
+  subcategory: ProductSubcategory;
+  brand: Brand;
+  manufacturer: Manufacturer;
+  supplier: Supplier;
+  variants: ProductVariant[];
+  attributes: ProductAttribute[];
+  specifications: ProductSpecification[];
+  dimensions: ProductDimensions;
+  weight: ProductWeight;
+  packaging: PackagingInfo;
+  logistics: LogisticsInfo;
+  inventory: InventoryStatus;
+  stock: StockInfo[];
+  warehouse_locations: WarehouseLocation[];
+  ratings: ProductRatings;
+  reviews: ProductReview[];
+  questions: ProductQuestion[];
+  tags: string[];
+  tax_class: TaxClass;
+  customs_info: CustomsInfo;
+  compliance: ComplianceInfo;
+  certifications: Certification[];
+  warranties: Warranty[];
+  related_products: RelatedProduct[];
+  cross_sell: CrossSellProduct[];
+  up_sell: UpSellProduct[];
+  bundles: BundleInfo[];
+  kits: KitInfo[];
+  digital_assets: DigitalAsset[];
+  subscription_options: SubscriptionOption[];
+  rental_options: RentalOption[];
+  is_active: boolean;
+  is_featured: boolean;
+  is_new: boolean;
+  is_bestseller: boolean;
+  is_preorder: boolean;
+  is_backorder: boolean;
+  is_digital: boolean;
+  is_virtual: boolean;
+  is_downloadable: boolean;
+  is_physical: boolean;
+  is_taxable: boolean;
+  requires_shipping: boolean;
+  requires_assembly: boolean;
+  requires_configuration: boolean;
+  min_order_quantity: number;
+  max_order_quantity: number;
+  step_quantity: number;
+  lead_time: LeadTime;
+  availability_date: Date;
+  restock_date: Date;
+  discontinued_date?: Date;
+  created_at: Date;
+  updated_at: Date;
+  published_at: Date;
+  version: number;
+  revision: number;
+  audit_log: AuditLogEntry[];
+  sync_status: SyncStatus;
+  external_ids: ExternalIds;
+  metadata: Record<string, any>;
+}
+
+interface ProductImage {
+  id: string;
+  url: string;
+  alt: string;
+  title: string;
+  caption: string;
+  order: number;
+  is_main: boolean;
+  is_thumbnail: boolean;
+  is_gallery: boolean;
+  is_zoomable: boolean;
+  resolution: { width: number; height: number };
+  size: number;
+  format: string;
+  colors: string[];
+  dominant_color: string;
+}
+
+interface ProductVideo {
+  id: string;
+  url: string;
+  thumbnail: string;
+  title: string;
+  description: string;
+  duration: number;
+  format: string;
+  resolution: string;
+  provider: 'youtube' | 'vimeo' | 'self-hosted';
+  embed_code: string;
+}
+
+interface ProductDocument {
+  id: string;
+  name: string;
+  url: string;
+  type: 'manual' | 'specification' | 'certificate' | 'drawing' | 'cad';
+  format: string;
+  size: number;
+  language: string;
+  version: string;
+}
+
+interface ProductCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image: string;
+  parent_id?: string;
+  level: number;
+  path: string[];
+  sort_order: number;
+  meta: CategoryMeta;
+  filters: CategoryFilter[];
+}
+
+interface CategoryMeta {
+  title: string;
+  description: string;
+  keywords: string[];
+  robots: string;
+}
+
+interface CategoryFilter {
+  id: string;
+  name: string;
+  type: 'range' | 'select' | 'multiselect' | 'checkbox' | 'radio';
+  values: FilterValue[];
+  units?: string;
+}
+
+interface FilterValue {
+  id: string;
+  value: string;
+  count: number;
+}
+
+interface ProductSubcategory {
+  id: string;
+  name: string;
+  slug: string;
+  category_id: string;
+}
+
+interface Brand {
+  id: string;
+  name: string;
+  slug: string;
+  logo: string;
+  description: string;
+  website: string;
+  founded_year: number;
+  country: string;
+  quality_rating: number;
+  sustainability_score: number;
+  certifications: string[];
+}
+
+interface Manufacturer {
+  id: string;
+  name: string;
+  code: string;
+  location: ManufacturerLocation;
+  contacts: ManufacturerContact[];
+  certifications: string[];
+  production_capacity: number;
+  lead_time: number;
+  minimum_order: number;
+}
+
+interface ManufacturerLocation {
+  country: string;
+  region: string;
+  city: string;
+  address: string;
+  coordinates: { lat: number; lng: number };
+  timezone: string;
+}
+
+interface ManufacturerContact {
+  type: 'sales' | 'support' | 'technical' | 'logistics';
+  name: string;
+  email: string;
+  phone: string;
+  language: string;
+  timezone: string;
+}
+
+interface Supplier {
+  id: string;
+  name: string;
+  type: 'manufacturer' | 'distributor' | 'wholesaler' | 'dropshipper';
+  reliability: number;
+  rating: number;
+  lead_time: SupplierLeadTime;
+  minimum_order: MinimumOrder;
+  payment_terms: PaymentTerm[];
+  contracts: SupplierContract[];
+}
+
+interface SupplierLeadTime {
+  standard: number;
+  express: number;
+  emergency: number;
+}
+
+interface MinimumOrder {
+  quantity: number;
+  value: number;
+  currency: string;
+}
+
+interface PaymentTerm {
+  type: 'prepayment' | 'net30' | 'net60' | 'consignment';
+  percentage: number;
+  days: number;
+}
+
+interface SupplierContract {
+  id: string;
+  start_date: Date;
+  end_date: Date;
+  terms: string;
+  pricing: ContractPricing[];
+}
+
+interface ContractPricing {
+  product_id: string;
+  price: number;
+  min_quantity: number;
+  valid_until: Date;
+}
+
+interface ProductVariant {
+  id: string;
+  sku: string;
+  name: string;
+  option1: VariantOption;
+  option2?: VariantOption;
+  option3?: VariantOption;
+  price_difference: number;
+  weight_difference: number;
+  image: string;
+  stock: number;
+  is_default: boolean;
+}
+
+interface VariantOption {
+  name: string;
+  value: string;
+  image?: string;
+}
+
+interface ProductAttribute {
+  id: string;
+  name: string;
+  value: string;
+  group: string;
+  sort_order: number;
+  is_filterable: boolean;
+  is_visible: boolean;
+  is_comparable: boolean;
+}
+
+interface ProductSpecification {
+  section: string;
+  items: SpecificationItem[];
+}
+
+interface SpecificationItem {
+  name: string;
+  value: string;
+  units?: string;
+  icon?: string;
+}
+
+interface ProductDimensions {
+  length: number;
+  width: number;
+  height: number;
+  units: 'mm' | 'cm' | 'm' | 'in' | 'ft';
+  volume: number;
+  dimensional_weight: number;
+}
+
+interface ProductWeight {
+  net: number;
+  gross: number;
+  units: 'g' | 'kg' | 'lb' | 'oz';
+  packaging_weight: number;
+}
+
+interface PackagingInfo {
+  type: 'box' | 'envelope' | 'tube' | 'pallet';
+  material: string;
+  dimensions: ProductDimensions;
+  weight: ProductWeight;
+  barcode: string;
+  qr_code: string;
+  handling_instructions: string;
+}
+
+interface LogisticsInfo {
+  shipping_class: string;
+  handling_time: number;
+  max_shipment_weight: number;
+  stackable: boolean;
+  hazardous: boolean;
+  perishable: boolean;
+  fragile: boolean;
+  temperature_control: TemperatureRange;
+  humidity_control: HumidityRange;
+}
+
+interface TemperatureRange {
+  min: number;
+  max: number;
+  units: 'C' | 'F';
+}
+
+interface HumidityRange {
+  min: number;
+  max: number;
+}
+
+interface InventoryStatus {
+  quantity: number;
+  reserved: number;
+  available: number;
+  backorder_allowed: boolean;
+  backorder_quantity: number;
+  low_stock_threshold: number;
+  out_of_stock_threshold: number;
+  stock_status: 'in_stock' | 'low_stock' | 'out_of_stock' | 'preorder' | 'backorder';
+  locations: InventoryLocation[];
+}
+
+interface InventoryLocation {
+  warehouse_id: string;
+  aisle: string;
+  shelf: string;
+  bin: string;
+  quantity: number;
+  batch_number?: string;
+  expiry_date?: Date;
+}
+
+interface StockInfo {
+  warehouse: Warehouse;
+  quantity: number;
+  allocated: number;
+  available: number;
+  incoming: number;
+  reserved: number;
+  safety_stock: number;
+  reorder_point: number;
+  reorder_quantity: number;
+  last_counted: Date;
+  next_count: Date;
+}
+
+interface Warehouse {
+  id: string;
+  name: string;
+  code: string;
+  type: 'main' | 'regional' | 'crossdock' | 'fulfillment';
+  location: WarehouseLocation;
+  capacity: WarehouseCapacity;
+  services: WarehouseService[];
+  operating_hours: OperatingHours;
+  contacts: WarehouseContact[];
+}
+
+interface WarehouseLocation {
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  postal_code: string;
+  coordinates: { lat: number; lng: number };
+  timezone: string;
+}
+
+interface WarehouseCapacity {
+  total: number;
+  used: number;
+  available: number;
+  units: 'm3' | 'sqm' | 'pallets';
+}
+
+interface WarehouseService {
+  type: 'storage' | 'pickpack' | 'shipping' | 'returns' | 'kitting';
+  available: boolean;
+  capacity: number;
+  lead_time: number;
+}
+
+interface OperatingHours {
+  monday: TimeRange;
+  tuesday: TimeRange;
+  wednesday: TimeRange;
+  thursday: TimeRange;
+  friday: TimeRange;
+  saturday: TimeRange;
+  sunday: TimeRange;
+  holidays: Holiday[];
+}
+
+interface TimeRange {
+  open: string;
+  close: string;
+  closed: boolean;
+}
+
+interface Holiday {
+  date: Date;
+  name: string;
+  closed: boolean;
+}
+
+interface WarehouseContact {
+  department: string;
+  name: string;
+  email: string;
+  phone: string;
+  emergency_phone: string;
+}
+
+interface WarehouseStorageLocation {  // Было: WarehouseLocation
+  id: string;
+  name: string;
+  code: string;
+  type: 'bin' | 'shelf' | 'rack' | 'pallet';
+  coordinates: { x: number; y: number; z: number };
+  dimensions: { width: number; depth: number; height: number };
+  capacity: number;
+  current_load: number;
+  temperature_zone?: string;
+  security_level: number;
+}
+
+interface ProductRatings {
+  average: number;
+  count: number;
+  distribution: {
+    1: number;
+    2: number;
+    3: number;
+    4: number;
+    5: number;
+  };
+  aspects: RatingAspect[];
+  verified_purchases: number;
+  helpful_votes: number;
+}
+
+interface RatingAspect {
+  name: string;
+  rating: number;
+  weight: number;
+}
+
+interface ProductReview {
+  id: string;
+  user: UserProfile;
+  rating: number;
+  title: string;
+  comment: string;
+  pros: string[];
+  cons: string[];
+  verified_purchase: boolean;
+  helpful_count: number;
+  unhelpful_count: number;
+  images: string[];
+  videos: string[];
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: Date;
+  updated_at: Date;
+  moderator_notes?: string;
+}
+
+interface ProductQuestion {
+  id: string;
+  user: UserProfile;
+  question: string;
+  answers: ProductAnswer[];
+  upvotes: number;
+  status: 'unanswered' | 'answered';
+  created_at: Date;
+}
+
+interface ProductAnswer {
+  id: string;
+  user: UserProfile;
+  answer: string;
+  is_seller: boolean;
+  helpful_count: number;
+  created_at: Date;
+}
+
+interface TaxClass {
+  id: string;
+  name: string;
+  rate: number;
+  country: string;
+  state: string;
+  city: string;
+  type: 'vat' | 'gst' | 'sales_tax' | 'import_duty';
+  exempt_categories: string[];
+}
+
+interface CustomsInfo {
+  hs_code: string;
+  country_of_origin: string;
+  customs_value: number;
+  customs_description: string;
+  dangerous_goods: boolean;
+  export_control: boolean;
+  requires_license: boolean;
+  license_number?: string;
+}
+
+interface ComplianceInfo {
+  rohs: boolean;
+  reach: boolean;
+  ce: boolean;
+  fcc: boolean;
+  ul: boolean;
+  iso_certifications: string[];
+  environmental_compliance: EnvironmentalCompliance;
+  safety_compliance: SafetyCompliance;
+}
+
+interface EnvironmentalCompliance {
+  recyclable: boolean;
+  biodegradable: boolean;
+  carbon_footprint: number;
+  energy_efficiency: string;
+  water_usage: number;
+}
+
+interface SafetyCompliance {
+  chemical_safety: boolean;
+  electrical_safety: boolean;
+  mechanical_safety: boolean;
+  certifications: string[];
+}
+
+interface Certification {
+  type: string;
+  number: string;
+  issuer: string;
+  issue_date: Date;
+  expiry_date: Date;
+  document_url: string;
+}
+
+interface Warranty {
+  type: 'manufacturer' | 'seller' | 'extended';
+  period: number;
+  period_unit: 'days' | 'months' | 'years';
+  coverage: string[];
+  exclusions: string[];
+  terms_url: string;
+  service_centers: ServiceCenter[];
+}
+
+interface ServiceCenter {
+  name: string;
+  location: string;
+  contact: string;
+  services: string[];
+}
+
+interface RelatedProduct {
+  product_id: string;
+  relation_type: 'similar' | 'complementary' | 'alternative';
+  score: number;
+}
+
+interface CrossSellProduct {
+  product_id: string;
+  probability: number;
+}
+
+interface UpSellProduct {
+  product_id: string;
+  upgrade_level: number;
+}
+
+interface BundleInfo {
+  id: string;
+  name: string;
+  items: BundleItem[];
+  discount: number;
+  price: number;
+}
+
+interface BundleItem {
+  product_id: string;
+  quantity: number;
+  required: boolean;
+}
+
+interface KitInfo {
+  id: string;
+  name: string;
+  components: KitComponent[];
+  assembly_time: number;
+  instructions_url: string;
+}
+
+interface KitComponent {
+  product_id: string;
+  quantity: number;
+  assembly_order: number;
+  tools_required: string[];
+}
+
+interface DigitalAsset {
+  id: string;
+  name: string;
+  type: 'file' | 'software' | 'license' | 'subscription';
+  url: string;
+  download_limit: number;
+  expiry_days: number;
+  version: string;
+  file_size: number;
+  format: string;
+}
+
+interface SubscriptionOption {
+  id: string;
+  name: string;
+  type: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+  price: number;
+  discount: number;
+  billing_cycles: number;
+  trial_days: number;
+  features: string[];
+}
+
+interface RentalOption {
+  id: string;
+  name: string;
+  min_days: number;
+  max_days: number;
+  daily_rate: number;
+  weekly_rate: number;
+  monthly_rate: number;
+  deposit: number;
+  insurance_required: boolean;
+  delivery_options: string[];
+}
+
+interface LeadTime {
+  standard: number;
+  express: number;
+  emergency: number;
+  units: 'hours' | 'days' | 'weeks';
+  processing_time: number;
+  shipping_time: number;
+}
+
+interface AuditLogEntry {
+  id: string;
+  action: string;
+  user_id: string;
+  timestamp: Date;
+  changes: Record<string, any>;
+  ip_address: string;
+  user_agent: string;
+}
+
+interface SyncStatus {
+  last_sync: Date;
+  status: 'success' | 'failed' | 'in_progress';
+  errors: string[];
+  next_sync: Date;
+}
+
+interface ExternalIds {
+  erp_id: string;
+  crm_id: string;
+  wms_id: string;
+  marketplace_ids: Record<string, string>;
+}
+
+// ============================================================================
+// [ORDER_DATABASE_SCHEMA] - Полная схема заказов
+// ============================================================================
+
+interface Order {
+  id: string;
+  order_number: string;
+  external_id: string;
+  status: OrderStatus;
+  substatus: OrderSubstatus;
+  customer: OrderCustomer;
+  billing_address: OrderAddress;
+  shipping_address: OrderAddress;
+  shipping_method: ShippingMethod;
+  payment_method: PaymentMethod;
+  payment_status: PaymentStatus;
+  items: OrderItem[];
+  totals: OrderTotals;
+  discounts: OrderDiscount[];
+  taxes: OrderTax[];
+  fees: OrderFee[];
+  packaging: OrderPackaging;
+  documents: OrderDocument[];
+  notes: OrderNote[];
+  timeline: OrderTimeline[];
+  risk_assessment: RiskAssessment;
+  fraud_indicators: FraudIndicator[];
+  logistics: OrderLogistics;
+  returns: OrderReturn[];
+  refunds: OrderRefund[];
+  subscriptions: OrderSubscription[];
+  metadata: Record<string, any>;
+  created_at: Date;
+  updated_at: Date;
+  estimated_delivery: Date;
+  actual_delivery?: Date;
+  cancellation_reason?: string;
+  cancellation_date?: Date;
+  version: number;
+}
+
+interface OrderStatus {
+  code: string;
+  name: string;
+  description: string;
+  color: string;
+  icon: string;
+  is_final: boolean;
+}
+
+interface OrderSubstatus {
+  code: string;
+  name: string;
+  parent_status: string;
+}
+
+interface OrderCustomer {
+  id: string;
+  email: string;
+  phone: string;
+  first_name: string;
+  last_name: string;
+  company?: string;
+  tax_id?: string;
+  loyalty_tier: string;
+  customer_since: Date;
+  order_count: number;
+  total_spent: number;
+  tags: string[];
+  segments: string[];
+}
+
+interface OrderAddress {
+  type: 'billing' | 'shipping';
+  first_name: string;
+  last_name: string;
+  company?: string;
+  address_line1: string;
+  address_line2?: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  country_code: string;
+  phone: string;
+  email: string;
+  coordinates?: { lat: number; lng: number };
+  validation_status: 'valid' | 'invalid' | 'unverified';
+  validation_date?: Date;
+}
+
+interface ShippingMethod {
+  id: string;
+  carrier: string;
+  service: string;
+  code: string;
+  name: string;
+  description: string;
+  delivery_time: DeliveryTime;
+  cost: ShippingCost;
+  tracking: TrackingInfo;
+  insurance: InsuranceInfo;
+  restrictions: ShippingRestriction[];
+  features: ShippingFeature[];
+  sustainability: ShippingSustainability;
+}
+
+interface DeliveryTime {
+  min_days: number;
+  max_days: number;
+  estimated_date: Date;
+  guaranteed: boolean;
+  cutoff_time: string;
+  delivery_window?: TimeWindow;
+}
+
+interface TimeWindow {
+  start: string;
+  end: string;
+}
+
+interface ShippingCost {
+  amount: number;
+  currency: string;
+  tax_amount: number;
+  discount_amount: number;
+  calculated_weight: number;
+  dimensional_weight: number;
+  chargeable_weight: number;
+}
+
+interface TrackingInfo {
+  available: boolean;
+  url: string;
+  number?: string;
+  carrier_tracking_url?: string;
+  events: TrackingEvent[];
+}
+
+interface TrackingEvent {
+  date: Date;
+  time: string;
+  status: string;
+  location: string;
+  description: string;
+  code: string;
+}
+
+interface InsuranceInfo {
+  included: boolean;
+  amount: number;
+  deductible: number;
+  covered_perils: string[];
+}
+
+interface ShippingRestriction {
+  type: 'weight' | 'dimensions' | 'value' | 'hazardous' | 'perishable';
+  min?: number;
+  max?: number;
+  units?: string;
+}
+
+interface ShippingFeature {
+  type: 'signature' | 'adult_signature' | 'insurance' | 'cod' | 'satellite';
+  available: boolean;
+  cost?: number;
+}
+
+interface ShippingSustainability {
+  carbon_neutral: boolean;
+  carbon_offset: number;
+  electric_vehicles: boolean;
+  renewable_energy: boolean;
+  eco_packaging: boolean;
+}
+
+interface PaymentMethod {
+  id: string;
+  type: 'card' | 'bank_transfer' | 'digital_wallet' | 'crypto' | 'cod' | 'leasing';
+  provider: string;
+  name: string;
+  last_four?: string;
+  expiry_date?: string;
+  authorization_code?: string;
+  transaction_id?: string;
+  gateway: PaymentGateway;
+  installments?: PaymentInstallment[];
+  risk_score: number;
+}
+
+interface PaymentGateway {
+  name: string;
+  transaction_id: string;
+  authorization_id: string;
+  response_code: string;
+  response_message: string;
+  avs_result: string;
+  cvv_result: string;
+  fraud_score: number;
+  processed_at: Date;
+  settled_at?: Date;
+}
+
+interface PaymentInstallment {
+  number: number;
+  amount: number;
+  due_date: Date;
+  status: 'pending' | 'paid' | 'overdue';
+}
+
+interface PaymentStatus {
+  status: 'pending' | 'authorized' | 'captured' | 'refunded' | 'failed' | 'voided';
+  amount_authorized: number;
+  amount_captured: number;
+  amount_refunded: number;
+  currency: string;
+  last_updated: Date;
+}
+
+interface OrderItem {
+  id: string;
+  product_id: string;
+  variant_id?: string;
+  sku: string;
+  name: string;
+  quantity: number;
+  unit_price: number;
+  discount_amount: number;
+  tax_amount: number;
+  total_price: number;
+  weight: number;
+  dimensions: ProductDimensions;
+  image: string;
+  attributes: Record<string, string>;
+  inventory: OrderItemInventory;
+  status: OrderItemStatus;
+  kit_components?: OrderItem[];
+  digital_assets?: DigitalDelivery[];
+  warranty: ItemWarranty;
+}
+
+interface OrderItemInventory {
+  warehouse_id: string;
+  location: string;
+  batch_number?: string;
+  expiry_date?: Date;
+  reserved_at: Date;
+  picked_at?: Date;
+  packed_at?: Date;
+}
+
+interface OrderItemStatus {
+  status: 'pending' | 'allocated' | 'picked' | 'packed' | 'shipped' | 'delivered' | 'backordered' | 'cancelled';
+  updated_at: Date;
+  updated_by: string;
+}
+
+interface DigitalDelivery {
+  id: string;
+  name: string;
+  type: string;
+  download_url: string;
+  download_limit: number;
+  expiry_date?: Date;
+  license_key?: string;
+  serial_number?: string;
+  delivered_at: Date;
+}
+
+interface ItemWarranty {
+  type: string;
+  period: number;
+  start_date: Date;
+  end_date: Date;
+  registration_url: string;
+  terms_url: string;
+}
+
+interface OrderTotals {
+  subtotal: number;
+  shipping: number;
+  discount: number;
+  tax: number;
+  fees: number;
+  total: number;
+  currency: string;
+  conversion_rate?: number;
+  converted_total?: number;
+  converted_currency?: string;
+}
+
+interface OrderDiscount {
+  type: 'coupon' | 'promotion' | 'loyalty' | 'manual';
+  code?: string;
+  name: string;
+  amount: number;
+  description: string;
+  rules: DiscountRule[];
+}
+
+interface DiscountRule {
+  type: 'minimum_amount' | 'category' | 'product' | 'customer_group';
+  value: any;
+}
+
+interface OrderTax {
+  name: string;
+  rate: number;
+  amount: number;
+  jurisdiction: string;
+  type: string;
+  included_in_price: boolean;
+}
+
+interface OrderFee {
+  type: 'handling' | 'service' | 'payment' | 'customs' | 'insurance';
+  name: string;
+  amount: number;
+  taxable: boolean;
+  description: string;
+}
+
+interface OrderPackaging {
+  boxes: PackagingBox[];
+  materials: PackagingMaterial[];
+  weight: number;
+  dimensions: ProductDimensions;
+  handling_instructions: string;
+  labeling_requirements: string;
+}
+
+interface PackagingBox {
+  type: string;
+  dimensions: ProductDimensions;
+  weight: number;
+  max_weight: number;
+  items: string[];
+}
+
+interface PackagingMaterial {
+  type: 'bubble_wrap' | 'foam' | 'paper' | 'tape' | 'label';
+  quantity: number;
+}
+
+interface OrderDocument {
+  type: 'invoice' | 'packing_slip' | 'shipping_label' | 'certificate' | 'manifest';
+  url: string;
+  number: string;
+  date: Date;
+  language: string;
+  format: string;
+}
+
+interface OrderNote {
+  id: string;
+  type: 'customer' | 'internal' | 'system';
+  author: string;
+  content: string;
+  created_at: Date;
+  is_pinned: boolean;
+  attachments: NoteAttachment[];
+}
+
+interface NoteAttachment {
+  name: string;
+  url: string;
+  type: string;
+  size: number;
+}
+
+interface OrderTimeline {
+  timestamp: Date;
+  status: string;
+  description: string;
+  location?: string;
+  user?: string;
+  system: boolean;
+  metadata: Record<string, any>;
+}
+
+interface RiskAssessment {
+  score: number;
+  level: 'low' | 'medium' | 'high' | 'critical';
+  factors: RiskFactor[];
+  recommendations: string[];
+  review_required: boolean;
+  reviewed_by?: string;
+  reviewed_at?: Date;
+}
+
+interface RiskFactor {
+  type: 'velocity' | 'billing_shipping_mismatch' | 'high_value' | 'new_customer' | 'suspicious_ip';
+  score: number;
+  description: string;
+}
+
+interface FraudIndicator {
+  type: string;
+  severity: 'low' | 'medium' | 'high';
+  description: string;
+  detected_at: Date;
+}
+
+interface OrderLogistics {
+  carrier: string;
+  service: string;
+  tracking_numbers: string[];
+  labels: ShippingLabel[];
+  manifests: ShippingManifest[];
+  customs_docs: CustomsDocument[];
+  delivery_attempts: DeliveryAttempt[];
+  proof_of_delivery: ProofOfDelivery;
+}
+
+interface ShippingLabel {
+  id: string;
+  url: string;
+  format: 'pdf' | 'png' | 'zpl';
+  created_at: Date;
+  dimensions: { width: number; height: number };
+}
+
+interface ShippingManifest {
+  id: string;
+  date: Date;
+  carrier: string;
+  total_packages: number;
+  total_weight: number;
+  url: string;
+}
+
+interface CustomsDocument {
+  type: 'commercial_invoice' | 'packing_list' | 'certificate_of_origin';
+  url: string;
+  number: string;
+  issued_date: Date;
+}
+
+interface DeliveryAttempt {
+  attempt: number;
+  date: Date;
+  time: string;
+  status: 'success' | 'failed' | 'rescheduled';
+  reason?: string;
+  driver_notes?: string;
+}
+
+interface ProofOfDelivery {
+  signed_by: string;
+  signature_url?: string;
+  photo_url?: string;
+  gps_coordinates?: { lat: number; lng: number };
+  delivered_at: Date;
+}
+
+interface OrderReturn {
+  id: string;
+  status: 'requested' | 'approved' | 'received' | 'inspected' | 'refunded' | 'rejected';
+  reason: string;
+  reason_code: string;
+  items: ReturnItem[];
+  authorization: ReturnAuthorization;
+  shipping: ReturnShipping;
+  refund: ReturnRefund;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface ReturnItem {
+  order_item_id: string;
+  quantity: number;
+  condition: 'new' | 'used' | 'damaged' | 'defective';
+  restockable: boolean;
+  restock_fee: number;
+  inspection_notes: string;
+}
+
+interface ReturnAuthorization {
+  number: string;
+  expires: Date;
+  instructions: string;
+  label_url: string;
+}
+
+interface ReturnShipping {
+  carrier: string;
+  tracking_number: string;
+  cost: number;
+  paid_by: 'customer' | 'merchant';
+}
+
+interface ReturnRefund {
+  amount: number;
+  method: string;
+  status: 'pending' | 'processed';
+  processed_at?: Date;
+}
+
+interface OrderRefund {
+  id: string;
+  type: 'full' | 'partial';
+  reason: string;
+  amount: number;
+  currency: string;
+  payment_method: string;
+  status: 'pending' | 'completed' | 'failed';
+  created_at: Date;
+  processed_at?: Date;
+  transaction_id?: string;
+  items: RefundItem[];
+}
+
+interface RefundItem {
+  order_item_id: string;
+  quantity: number;
+  amount: number;
+}
+
+interface OrderSubscription {
+  id: string;
+  plan_id: string;
+  status: 'active' | 'paused' | 'cancelled' | 'expired';
+  billing_cycle: string;
+  next_billing_date: Date;
+  trial_end_date?: Date;
+  cancellation_date?: Date;
+  auto_renew: boolean;
+}
+
+// ============================================================================
+// [CUSTOMER_DATABASE_SCHEMA] - Полная схема клиентов
+// ============================================================================
+
+interface Customer {
+  id: string;
+  external_ids: CustomerExternalIds;
+  personal_info: PersonalInfo;
+  contact_info: ContactInfo;
+  company_info?: CompanyInfo;
+  demographics: Demographics;
+  preferences: CustomerPreferences;
+  authentication: Authentication;
+  addresses: CustomerAddress[];
+  payment_methods: CustomerPaymentMethod[];
+  loyalty: LoyaltyProgram;
+  segments: CustomerSegment[];
+  tags: string[];
+  consent: ConsentSettings;
+  activity: CustomerActivity;
+  metrics: CustomerMetrics;
+  risk: CustomerRisk;
+  notes: CustomerNote[];
+  attachments: CustomerAttachment[];
+  status: CustomerStatus;
+  created_at: Date;
+  updated_at: Date;
+  last_active: Date;
+  version: number;
+}
+
+interface CustomerExternalIds {
+  crm_id: string;
+  erp_id: string;
+  marketing_id: string;
+  legacy_id: string;
+}
+
+interface PersonalInfo {
+  title?: string;
+  first_name: string;
+  middle_name?: string;
+  last_name: string;
+  birth_date?: Date;
+  gender?: 'male' | 'female' | 'other';
+  nationality?: string;
+  language: string;
+  timezone: string;
+}
+
+interface ContactInfo {
+  email: string;
+  email_verified: boolean;
+  phone: string;
+  phone_verified: boolean;
+  mobile?: string;
+  fax?: string;
+  alternative_email?: string;
+  preferred_contact: 'email' | 'phone' | 'sms' | 'whatsapp';
+  do_not_contact: boolean;
+}
+
+interface CompanyInfo {
+  name: string;
+  vat_number?: string;
+  registration_number?: string;
+  industry: string;
+  size: 'micro' | 'small' | 'medium' | 'large' | 'enterprise';
+  department: string;
+  job_title: string;
+}
+
+interface Demographics {
+  education?: string;
+  occupation?: string;
+  income_range?: string;
+  marital_status?: string;
+  household_size?: number;
+  interests: string[];
+  hobbies: string[];
+}
+
+interface CustomerPreferences {
+  currency: string;
+  language: string;
+  theme: 'light' | 'dark' | 'auto';
+  communication: CommunicationPreferences;
+  marketing: MarketingPreferences;
+  privacy: PrivacyPreferences;
+  accessibility: AccessibilityPreferences;
+}
+
+interface CommunicationPreferences {
+  email: boolean;
+  sms: boolean;
+  push: boolean;
+  phone: boolean;
+  whatsapp: boolean;
+  telegram: boolean;
+  frequency: 'immediate' | 'daily' | 'weekly' | 'monthly';
+}
+
+interface MarketingPreferences {
+  newsletters: boolean;
+  promotions: boolean;
+  product_updates: boolean;
+  surveys: boolean;
+  personalized_ads: boolean;
+}
+
+interface PrivacyPreferences {
+  data_sharing: boolean;
+  analytics: boolean;
+  third_party_marketing: boolean;
+  cookie_level: 'essential' | 'functional' | 'analytical' | 'marketing';
+}
+
+interface AccessibilityPreferences {
+  high_contrast: boolean;
+  large_text: boolean;
+  reduced_motion: boolean;
+  screen_reader: boolean;
+}
+
+interface Authentication {
+  password_hash: string;
+  last_password_change: Date;
+  password_expiry?: Date;
+  two_factor_enabled: boolean;
+  two_factor_method?: 'sms' | 'email' | 'authenticator' | 'biometric';
+  recovery_codes: string[];
+  failed_attempts: number;
+  locked_until?: Date;
+  last_login: Date;
+  login_history: LoginRecord[];
+}
+
+interface LoginRecord {
+  timestamp: Date;
+  ip_address: string;
+  user_agent: string;
+  location: string;
+  success: boolean;
+}
+
+interface CustomerAddress {
+  id: string;
+  type: 'billing' | 'shipping' | 'both';
+  label: string;
+  is_default: boolean;
+  street: string;
+  street2?: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  country_code: string;
+  coordinates?: { lat: number; lng: number };
+  validation_status: 'valid' | 'invalid' | 'pending';
+  last_used: Date;
+}
+
+interface CustomerPaymentMethod {
+  id: string;
+  type: 'card' | 'bank' | 'wallet' | 'crypto';
+  provider: string;
+  is_default: boolean;
+  last_four?: string;
+  expiry_date?: string;
+  billing_address_id: string;
+  token: string;
+  verified: boolean;
+  added_at: Date;
+  last_used: Date;
+  metadata: Record<string, any>;
+}
+
+interface LoyaltyProgram {
+  tier: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
+  points: number;
+  points_pending: number;
+  points_expiring: number;
+  lifetime_points: number;
+  join_date: Date;
+  renewal_date: Date;
+  benefits: LoyaltyBenefit[];
+  rewards: LoyaltyReward[];
+  history: LoyaltyTransaction[];
+}
+
+interface LoyaltyBenefit {
+  type: string;
+  value: number;
+  description: string;
+  active: boolean;
+}
+
+interface LoyaltyReward {
+  id: string;
+  name: string;
+  points_cost: number;
+  claimed: boolean;
+  claimed_at?: Date;
+  expiry_date?: Date;
+}
+
+interface LoyaltyTransaction {
+  id: string;
+  type: 'earn' | 'redeem' | 'expire' | 'adjustment';
+  points: number;
+  reason: string;
+  order_id?: string;
+  created_at: Date;
+}
+
+interface CustomerSegment {
+  id: string;
+  name: string;
+  type: 'behavioral' | 'demographic' | 'transactional' | 'predictive';
+  score: number;
+  assigned_date: Date;
+}
+
+interface ConsentSettings {
+  terms_accepted: boolean;
+  terms_version: string;
+  terms_accepted_at: Date;
+  privacy_policy_accepted: boolean;
+  cookie_consent: boolean;
+  marketing_consent: boolean;
+  data_processing_consent: boolean;
+  age_verification: boolean;
+}
+
+interface CustomerActivity {
+  orders: OrderActivity[];
+  cart_activity: CartActivity[];
+  wishlist_activity: WishlistActivity[];
+  viewed_products: ViewedProduct[];
+  searches: SearchQuery[];
+  reviews: ReviewActivity[];
+  support_tickets: SupportTicket[];
+  newsletter_subscriptions: NewsletterSubscription[];
+}
+
+interface OrderActivity {
+  order_id: string;
+  status: string;
+  total: number;
+  date: Date;
+}
+
+interface CartActivity {
+  product_id: string;
+  action: 'add' | 'remove' | 'update';
+  quantity: number;
+  timestamp: Date;
+}
+
+interface WishlistActivity {
+  product_id: string;
+  action: 'add' | 'remove';
+  timestamp: Date;
+}
+
+interface ViewedProduct {
+  product_id: string;
+  views: number;
+  last_viewed: Date;
+  time_spent: number;
+}
+
+interface SearchQuery {
+  query: string;
+  results: number;
+  timestamp: Date;
+}
+
+interface ReviewActivity {
+  product_id: string;
+  rating: number;
+  date: Date;
+}
+
+interface SupportTicket {
+  id: string;
+  subject: string;
+  status: string;
+  created_at: Date;
+  resolved_at?: Date;
+}
+
+interface NewsletterSubscription {
+  list: string;
+  subscribed: boolean;
+  subscribed_at: Date;
+  unsubscribed_at?: Date;
+}
+
+interface CustomerMetrics {
+  lifetime_value: number;
+  average_order_value: number;
+  order_frequency: number;
+  recency: number;
+  churn_probability: number;
+  next_purchase_prediction: Date;
+  customer_health_score: number;
+  engagement_score: number;
+  satisfaction_score: number;
+}
+
+interface CustomerRisk {
+  score: number;
+  level: 'low' | 'medium' | 'high';
+  factors: RiskFactor[];
+  fraud_alerts: number;
+  chargeback_rate: number;
+  suspicious_activity: boolean;
+  last_review: Date;
+}
+
+interface CustomerNote {
+  id: string;
+  author: string;
+  type: 'general' | 'support' | 'sales' | 'fraud' | 'system';
+  content: string;
+  is_internal: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface CustomerAttachment {
+  id: string;
+  name: string;
+  type: string;
+  url: string;
+  uploaded_by: string;
+  uploaded_at: Date;
+  size: number;
+}
+
+interface CustomerStatus {
+  active: boolean;
+  verified: boolean;
+  blocked: boolean;
+  blocked_reason?: string;
+  suspended: boolean;
+  suspended_until?: Date;
+  archived: boolean;
+  archived_at?: Date;
+}
+
+// ============================================================================
+// [WAREHOUSE_MANAGEMENT_SYSTEM] - WMS схемы
+// ============================================================================
+
+// Добавить перед WarehouseSystem (строка 1690):
+interface WarehouseMetrics {
+  inventory_turnover: number;
+  storage_utilization: number;
+  order_accuracy: number;
+  picking_efficiency: number;
+}
+
+// Добавить перед WarehouseSystem (строка 1691):
+interface MaintenanceSchedule {
+  tasks: MaintenanceTask[];
+  next_scheduled: Date;
+  last_completed: Date;
+}
+interface WarehouseSystem {
+  id: string;
+  name: string;
+  code: string;
+  type: 'automated' | 'manual' | 'hybrid';
+  status: WarehouseStatus;
+  location: WarehouseLocation;
+  layout: WarehouseLayout;
+  zones: WarehouseZone[];
+  equipment: WarehouseEquipment[];
+  inventory: WarehouseInventory;
+  operations: WarehouseOperations;
+  personnel: WarehousePersonnel[];
+  safety: SafetyProtocols;
+  environment: EnvironmentalControls;
+  integration: SystemIntegration;
+  metrics: WarehouseMetrics;
+  maintenance: MaintenanceSchedule;
+}
+
+interface WarehouseStatus {
+  operational: boolean;
+  mode: 'normal' | 'peak' | 'maintenance' | 'emergency';
+  capacity_utilization: number;
+  last_audit: Date;
+  next_audit: Date;
+  issues: WarehouseIssue[];
+}
+
+interface WarehouseIssue {
+  id: string;
+  type: 'equipment' | 'safety' | 'inventory' | 'system';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  reported_at: Date;
+  assigned_to: string;
+  status: 'open' | 'in_progress' | 'resolved';
+  resolved_at?: Date;
+}
+
+interface WarehouseLayout {
+  total_area: number;
+  storage_area: number;
+  operational_area: number;
+  offices_area: number;
+  loading_docks: number;
+  receiving_areas: number;
+  shipping_areas: number;
+  packing_stations: number;
+  aisles: WarehouseAisle[];
+  cross_aisles: CrossAisle[];
+}
+
+interface WarehouseAisle {
+  id: string;
+  number: string;
+  type: 'pallet' | 'shelf' | 'bin' | 'flow_rack';
+  length: number;
+  width: number;
+  height: number;
+  capacity: number;
+  current_utilization: number;
+  temperature_zone?: string;
+  fire_zone: string;
+}
+
+interface CrossAisle {
+  id: string;
+  width: number;
+  intersections: AisleIntersection[];
+}
+
+interface AisleIntersection {
+  aisle1: string;
+  aisle2: string;
+  coordinates: { x: number; y: number };
+}
+
+interface WarehouseZone {
+  id: string;
+  name: string;
+  type: 'receiving' | 'storage' | 'picking' | 'packing' | 'shipping' | 'returns' | 'quarantine';
+  area: number;
+  capacity: number;
+  temperature_range?: TemperatureRange;
+  humidity_range?: HumidityRange;
+  security_level: number;
+  access_control: AccessControl[];
+  equipment_allowed: string[];
+}
+
+interface AccessControl {
+  type: 'card' | 'biometric' | 'pin' | 'mobile';
+  schedule: AccessSchedule;
+  authorized_personnel: string[];
+}
+
+interface AccessSchedule {
+  days: string[];
+  hours: TimeRange[];
+}
+
+interface WarehouseEquipment {
+  id: string;
+  type: 'forklift' | 'pallet_jack' | 'conveyor' | 'sorter' | 'robot' | 'asrs' | 'crane';
+  model: string;
+  serial_number: string;
+  status: EquipmentStatus;
+  location: EquipmentLocation;
+  specifications: EquipmentSpecs;
+  maintenance: EquipmentMaintenance;
+  operator?: EquipmentOperator;
+}
+
+interface EquipmentStatus {
+  operational: boolean;
+  battery_level?: number;
+  fuel_level?: number;
+  last_maintenance: Date;
+  next_maintenance: Date;
+  runtime_hours: number;
+  errors: EquipmentError[];
+}
+
+interface EquipmentError {
+  code: string;
+  description: string;
+  timestamp: Date;
+  severity: 'warning' | 'error' | 'critical';
+  resolved: boolean;
+}
+
+interface EquipmentLocation {
+  zone: string;
+  coordinates: { x: number; y: number; z: number };
+  last_update: Date;
+}
+
+interface EquipmentSpecs {
+  capacity: number;
+  speed: number;
+  dimensions: { length: number; width: number; height: number };
+  weight: number;
+  power_type: 'electric' | 'diesel' | 'hybrid';
+  battery_capacity?: number;
+  fuel_capacity?: number;
+}
+
+interface EquipmentMaintenance {
+  schedule: MaintenanceTask[];
+  history: MaintenanceRecord[];
+  warranty: EquipmentWarranty;
+}
+
+interface MaintenanceTask {
+  type: 'preventive' | 'corrective' | 'predictive';
+  frequency: number;
+  frequency_unit: 'hours' | 'days' | 'weeks' | 'months';
+  estimated_duration: number;
+  last_performed: Date;
+  next_due: Date;
+  checklist: string[];
+}
+
+interface MaintenanceRecord {
+  id: string;
+  task: string;
+  performed_by: string;
+  start_time: Date;
+  end_time: Date;
+  duration: number;
+  parts_replaced: PartReplacement[];
+  cost: number;
+  notes: string;
+}
+
+interface PartReplacement {
+  part_number: string;
+  name: string;
+  quantity: number;
+  cost: number;
+}
+
+interface EquipmentWarranty {
+  valid_until: Date;
+  coverage: string[];
+  service_provider: string;
+  contact: string;
+}
+
+interface EquipmentOperator {
+  id: string;
+  name: string;
+  certification: string;
+  certification_expiry: Date;
+  shift: string;
+  hours_trained: number;
+}
+
+interface WarehouseInventory {
+  total_sku_count: number;
+  total_quantity: number;
+  total_value: number;
+  categories: InventoryCategory[];
+  locations: InventoryLocation[];
+  movements: InventoryMovement[];
+  adjustments: InventoryAdjustment[];
+  counts: InventoryCount[];
+  alerts: InventoryAlert[];
+}
+
+interface InventoryCategory {
+  category: string;
+  sku_count: number;
+  quantity: number;
+  value: number;
+  turnover_rate: number;
+  abc_classification: 'A' | 'B' | 'C';
+}
+
+interface InventoryMovement {
+  id: string;
+  type: 'receipt' | 'pick' | 'putaway' | 'transfer' | 'adjustment';
+  sku: string;
+  from_location: string;
+  to_location: string;
+  quantity: number;
+  user: string;
+  timestamp: Date;
+  reference: string;
+  batch_number?: string;
+}
+
+interface InventoryAdjustment {
+  id: string;
+  reason: 'damage' | 'expiry' | 'theft' | 'counting_error' | 'quality';
+  sku: string;
+  location: string;
+  quantity_change: number;
+  value_change: number;
+  approved_by: string;
+  approved_at: Date;
+  notes: string;
+}
+
+interface InventoryCount {
+  id: string;
+  type: 'cycle' | 'full' | 'random';
+  zone: string;
+  start_time: Date;
+  end_time: Date;
+  counted_by: string;
+  expected_quantity: number;
+  counted_quantity: number;
+  variance: number;
+  accuracy: number;
+  status: 'planned' | 'in_progress' | 'completed' | 'audited';
+}
+
+interface InventoryAlert {
+  id: string;
+  type: 'low_stock' | 'overstock' | 'expiring' | 'slow_moving' | 'dead_stock';
+  sku: string;
+  severity: 'info' | 'warning' | 'critical';
+  threshold: number;
+  current_value: number;
+  created_at: Date;
+  acknowledged: boolean;
+  acknowledged_by?: string;
+  acknowledged_at?: Date;
+}
+
+interface WarehouseOperations {
+  receiving: ReceivingOperations;
+  putaway: PutawayOperations;
+  picking: PickingOperations;
+  packing: PackingOperations;
+  shipping: ShippingOperations;
+  returns: ReturnsProcessing;
+  value_added: ValueAddedServices;
+}
+
+interface ReceivingOperations {
+  appointments: ReceivingAppointment[];
+  queues: ReceivingQueue[];
+  docks: ReceivingDock[];
+  procedures: ReceivingProcedure[];
+  metrics: ReceivingMetrics;
+}
+
+interface ReceivingAppointment {
+  id: string;
+  supplier: string;
+  po_number: string;
+  expected_date: Date;
+  expected_time: TimeWindow;
+  dock: string;
+  carrier: string;
+  trailer_number: string;
+  seal_number: string;
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  actual_arrival?: Date;
+  actual_departure?: Date;
+}
+
+interface ReceivingQueue {
+  appointment_id: string;
+  position: number;
+  estimated_wait: number;
+  status: 'waiting' | 'unloading' | 'inspecting' | 'completed';
+}
+
+interface ReceivingDock {
+  id: string;
+  type: 'truck' | 'rail' | 'sea';
+  capacity: number;
+  equipment: string[];
+  status: 'available' | 'occupied' | 'maintenance';
+}
+
+interface ReceivingProcedure {
+  step: number;
+  description: string;
+  responsible: string;
+  estimated_time: number;
+  checklist: string[];
+}
+
+interface ReceivingMetrics {
+  daily_receipts: number;
+  average_unload_time: number;
+  inspection_pass_rate: number;
+  putaway_accuracy: number;
+  damage_rate: number;
+}
+
+interface PutawayOperations {
+  strategies: PutawayStrategy[];
+  rules: PutawayRule[];
+  tasks: PutawayTask[];
+  metrics: PutawayMetrics;
+}
+
+interface PutawayStrategy {
+  type: 'random' | 'fixed' | 'closest' | 'zone' | 'family';
+  description: string;
+  rules: string[];
+}
+
+interface PutawayRule {
+  condition: string;
+  action: string;
+  priority: number;
+}
+
+interface PutawayTask {
+  id: string;
+  receipt_id: string;
+  sku: string;
+  quantity: number;
+  from_location: string;
+  to_location: string;
+  assigned_to: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  created_at: Date;
+  completed_at?: Date;
+}
+
+interface PutawayMetrics {
+  average_time: number;
+  accuracy: number;
+  utilization: number;
+  errors: number;
+}
+
+interface PickingOperations {
+  methods: PickingMethod[];
+  waves: PickingWave[];
+  batches: PickingBatch[];
+  routes: PickingRoute[];
+  metrics: PickingMetrics;
+}
+
+interface PickingMethod {
+  type: 'discrete' | 'batch' | 'wave' | 'zone' | 'cluster';
+  description: string;
+  equipment: string[];
+  rules: string[];
+}
+
+interface PickingWave {
+  id: string;
+  orders: string[];
+  priority: 'normal' | 'high' | 'rush';
+  start_time: Date;
+  end_time?: Date;
+  status: 'planned' | 'in_progress' | 'completed';
+  picker: string;
+}
+
+interface PickingBatch {
+  id: string;
+  wave_id: string;
+  zone: string;
+  items: BatchItem[];
+  status: 'pending' | 'picking' | 'picked';
+}
+
+interface BatchItem {
+  sku: string;
+  location: string;
+  quantity: number;
+  order_id: string;
+  order_line: number;
+}
+
+interface PickingRoute {
+  batch_id: string;
+  sequence: RouteStep[];
+  total_distance: number;
+  estimated_time: number;
+  optimized: boolean;
+}
+
+interface RouteStep {
+  step: number;
+  location: string;
+  sku: string;
+  quantity: number;
+  action: 'pick' | 'verify';
+  estimated_duration: number;
+}
+
+interface PickingMetrics {
+  lines_per_hour: number;
+  items_per_hour: number;
+  accuracy: number;
+  travel_distance: number;
+  utilization: number;
+}
+
+interface PackingOperations {
+  stations: PackingStation[];
+  workflows: PackingWorkflow[];
+  materials: PackingMaterial[];
+  quality: PackingQuality;
+  metrics: PackingMetrics;
+}
+
+interface PackingStation {
+  id: string;
+  type: 'manual' | 'semi_auto' | 'auto';
+  status: 'available' | 'busy' | 'maintenance';
+  equipment: string[];
+  throughput: number;
+  current_order?: string;
+}
+
+interface PackingWorkflow {
+  step: number;
+  description: string;
+  required_materials: string[];
+  quality_checkpoints: string[];
+  estimated_time: number;
+}
+
+interface PackingMaterial {
+  type: string;
+  current_stock: number;
+  reorder_point: number;
+  reorder_quantity: number;
+  last_reorder: Date;
+}
+
+interface PackingQuality {
+  checkpoints: QualityCheckpoint[];
+  rejection_reasons: RejectionReason[];
+  metrics: QualityMetrics;
+}
+
+interface QualityCheckpoint {
+  name: string;
+  description: string;
+  method: 'visual' | 'measurement' | 'weight' | 'scan';
+  tolerance: number;
+  frequency: number;
+}
+
+interface RejectionReason {
+  code: string;
+  description: string;
+  severity: 'minor' | 'major' | 'critical';
+  corrective_action: string;
+}
+
+interface QualityMetrics {
+  first_pass_yield: number;
+  defect_rate: number;
+  rework_rate: number;
+  customer_returns: number;
+}
+
+interface PackingMetrics {
+  orders_per_hour: number;
+  average_pack_time: number;
+  material_usage: number;
+  cost_per_order: number;
+}
+
+interface ShippingOperations {
+  carriers: ShippingCarrier[];
+  manifests: ShippingManifest[];
+  labels: ShippingLabel[];
+  tracking: ShippingTracking;
+  metrics: ShippingMetrics;
+}
+
+interface ShippingCarrier {
+  code: string;
+  name: string;
+  services: CarrierService[];
+  cut_off_times: CutOffTime[];
+  pickup_schedule: PickupSchedule[];
+  contract: CarrierContract;
+}
+
+interface CarrierService {
+  code: string;
+  name: string;
+  transit_time: number;
+  coverage: string[];
+  restrictions: string[];
+  rates: ServiceRate[];
+}
+
+interface ServiceRate {
+  weight_range: { min: number; max: number };
+  zone: string;
+  rate: number;
+  surcharges: Surcharge[];
+}
+
+interface Surcharge {
+  type: string;
+  amount: number;
+  calculation: 'fixed' | 'percentage';
+}
+
+interface CutOffTime {
+  service: string;
+  time: string;
+  days: string[];
+}
+
+interface PickupSchedule {
+  day: string;
+  time: string;
+  type: 'regular' | 'express' | 'on_demand';
+}
+
+interface CarrierContract {
+  number: string;
+  start_date: Date;
+  end_date: Date;
+  discount: number;
+  payment_terms: string;
+  liability: number;
+}
+
+interface ShippingTracking {
+  integrations: TrackingIntegration[];
+  events: TrackingEvent[];
+  alerts: TrackingAlert[];
+  performance: TrackingPerformance;
+}
+
+interface TrackingIntegration {
+  carrier: string;
+  method: 'api' | 'ftp' | 'email' | 'manual';
+  status: 'active' | 'inactive' | 'error';
+  last_sync: Date;
+  sync_frequency: number;
+}
+
+interface TrackingAlert {
+  type: 'delay' | 'exception' | 'delivery' | 'customs';
+  condition: string;
+  action: 'email' | 'sms' | 'dashboard' | 'api';
+  recipients: string[];
+}
+
+interface TrackingPerformance {
+  on_time_delivery: number;
+  exception_rate: number;
+  tracking_accuracy: number;
+  customer_visibility: number;
+}
+
+interface ShippingMetrics {
+  packages_per_day: number;
+  average_cost: number;
+  carrier_utilization: Record<string, number>;
+  damage_rate: number;
+  claims_rate: number;
+}
+
+interface ReturnsProcessing {
+  areas: ReturnsArea[];
+  workflows: ReturnsWorkflow[];
+  disposition: DispositionRules;
+  metrics: ReturnsMetrics;
+}
+
+interface ReturnsArea {
+  id: string;
+  type: 'inspection' | 'testing' | 'repair' | 'disposal';
+  capacity: number;
+  equipment: string[];
+  status: 'open' | 'full' | 'closed';
+}
+
+interface ReturnsWorkflow {
+  step: number;
+  description: string;
+  responsible: string;
+  decision_points: DecisionPoint[];
+  time_limit: number;
+}
+
+interface DecisionPoint {
+  condition: string;
+  action: string;
+  next_step: number;
+}
+
+interface DispositionRules {
+  categories: DispositionCategory[];
+  rules: DispositionRule[];
+  values: DispositionValue[];
+}
+
+interface DispositionCategory {
+  code: string;
+  name: string;
+  actions: string[];
+  value_recovery: number;
+}
+
+interface DispositionRule {
+  condition: string;
+  disposition: string;
+  priority: number;
+}
+
+interface DispositionValue {
+  sku: string;
+  condition: string;
+  recovery_value: number;
+  resale_channel: string;
+}
+
+interface ReturnsMetrics {
+  processing_time: number;
+  recovery_rate: number;
+  resale_rate: number;
+  disposal_cost: number;
+  customer_satisfaction: number;
+}
+
+interface ValueAddedServices {
+  services: VAService[];
+  kitting: KittingOperations;
+  assembly: AssemblyOperations;
+  customization: CustomizationOperations;
+  engraving: EngravingOperations;
+}
+
+interface VAService {
+  id: string;
+  name: string;
+  description: string;
+  time_required: number;
+  cost: number;
+  equipment: string[];
+  skills: string[];
+}
+
+interface KittingOperations {
+  kits: KitDefinition[];
+  stations: KittingStation[];
+  inventory: KitInventory;
+  metrics: KittingMetrics;
+}
+
+interface KitDefinition {
+  id: string;
+  name: string;
+  components: KitComponent[];
+  instructions: string;
+  tools: string[];
+  estimated_time: number;
+}
+
+interface KittingStation {
+  id: string;
+  type: 'manual' | 'auto';
+  capacity: number;
+  equipment: string[];
+  current_kits: string[];
+}
+
+interface KitInventory {
+  components: KitComponentStock[];
+  warnings: KitWarning[];
+}
+
+interface KitComponentStock {
+  component_sku: string;
+  kit_id: string;
+  required: number;
+  available: number;
+  allocated: number;
+}
+
+interface KitWarning {
+  kit_id: string;
+  component_sku: string;
+  shortage: number;
+  severity: 'warning' | 'critical';
+}
+
+interface KittingMetrics {
+  kits_per_hour: number;
+  accuracy: number;
+  component_usage: number;
+  waste_rate: number;
+}
+
+interface AssemblyOperations {
+  products: AssemblyProduct[];
+  stations: AssemblyStation[];
+  instructions: AssemblyInstruction[];
+  quality: AssemblyQuality;
+}
+
+interface AssemblyProduct {
+  sku: string;
+  complexity: 'simple' | 'medium' | 'complex';
+  time_estimate: number;
+  tools_required: string[];
+  skills_required: string[];
+  test_procedures: string[];
+}
+
+interface AssemblyStation {
+  id: string;
+  tools: string[];
+  fixtures: string[];
+  status: 'available' | 'busy' | 'maintenance';
+  current_product?: string;
+  operator?: string;
+}
+
+interface AssemblyInstruction {
+  product_sku: string;
+  steps: AssemblyStep[];
+  warnings: string[];
+  torque_specs: TorqueSpec[];
+}
+
+interface AssemblyStep {
+  number: number;
+  description: string;
+  image?: string;
+  video?: string;
+  tools: string[];
+  parts: string[];
+  time_estimate: number;
+  quality_check: string;
+}
+
+interface TorqueSpec {
+  component: string;
+  torque: number;
+  units: 'Nm' | 'ft-lb' | 'in-lb';
+  tolerance: number;
+}
+
+interface AssemblyQuality {
+  test_procedures: TestProcedure[];
+  acceptance_criteria: AcceptanceCriterion[];
+  metrics: AssemblyMetrics;
+}
+
+interface TestProcedure {
+  name: string;
+  steps: TestStep[];
+  equipment: string[];
+  pass_criteria: string;
+}
+
+interface TestStep {
+  description: string;
+  expected_result: string;
+  actual_result?: string;
+  status?: 'pass' | 'fail';
+}
+
+interface AcceptanceCriterion {
+  parameter: string;
+  min: number;
+  max: number;
+  units: string;
+  measurement_method: string;
+}
+
+interface AssemblyMetrics {
+  first_time_yield: number;
+  defect_rate: number;
+  rework_rate: number;
+  test_pass_rate: number;
+}
+
+interface CustomizationOperations {
+  types: CustomizationType[];
+  capabilities: CustomizationCapability[];
+  materials: CustomizationMaterial[];
+  lead_times: CustomizationLeadTime[];
+}
+
+interface CustomizationType {
+  id: string;
+  name: string;
+  description: string;
+  applicable_products: string[];
+  options: CustomizationOption[];
+  pricing: CustomizationPricing;
+}
+
+interface CustomizationOption {
+  id: string;
+  name: string;
+  type: 'text' | 'image' | 'color' | 'material';
+  values: string[];
+  constraints: string[];
+}
+
+interface CustomizationPricing {
+  base_price: number;
+  options: OptionPrice[];
+  calculation_method: 'fixed' | 'percentage' | 'formula';
+}
+
+interface OptionPrice {
+  option_id: string;
+  value: string;
+  price: number;
+}
+
+interface CustomizationCapability {
+  machine: string;
+  capabilities: string[];
+  resolution: number;
+  max_size: { width: number; height: number; depth: number };
+  materials_supported: string[];
+}
+
+interface CustomizationMaterial {
+  type: string;
+  color: string;
+  finish: string;
+  thickness: number;
+  stock: number;
+  reorder_point: number;
+}
+
+interface CustomizationLeadTime {
+  complexity: string;
+  normal: number;
+  rush: number;
+  emergency: number;
+}
+
+interface EngravingOperations {
+  machines: EngravingMachine[];
+  fonts: EngravingFont[];
+  templates: EngravingTemplate[];
+  quality: EngravingQuality;
+}
+
+interface EngravingMachine {
+  id: string;
+  type: 'laser' | 'mechanical' | 'chemical';
+  power: number;
+  precision: number;
+  materials: string[];
+  status: 'available' | 'busy' | 'maintenance';
+}
+
+interface EngravingFont {
+  name: string;
+  style: 'serif' | 'sans-serif' | 'script' | 'decorative';
+  sizes: number[];
+  languages: string[];
+}
+
+interface EngravingTemplate {
+  id: string;
+  name: string;
+  product_sku: string;
+  design: string;
+  placement: { x: number; y: number; rotation: number };
+  size: { width: number; height: number };
+}
+
+interface EngravingQuality {
+  depth_tolerance: number;
+  position_tolerance: number;
+  contrast_requirements: string;
+  inspection_methods: string[];
+}
+
+interface WarehousePersonnel {
+  id: string;
+  employee_id: string;
+  name: string;
+  role: string;
+  department: string;
+  shift: string;
+  skills: PersonnelSkill[];
+  certifications: PersonnelCertification[];
+  performance: PersonnelPerformance;
+  schedule: WorkSchedule;
+  equipment: AssignedEquipment[];
+}
+
+interface PersonnelSkill {
+  skill: string;
+  level: 'basic' | 'intermediate' | 'advanced' | 'expert';
+  certified: boolean;
+  certification_date?: Date;
+  expiry_date?: Date;
+}
+
+interface PersonnelCertification {
+  type: string;
+  issuer: string;
+  number: string;
+  issue_date: Date;
+  expiry_date: Date;
+  status: 'valid' | 'expired' | 'suspended';
+}
+
+interface PersonnelPerformance {
+  metrics: PerformanceMetric[];
+  ratings: PerformanceRating[];
+  incidents: PerformanceIncident[];
+  training: TrainingRecord[];
+}
+
+interface PerformanceMetric {
+  name: string;
+  target: number;
+  actual: number;
+  unit: string;
+  period: 'daily' | 'weekly' | 'monthly';
+}
+
+interface PerformanceRating {
+  period: string;
+  rating: number;
+  feedback: string;
+  reviewer: string;
+}
+
+interface PerformanceIncident {
+  date: Date;
+  type: 'safety' | 'quality' | 'attendance' | 'conduct';
+  description: string;
+  severity: 'minor' | 'major' | 'critical';
+  action_taken: string;
+  resolved: boolean;
+}
+
+interface TrainingRecord {
+  course: string;
+  provider: string;
+  date: Date;
+  duration: number;
+  score: number;
+  certificate_url?: string;
+}
+
+interface WorkSchedule {
+  monday: Shift;
+  tuesday: Shift;
+  wednesday: Shift;
+  thursday: Shift;
+  friday: Shift;
+  saturday: Shift;
+  sunday: Shift;
+  time_off: TimeOff[];
+  overtime: OvertimeRecord[];
+}
+
+interface Shift {
+  start: string;
+  end: string;
+  break_duration: number;
+  zone: string;
+}
+
+interface TimeOff {
+  type: 'vacation' | 'sick' | 'personal' | 'training';
+  start_date: Date;
+  end_date: Date;
+  approved: boolean;
+  approved_by?: string;
+}
+
+interface OvertimeRecord {
+  date: Date;
+  hours: number;
+  reason: string;
+  approved: boolean;
+  rate: number;
+}
+
+interface AssignedEquipment {
+  equipment_id: string;
+  assigned_date: Date;
+  checkout_time?: Date;
+  checkin_time?: Date;
+  condition: string;
+}
+
+interface SafetyProtocols {
+  policies: SafetyPolicy[];
+  equipment: SafetyEquipment[];
+  training: SafetyTraining[];
+  incidents: SafetyIncident[];
+  inspections: SafetyInspection[];
+}
+
+interface SafetyPolicy {
+  id: string;
+  name: string;
+  description: string;
+  scope: string;
+  effective_date: Date;
+  revision: number;
+  documents: string[];
+}
+
+interface SafetyEquipment {
+  type: string;
+  location: string;
+  quantity: number;
+  last_inspection: Date;
+  next_inspection: Date;
+  status: 'good' | 'needs_maintenance' | 'replaced';
+}
+
+interface SafetyTraining {
+  course: string;
+  frequency: number;
+  attendees: string[];
+  last_conducted: Date;
+  next_scheduled: Date;
+  materials: string[];
+}
+
+interface SafetyIncident {
+  id: string;
+  date: Date;
+  time: string;
+  location: string;
+  type: 'injury' | 'near_miss' | 'property_damage' | 'environmental';
+  severity: 'minor' | 'moderate' | 'serious' | 'fatal';
+  description: string;
+  root_cause: string;
+  corrective_actions: string[];
+  status: 'open' | 'in_progress' | 'closed';
+}
+
+interface SafetyInspection {
+  id: string;
+  type: 'daily' | 'weekly' | 'monthly' | 'quarterly';
+  area: string;
+  inspector: string;
+  date: Date;
+  findings: InspectionFinding[];
+  score: number;
+  actions: string[];
+}
+
+interface InspectionFinding {
+  item: string;
+  status: 'compliant' | 'non_compliant' | 'na';
+  notes: string;
+  photo?: string;
+}
+
+interface EnvironmentalControls {
+  temperature: EnvironmentalParameter;
+  humidity: EnvironmentalParameter;
+  lighting: EnvironmentalParameter;
+  air_quality: AirQuality;
+  energy: EnergyConsumption;
+  waste: WasteManagement;
+}
+
+interface EnvironmentalParameter {
+  zones: EnvironmentalZone[];
+  sensors: EnvironmentalSensor[];
+  alarms: EnvironmentalAlarm[];
+  controls: EnvironmentalControl[];
+}
+
+interface EnvironmentalZone {
+  id: string;
+  name: string;
+  target: number;
+  tolerance: number;
+  units: string;
+  current: number;
+  status: 'normal' | 'warning' | 'alarm';
+}
+
+interface EnvironmentalSensor {
+  id: string;
+  type: string;
+  location: string;
+  last_read: Date;
+  value: number;
+  battery: number;
+  status: 'active' | 'inactive' | 'error';
+}
+
+interface EnvironmentalAlarm {
+  id: string;
+  parameter: string;
+  zone: string;
+  threshold: number;
+  triggered_at: Date;
+  acknowledged: boolean;
+  acknowledged_by?: string;
+  acknowledged_at?: Date;
+}
+
+interface EnvironmentalControl {
+  id: string;
+  type: 'heater' | 'cooler' | 'humidifier' | 'dehumidifier' | 'fan';
+  location: string;
+  status: 'on' | 'off' | 'auto';
+  power_consumption: number;
+  last_maintenance: Date;
+}
+
+interface AirQuality {
+  co2: number;
+  voc: number;
+  pm25: number;
+  pm10: number;
+  o3: number;
+  status: 'good' | 'moderate' | 'poor' | 'hazardous';
+  last_test: Date;
+}
+
+interface EnergyConsumption {
+  total: number;
+  by_source: EnergySource[];
+  by_equipment: EquipmentEnergy[];
+  efficiency: EnergyEfficiency;
+  targets: EnergyTarget[];
+}
+
+interface EnergySource {
+  type: 'grid' | 'solar' | 'wind' | 'generator';
+  consumption: number;
+  cost: number;
+  percentage: number;
+}
+
+interface EquipmentEnergy {
+  equipment_id: string;
+  consumption: number;
+  efficiency: number;
+  load_factor: number;
+}
+
+interface EnergyEfficiency {
+  kwh_per_sqm: number;
+  kwh_per_order: number;
+  peak_demand: number;
+  power_factor: number;
+}
+
+interface EnergyTarget {
+  period: string;
+  target: number;
+  actual: number;
+  variance: number;
+}
+
+interface WasteManagement {
+  categories: WasteCategory[];
+  recycling: RecyclingStats;
+  disposal: DisposalStats;
+  compliance: WasteCompliance;
+}
+
+interface WasteCategory {
+  type: 'cardboard' | 'plastic' | 'wood' | 'metal' | 'hazardous' | 'organic';
+  quantity: number;
+  unit: string;
+  disposal_method: string;
+  cost: number;
+  recycled: boolean;
+  percentage_recycled: number;
+}
+
+interface RecyclingStats {
+  total_recycled: number;
+  recycling_rate: number;
+  revenue: number;
+  partners: RecyclingPartner[];
+}
+
+interface RecyclingPartner {
+  name: string;
+  material: string;
+  contract: string;
+  pickup_schedule: string;
+}
+
+interface DisposalStats {
+  total_disposed: number;
+  disposal_cost: number;
+  landfill_usage: number;
+  hazardous_waste: number;
+}
+
+interface WasteCompliance {
+  regulations: string[];
+  permits: WastePermit[];
+  inspections: WasteInspection[];
+  incidents: WasteIncident[];
+}
+
+interface WastePermit {
+  type: string;
+  number: string;
+  issuer: string;
+  valid_from: Date;
+  valid_to: Date;
+  conditions: string[];
+}
+
+interface WasteInspection {
+  date: Date;
+  inspector: string;
+  findings: string[];
+  compliance: boolean;
+  actions: string[];
+}
+
+interface WasteIncident {
+  date: Date;
+  type: string;
+  description: string;
+  severity: string;
+  reported_to: string;
+  actions_taken: string[];
+}
+
+interface SystemIntegration {
+  erp: ERPIntegration;
+  wms: WMSIntegration;
+  tms: TMSIntegration;
+  crm: CRMIntegration;
+  plm: PLMIntegration;
+  bi: BIIntegration;
+  iot: IoTIntegration;
+}
+
+interface ERPIntegration {
+  system: string;
+  version: string;
+  connection: ConnectionStatus;
+  sync_frequency: number;
+  last_sync: Date;
+  errors: IntegrationError[];
+  mappings: ERPMapping[];
+}
+
+interface ConnectionStatus {
+  status: 'connected' | 'disconnected' | 'error';
+  last_check: Date;
+  latency: number;
+  uptime: number;
+}
+
+interface IntegrationError {
+  code: string;
+  message: string;
+  timestamp: Date;
+  resolved: boolean;
+  resolution?: string;
+}
+
+interface ERPMapping {
+  erp_field: string;
+  wms_field: string;
+  transformation: string;
+  mandatory: boolean;
+}
+
+interface WMSIntegration {
+  modules: WMSModule[];
+  interfaces: WMSInterface[];
+  automations: WMSAutomation[];
+  reports: WMSReport[];
+}
+
+interface WMSModule {
+  name: string;
+  version: string;
+  status: 'active' | 'inactive' | 'maintenance';
+  features: string[];
+  licenses: number;
+  expiry_date?: Date;
+}
+
+interface WMSInterface {
+  type: 'web' | 'mobile' | 'rf' | 'voice' | 'wearable';
+  devices: number;
+  users: number;
+  uptime: number;
+}
+
+interface WMSAutomation {
+  name: string;
+  trigger: string;
+  action: string;
+  enabled: boolean;
+  last_run: Date;
+  success_rate: number;
+}
+
+interface WMSReport {
+  name: string;
+  frequency: string;
+  recipients: string[];
+  format: string;
+  last_generated: Date;
+}
+
+// Строка 3033 - исправить:
+interface TMSIntegration {
+  carriers: TMSCarrier[];  // Было: TMS
+  routes: TMSRoute[];
+  shipments: TMSShipment[];
+  tracking: TMSTracking;
+  analytics: TMSAnalytics;
+}
+
+interface TMSCarrier {
+  id: string;
+  name: string;
+  services: TMSService[];
+  contracts: TMSContract[];
+  performance: TMSPerformance;
+  costs: TMSCost[];
+}
+
+interface TMSService {
+  code: string;
+  name: string;
+  transit_time: { min: number; max: number };
+  coverage: ServiceCoverage[];
+  restrictions: ServiceRestriction[];
+}
+
+interface ServiceCoverage {
+  country: string;
+  regions: string[];
+  postal_codes: string[];
+  exceptions: string[];
+}
+
+interface ServiceRestriction {
+  type: 'weight' | 'dimensions' | 'value' | 'commodity';
+  min?: number;
+  max?: number;
+  unit?: string;
+}
+
+interface TMSContract {
+  id: string;
+  start_date: Date;
+  end_date: Date;
+  terms: ContractTerms;
+  pricing: ContractPricing[];
+  service_level: ServiceLevelAgreement;
+}
+
+interface ContractTerms {
+  payment_terms: string;
+  liability: number;
+  insurance: number;
+  cancellation: string;
+}
+
+// Добавить перед ContractPricing (строка 3094):
+interface Discount {
+  type: string;
+  amount: number;
+  reason: string;
+}
+interface ContractPricing {
+  service: string;
+  zone: string;
+  rate: number;
+  surcharges: Surcharge[];
+  discounts: Discount[];
+}
+
+interface ServiceLevelAgreement {
+  pickup_time: number;
+  delivery_time: number;
+  accuracy: number;
+  claims_processing: number;
+}
+
+interface TMSPerformance {
+  on_time_pickup: number;
+  on_time_delivery: number;
+  damage_rate: number;
+  claim_ratio: number;
+  invoice_accuracy: number;
+}
+
+interface TMSCost {
+  type: 'transport' | 'fuel' | 'accessorial' | 'insurance';
+  amount: number;
+  currency: string;
+  period: 'daily' | 'weekly' | 'monthly';
+  trend: 'up' | 'down' | 'stable';
+}
+
+interface TMSRoute {
+  id: string;
+  origin: RoutePoint;
+  destination: RoutePoint;
+  waypoints: RoutePoint[];
+  distance: number;
+  duration: number;
+  cost: number;
+  restrictions: RouteRestriction[];
+  optimizations: RouteOptimization[];
+}
+
+interface RoutePoint {
+  location: string;
+  coordinates: { lat: number; lng: number };
+  arrival: Date;
+  departure: Date;
+  activities: RouteActivity[];
+}
+
+interface RouteActivity {
+  type: 'pickup' | 'delivery' | 'stop' | 'break';
+  duration: number;
+  reference: string;
+  notes: string;
+}
+
+interface RouteRestriction {
+  type: 'time_window' | 'weight_limit' | 'height_limit' | 'hazardous';
+  value: any;
+}
+
+interface RouteOptimization {
+  type: 'distance' | 'time' | 'cost' | 'fuel';
+  improvement: number;
+  savings: number;
+}
+
+interface TMSShipment {
+  id: string;
+  order_id: string;
+  carrier: string;
+  service: string;
+  status: ShipmentStatus;
+  details: ShipmentDetails;
+  documents: ShipmentDocument[];
+  events: ShipmentEvent[];
+  costs: ShipmentCost[];
+}
+
+interface ShipmentStatus {
+  code: string;
+  description: string;
+  timestamp: Date;
+  location: string;
+  estimated_delivery: Date;
+}
+
+interface ShipmentDetails {
+  pieces: number;
+  weight: number;
+  dimensions: { length: number; width: number; height: number };
+  declared_value: number;
+  description: string;
+  handling_units: HandlingUnit[];
+}
+
+interface HandlingUnit {
+  type: 'pallet' | 'carton' | 'crate';
+  count: number;
+  dimensions: { length: number; width: number; height: number };
+  weight: number;
+}
+
+interface ShipmentDocument {
+  type: 'bill_of_lading' | 'commercial_invoice' | 'packing_list';
+  url: string;
+  number: string;
+  date: Date;
+}
+
+interface ShipmentEvent {
+  timestamp: Date;
+  code: string;
+  description: string;
+  location: string;
+  details: string;
+}
+
+interface ShipmentCost {
+  type: string;
+  amount: number;
+  currency: string;
+  billed: boolean;
+  invoice_number?: string;
+}
+
+interface TMSTracking {
+  real_time: boolean;
+  update_frequency: number;
+  notifications: TrackingNotification[];
+  exceptions: TrackingException[];
+  performance: TrackingPerformance;
+}
+
+interface TrackingNotification {
+  type: 'email' | 'sms' | 'push' | 'webhook';
+  trigger: string;
+  recipients: string[];
+  template: string;
+}
+
+interface TrackingException {
+  code: string;
+  description: string;
+  action_required: string;
+  severity: 'low' | 'medium' | 'high';
+}
+
+interface TrackingPerformance {
+  update_latency: number;
+  accuracy: number;
+  coverage: number;
+}
+
+interface TMSAnalytics {
+  kpis: TMSKPI[];
+  trends: TMSTrend[];
+  forecasts: TMSForecast[];
+  insights: TMSInsight[];
+}
+
+interface TMSKPI {
+  name: string;
+  value: number;
+  target: number;
+  unit: string;
+  period: string;
+  trend: number;
+}
+
+interface TMSTrend {
+  metric: string;
+  data: TrendDataPoint[];
+  seasonality: number;
+  correlation: number;
+}
+
+interface TrendDataPoint {
+  date: Date;
+  value: number;
+  forecast?: number;
+}
+
+interface TMSForecast {
+  metric: string;
+  horizon: number;
+  confidence: number;
+  values: ForecastValue[];
+}
+
+interface ForecastValue {
+  date: Date;
+  low: number;
+  medium: number;
+  high: number;
+}
+
+interface TMSInsight {
+  type: 'optimization' | 'risk' | 'opportunity';
+  description: string;
+  impact: number;
+  confidence: number;
+  actions: string[];
+}
+
+// ============================================================================
+// [CRM_INTEGRATION] - CRM системы
+// ============================================================================
+
+interface CRMIntegration {
+  customers: CRMCustomer[];
+  leads: CRMLead[];
+  opportunities: CRMOpportunity[];
+  activities: CRMActivity[];
+  analytics: CRMAnalytics;
+}
+
+interface CRMCustomer {
+  id: string;
+  account: CRMAccount;
+  contacts: CRMContact[];
+  relationships: CRMRelationship[];
+  interactions: CRMInteraction[];
+  value: CustomerValue;
+}
+
+interface CRMAccount {
+  name: string;
+  industry: string;
+  size: string;
+  website: string;
+  phone: string;
+  address: CRMAddress;
+  billing: CRMBilling;
+  classification: string;
+}
+
+interface CRMAddress {
+  street: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  type: 'billing' | 'shipping' | 'primary';
+}
+
+interface CRMBilling {
+  terms: string;
+  currency: string;
+  credit_limit: number;
+  balance: number;
+  overdue: number;
+}
+
+interface CRMContact {
+  id: string;
+  name: string;
+  title: string;
+  department: string;
+  email: string;
+  phone: string;
+  mobile: string;
+  preferred_contact: string;
+  decision_maker: boolean;
+  influencer: boolean;
+}
+
+interface CRMRelationship {
+  type: 'partner' | 'supplier' | 'distributor' | 'reseller';
+  company: string;
+  contact: string;
+  since: Date;
+  status: 'active' | 'inactive' | 'pending';
+}
+
+interface CRMInteraction {
+  type: 'call' | 'email' | 'meeting' | 'demo' | 'support';
+  date: Date;
+  duration: number;
+  participants: string[];
+  notes: string;
+  outcome: string;
+  follow_up: Date;
+}
+
+interface CustomerValue {
+  lifetime_value: number;
+  annual_value: number;
+  potential_value: number;
+  growth_rate: number;
+  profitability: number;
+}
+
+interface CRMLead {
+  id: string;
+  source: string;
+  status: string;
+  score: number;
+  details: LeadDetails;
+  qualification: LeadQualification;
+  timeline: LeadTimeline;
+}
+
+interface LeadDetails {
+  company: string;
+  contact: string;
+  email: string;
+  phone: string;
+  industry: string;
+  size: string;
+  needs: string[];
+  budget: number;
+  timeframe: string;
+}
+
+interface LeadQualification {
+  budget: number;
+  authority: number;
+  need: number;
+  timeline: number;
+  total_score: number;
+}
+
+interface LeadTimeline {
+  created: Date;
+  contacted: Date;
+  qualified: Date;
+  converted: Date;
+  last_activity: Date;
+}
+
+interface CRMOpportunity {
+  id: string;
+  name: string;
+  account: string;
+  value: number;
+  probability: number;
+  stage: string;
+  expected_close: Date;
+  competitors: string[];
+  requirements: string[];
+  team: OpportunityTeam;
+  documents: OpportunityDocument[];
+}
+
+interface OpportunityTeam {
+  owner: string;
+  members: string[];
+  roles: Record<string, string>;
+}
+
+interface OpportunityDocument {
+  type: 'proposal' | 'contract' | 'quote' | 'presentation';
+  name: string;
+  url: string;
+  version: string;
+  date: Date;
+}
+
+interface CRMActivity {
+  tasks: CRMTask[];
+  events: CRMEvent[];
+  campaigns: CRMCampaign[];
+  emails: CRMEmail[];
+}
+
+interface CRMTask {
+  id: string;
+  type: string;
+  subject: string;
+  due_date: Date;
+  priority: 'low' | 'medium' | 'high';
+  status: 'not_started' | 'in_progress' | 'completed';
+  assigned_to: string;
+  related_to: string;
+  notes: string;
+}
+
+interface CRMEvent {
+  id: string;
+  type: 'meeting' | 'call' | 'demo' | 'training';
+  subject: string;
+  start: Date;
+  end: Date;
+  location: string;
+  attendees: string[];
+  agenda: string;
+  notes: string;
+}
+
+interface CRMCampaign {
+  id: string;
+  name: string;
+  type: 'email' | 'social' | 'event' | 'webinar';
+  status: 'planned' | 'active' | 'completed';
+  budget: number;
+  roi: number;
+  metrics: CampaignMetrics;
+}
+
+interface CampaignMetrics {
+  reach: number;
+  engagement: number;
+  conversions: number;
+  cost_per_conversion: number;
+  revenue: number;
+}
+
+interface CRMEmail {
+  id: string;
+  subject: string;
+  from: string;
+  to: string[];
+  date: Date;
+  status: 'sent' | 'delivered' | 'opened' | 'clicked';
+  template: string;
+  metrics: EmailMetrics;
+}
+
+interface EmailMetrics {
+  opens: number;
+  clicks: number;
+  replies: number;
+  bounces: number;
+  unsubscribes: number;
+}
+
+interface CRMAnalytics {
+  sales: SalesAnalytics;
+  marketing: MarketingAnalytics;
+  service: ServiceAnalytics;
+  customer: CustomerAnalytics;
+}
+
+interface SalesAnalytics {
+  pipeline: PipelineAnalysis;
+  performance: SalesPerformance;
+  forecasting: SalesForecast;
+}
+
+interface PipelineAnalysis {
+  total_value: number;
+  stage_distribution: Record<string, number>;
+  velocity: number;
+  conversion_rate: number;
+  average_deal_size: number;
+}
+
+interface SalesPerformance {
+  quota_achievement: number;
+  win_rate: number;
+  average_sales_cycle: number;
+  activity_volume: number;
+}
+
+interface SalesForecast {
+  period: string;
+  committed: number;
+  best_case: number;
+  worst_case: number;
+  accuracy: number;
+}
+
+interface MarketingAnalytics {
+  campaigns: CampaignPerformance[];
+  channels: ChannelPerformance[];
+  leads: LeadAnalytics;
+  roi: MarketingROI;
+}
+
+interface CampaignPerformance {
+  campaign: string;
+  spend: number;
+  leads: number;
+  opportunities: number;
+  revenue: number;
+  roi: number;
+}
+
+interface ChannelPerformance {
+  channel: string;
+  traffic: number;
+  conversions: number;
+  cost: number;
+  effectiveness: number;
+}
+
+interface LeadAnalytics {
+  volume: number;
+  quality: number;
+  source_efficiency: number;
+  conversion_rate: number;
+}
+
+interface MarketingROI {
+  overall: number;
+  by_channel: Record<string, number>;
+  by_campaign: Record<string, number>;
+  trend: number;
+}
+
+interface ServiceAnalytics {
+  tickets: TicketAnalytics;
+  satisfaction: SatisfactionMetrics;
+  efficiency: ServiceEfficiency;
+}
+
+interface TicketAnalytics {
+  volume: number;
+  resolution_time: number;
+  first_response_time: number;
+  backlog: number;
+  severity_distribution: Record<string, number>;
+}
+
+interface SatisfactionMetrics {
+  csat: number;
+  nps: number;
+  ces: number;
+  trends: SatisfactionTrend[];
+}
+
+interface SatisfactionTrend {
+  period: string;
+  score: number;
+  sample: number;
+}
+
+interface ServiceEfficiency {
+  utilization: number;
+  productivity: number;
+  quality: number;
+  cost_per_ticket: number;
+}
+
+interface CustomerAnalytics {
+  segmentation: CustomerSegmentation;
+  retention: RetentionMetrics;
+  health: CustomerHealth;
+  lifetime: LifetimeValue;
+}
+
+interface CustomerSegmentation {
+  segments: CustomerSegment[];
+  distribution: Record<string, number>;
+  characteristics: SegmentCharacteristic[];
+}
+
+interface SegmentCharacteristic {
+  segment: string;
+  attributes: Record<string, any>;
+  behavior: Record<string, number>;
+}
+
+interface RetentionMetrics {
+  retention_rate: number;
+  churn_rate: number;
+  repeat_rate: number;
+  cohort_analysis: CohortData[];
+}
+
+interface CohortData {
+  cohort: string;
+  periods: CohortPeriod[];
+}
+
+interface CohortPeriod {
+  period: number;
+  retained: number;
+  revenue: number;
+}
+
+interface CustomerHealth {
+  score: number;
+  factors: HealthFactor[];
+  trends: HealthTrend[];
+  alerts: HealthAlert[];
+}
+
+interface HealthFactor {
+  factor: string;
+  weight: number;
+  score: number;
+  trend: number;
+}
+
+interface HealthTrend {
+  date: Date;
+  score: number;
+  change: number;
+}
+
+interface HealthAlert {
+  customer: string;
+  factor: string;
+  severity: 'low' | 'medium' | 'high';
+  description: string;
+  suggested_action: string;
+}
+
+interface LifetimeValue {
+  current: number;
+  predicted: number;
+  segments: LVTSegment[];
+  drivers: LVTDriver[];
+}
+
+interface LVTSegment {
+  segment: string;
+  ltv: number;
+  margin: number;
+  acquisition_cost: number;
+}
+
+interface LVTDriver {
+  driver: string;
+  impact: number;
+  investment: number;
+  roi: number;
+}
+
+// ============================================================================
+// [PLM_INTEGRATION] - Управление жизненным циклом продукта
+// ============================================================================
+
+interface PLMIntegration {
+  products: PLMProduct[];
+  projects: PLMProject[];
+  documents: PLMDocument[];
+  workflows: PLMWorkflow[];
+  changes: PLMChange[];
+  quality: PLMQuality;
+}
+
+interface PLMProduct {
+  id: string;
+  name: string;
+  version: string;
+  status: PLMStatus;
+  structure: PLMStructure;
+  specifications: PLMSpecification[];
+  requirements: PLMRequirement[];
+  components: PLMComponent[];
+  suppliers: PLMSupplier[];
+  costs: PLMCost[];
+  compliance: PLMCompliance;
+}
+
+interface PLMStatus {
+  phase: 'concept' | 'design' | 'prototype' | 'pilot' | 'production' | 'eol';
+  approval: ApprovalStatus;
+  release: ReleaseStatus;
+}
+
+interface ApprovalStatus {
+  stage: string;
+  approved: boolean;
+  approver: string;
+  date: Date;
+  comments: string;
+}
+
+interface ReleaseStatus {
+  released: boolean;
+  version: string;
+  date: Date;
+  notes: string;
+}
+
+interface PLMStructure {
+  bom: BillOfMaterials;
+  assemblies: PLMAssembly[];
+  variants: PLMVariant[];
+  revisions: PLMRevision[];
+}
+
+interface BillOfMaterials {
+  level: number;
+  parent: string;
+  child: string;
+  quantity: number;
+  unit: string;
+  reference: string;
+}
+
+interface PLMAssembly {
+  id: string;
+  name: string;
+  level: number;
+  components: string[];
+  drawings: string[];
+  instructions: string;
+}
+
+interface PLMVariant {
+  id: string;
+  name: string;
+  base_product: string;
+  differences: VariantDifference[];
+  costs: VariantCost[];
+}
+
+interface VariantDifference {
+  component: string;
+  change: 'add' | 'remove' | 'modify';
+  details: string;
+}
+
+interface VariantCost {
+  type: 'material' | 'labor' | 'tooling';
+  difference: number;
+  reason: string;
+}
+
+interface PLMRevision {
+  number: string;
+  date: Date;
+  author: string;
+  changes: string[];
+  documents: string[];
+  approval: string;
+}
+
+interface PLMSpecification {
+  type: 'functional' | 'technical' | 'performance' | 'safety';
+  requirement: string;
+  target: string;
+  tolerance: string;
+  test_method: string;
+  status: 'met' | 'pending' | 'failed';
+}
+
+interface PLMRequirement {
+  id: string;
+  source: 'customer' | 'regulatory' | 'internal';
+  description: string;
+  priority: 'must' | 'should' | 'could' | 'wont';
+  status: 'open' | 'implemented' | 'verified' | 'validated';
+  verification: VerificationMethod;
+}
+
+interface VerificationMethod {
+  method: 'test' | 'analysis' | 'inspection' | 'demonstration';
+  criteria: string;
+  result: string;
+  date: Date;
+}
+
+interface PLMComponent {
+  id: string;
+  name: string;
+  type: 'mechanical' | 'electrical' | 'software' | 'firmware';
+  supplier: string;
+  part_number: string;
+  specifications: ComponentSpec[];
+  qualifications: ComponentQualification[];
+  alternatives: AlternativeComponent[];
+}
+
+interface ComponentSpec {
+  parameter: string;
+  value: string;
+  unit: string;
+  condition: string;
+}
+
+interface ComponentQualification {
+  test: string;
+  standard: string;
+  result: string;
+  report: string;
+  date: Date;
+}
+
+interface AlternativeComponent {
+  part_number: string;
+  supplier: string;
+  compatibility: number;
+  cost_difference: number;
+  lead_time_difference: number;
+}
+
+interface PLMSupplier {
+  id: string;
+  name: string;
+  type: 'manufacturer' | 'distributor';
+  components: string[];
+  qualifications: SupplierQualification[];
+  performance: SupplierPerformance;
+}
+
+interface SupplierQualification {
+  type: 'audit' | 'certification' | 'sample_test';
+  status: 'approved' | 'conditional' | 'rejected';
+  date: Date;
+  expiry: Date;
+  notes: string;
+}
+
+interface SupplierPerformance {
+  quality: number;
+  delivery: number;
+  responsiveness: number;
+  cost: number;
+  overall: number;
+}
+
+interface PLMCost {
+  type: 'material' | 'labor' | 'tooling' | 'overhead';
+  item: string;
+  quantity: number;
+  unit_cost: number;
+  total_cost: number;
+  currency: string;
+  breakdown: CostBreakdown[];
+}
+
+interface CostBreakdown {
+  element: string;
+  percentage: number;
+  amount: number;
+  drivers: string[];
+}
+
+interface PLMCompliance {
+  regulations: Regulation[];
+  certifications: Certification[];
+  tests: ComplianceTest[];
+  documentation: ComplianceDocument[];
+}
+
+interface Regulation {
+  region: string;
+  standard: string;
+  version: string;
+  status: 'compliant' | 'pending' | 'exempt';
+  certificate: string;
+  expiry: Date;
+}
+
+interface ComplianceTest {
+  standard: string;
+  test: string;
+  date: Date;
+  result: string;
+  report: string;
+}
+
+interface ComplianceDocument {
+  type: 'test_report' | 'declaration' | 'certificate';
+  name: string;
+  reference: string;
+  date: Date;
+  url: string;
+}
+
+interface PLMProject {
+  id: string;
+  name: string;
+  phase: string;
+  timeline: ProjectTimeline;
+  team: ProjectTeam;
+  milestones: ProjectMilestone[];
+  risks: ProjectRisk[];
+  deliverables: ProjectDeliverable[];
+}
+
+interface ProjectTimeline {
+  start: Date;
+  end: Date;
+  baseline: BaselineSchedule;
+  actual: ActualProgress;
+  critical_path: string[];
+}
+
+interface BaselineSchedule {
+  tasks: ProjectTask[];
+  dependencies: TaskDependency[];
+  resources: ResourceAllocation[];
+}
+
+interface ProjectTask {
+  id: string;
+  name: string;
+  duration: number;
+  start: Date;
+  end: Date;
+  resources: string[];
+  predecessors: string[];
+}
+
+interface TaskDependency {
+  from: string;
+  to: string;
+  type: 'fs' | 'ff' | 'ss' | 'sf';
+  lag: number;
+}
+
+interface ResourceAllocation {
+  resource: string;
+  tasks: string[];
+  allocation: number;
+}
+
+interface ActualProgress {
+  completed: number;
+  tasks: TaskProgress[];
+  issues: TaskIssue[];
+  changes: ScheduleChange[];
+}
+
+interface TaskProgress {
+  task: string;
+  percent_complete: number;
+  actual_start: Date;
+  actual_end?: Date;
+  remaining: number;
+}
+
+interface TaskIssue {
+  task: string;
+  type: 'delay' | 'resource' | 'technical' | 'quality';
+  impact: number;
+  resolution: string;
+  status: 'open' | 'resolved';
+}
+
+interface ScheduleChange {
+  task: string;
+  change: string;
+  reason: string;
+  impact: number;
+  approved: boolean;
+}
+
+interface ProjectTeam {
+  members: TeamMember[];
+  roles: TeamRole[];
+  communication: CommunicationPlan;
+}
+
+interface TeamMember {
+  name: string;
+  role: string;
+  department: string;
+  allocation: number;
+  skills: string[];
+}
+
+interface TeamRole {
+  role: string;
+  responsibilities: string[];
+  authority: string[];
+  requirements: string[];
+}
+
+interface CommunicationPlan {
+  meetings: MeetingSchedule[];
+  reports: ReportSchedule[];
+  tools: CommunicationTool[];
+}
+
+interface MeetingSchedule {
+  type: string;
+  frequency: string;
+  attendees: string[];
+  agenda: string;
+}
+
+interface ReportSchedule {
+  type: string;
+  frequency: string;
+  recipients: string[];
+  format: string;
+}
+
+interface CommunicationTool {
+  type: string;
+  purpose: string;
+  access: string;
+}
+
+interface ProjectMilestone {
+  id: string;
+  name: string;
+  date: Date;
+  deliverables: string[];
+  acceptance_criteria: string[];
+  status: 'pending' | 'achieved' | 'delayed';
+}
+
+interface ProjectRisk {
+  id: string;
+  description: string;
+  probability: number;
+  impact: number;
+  severity: number;
+  mitigation: string;
+  owner: string;
+  status: 'open' | 'mitigated' | 'closed';
+}
+
+interface ProjectDeliverable {
+  id: string;
+  name: string;
+  type: 'document' | 'prototype' | 'test_report';
+  due_date: Date;
+  owner: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  url?: string;
+}
+
+interface PLMDocument {
+  id: string;
+  type: 'drawing' | 'specification' | 'manual' | 'report';
+  name: string;
+  version: string;
+  status: DocumentStatus;
+  metadata: DocumentMetadata;
+  relationships: DocumentRelationship[];
+  workflow: DocumentWorkflow;
+}
+
+interface DocumentStatus {
+  state: 'draft' | 'review' | 'approved' | 'released' | 'obsolete';
+  owner: string;
+  last_update: Date;
+  next_review: Date;
+}
+
+interface DocumentMetadata {
+  author: string;
+  created: Date;
+  modified: Date;
+  size: number;
+  format: string;
+  language: string;
+  keywords: string[];
+}
+
+interface DocumentRelationship {
+  type: 'references' | 'referenced_by' | 'supersedes' | 'superseded_by';
+  document: string;
+  version: string;
+}
+
+interface DocumentWorkflow {
+  steps: WorkflowStep[];
+  current_step: number;
+  history: WorkflowHistory[];
+  approvals: WorkflowApproval[];
+}
+
+interface WorkflowStep {
+  step: number;
+  action: string;
+  role: string;
+  criteria: string;
+  time_limit: number;
+}
+
+interface WorkflowHistory {
+  step: number;
+  action: string;
+  user: string;
+  timestamp: Date;
+  comments: string;
+}
+
+interface WorkflowApproval {
+  step: number;
+  approver: string;
+  approved: boolean;
+  date: Date;
+  comments: string;
+}
+
+interface PLMWorkflow {
+  id: string;
+  name: string;
+  type: 'design' | 'change' | 'approval' | 'release';
+  stages: WorkflowStage[];
+  rules: WorkflowRule[];
+  templates: WorkflowTemplate[];
+  metrics: WorkflowMetrics;
+}
+
+interface WorkflowStage {
+  name: string;
+  activities: string[];
+  roles: string[];
+  inputs: string[];
+  outputs: string[];
+  duration: number;
+}
+
+interface WorkflowRule {
+  condition: string;
+  action: string;
+  priority: number;
+  automated: boolean;
+}
+
+interface WorkflowTemplate {
+  name: string;
+  workflow: string;
+  defaults: Record<string, any>;
+  variables: WorkflowVariable[];
+}
+
+interface WorkflowVariable {
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'date';
+  default: any;
+  required: boolean;
+}
+
+interface WorkflowMetrics {
+  cycle_time: number;
+  throughput: number;
+  efficiency: number;
+  bottleneck: string;
+  improvement: number;
+}
+
+interface PLMChange {
+  id: string;
+  type: 'engineering' | 'manufacturing' | 'cost' | 'regulatory';
+  status: ChangeStatus;
+  impact: ChangeImpact;
+  implementation: ChangeImplementation;
+  documentation: ChangeDocumentation;
+}
+
+interface ChangeStatus {
+  state: 'requested' | 'review' | 'approved' | 'implemented' | 'verified';
+  progress: number;
+  blockers: string[];
+}
+
+interface ChangeImpact {
+  products: string[];
+  documents: string[];
+  processes: string[];
+  cost: CostImpact;
+  schedule: ScheduleImpact;
+  risk: RiskImpact;
+}
+
+interface CostImpact {
+  estimate: number;
+  breakdown: CostBreakdown[];
+  approval: CostApproval;
+}
+
+interface CostApproval {
+  required: boolean;
+  level: string;
+  approved: boolean;
+  approver: string;
+}
+
+interface ScheduleImpact {
+  delay: number;
+  critical_path: boolean;
+  mitigation: string;
+}
+
+interface RiskImpact {
+  technical: number;
+  quality: number;
+  safety: number;
+  mitigation: string;
+}
+
+interface ChangeImplementation {
+  plan: ImplementationPlan;
+  tasks: ImplementationTask[];
+  verification: VerificationPlan;
+  rollback: RollbackPlan;
+}
+
+interface ImplementationPlan {
+  phases: ImplementationPhase[];
+  resources: ImplementationResource[];
+  timeline: ImplementationTimeline;
+}
+
+interface ImplementationPhase {
+  name: string;
+  activities: string[];
+  deliverables: string[];
+  duration: number;
+}
+
+interface ImplementationResource {
+  type: 'personnel' | 'equipment' | 'material';
+  name: string;
+  quantity: number;
+  timing: string;
+}
+
+interface ImplementationTimeline {
+  start: Date;
+  end: Date;
+  milestones: ImplementationMilestone[];
+}
+
+interface ImplementationMilestone {
+  name: string;
+  date: Date;
+  criteria: string;
+}
+
+interface ImplementationTask {
+  id: string;
+  description: string;
+  assignee: string;
+  due_date: Date;
+  status: 'pending' | 'in_progress' | 'completed';
+  dependencies: string[];
+}
+
+interface VerificationPlan {
+  methods: VerificationMethod[];
+  criteria: string;
+  responsible: string;
+  schedule: VerificationSchedule;
+}
+
+interface VerificationSchedule {
+  tests: VerificationTest[];
+  reviews: VerificationReview[];
+  approvals: VerificationApproval[];
+}
+
+interface VerificationTest {
+  type: string;
+  standard: string;
+  sample: number;
+  criteria: string;
+  date: Date;
+}
+
+interface VerificationReview {
+  type: string;
+  participants: string[];
+  agenda: string;
+  date: Date;
+}
+
+interface VerificationApproval {
+  role: string;
+  criteria: string;
+  date: Date;
+}
+
+interface RollbackPlan {
+  trigger: string;
+  steps: string[];
+  timeline: number;
+  resources: string[];
+}
+
+interface ChangeDocumentation {
+  request: ChangeRequest;
+  analysis: ChangeAnalysis;
+  approval: ChangeApproval;
+  closure: ChangeClosure;
+}
+
+interface ChangeRequest {
+  originator: string;
+  date: Date;
+  description: string;
+  justification: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+}
+
+interface ChangeAnalysis {
+  alternatives: string[];
+  recommendation: string;
+  rationale: string;
+  assumptions: string[];
+}
+
+interface ChangeApproval {
+  approvers: string[];
+  decisions: ApprovalDecision[];
+  date: Date;
+}
+
+interface ApprovalDecision {
+  approver: string;
+  decision: 'approved' | 'rejected' | 'conditional';
+  comments: string;
+  date: Date;
+}
+
+interface ChangeClosure {
+  verified: boolean;
+  date: Date;
+  evidence: string[];
+  lessons: string[];
+}
+
+interface PLMQuality {
+  processes: QualityProcess[];
+  audits: QualityAudit[];
+  nc: NonConformance[];
+  capa: CorrectiveAction[];
+  metrics: QualityMetrics;
+}
+
+interface QualityProcess {
+  id: string;
+  name: string;
+  version: string;
+  scope: string;
+  inputs: string[];
+  outputs: string[];
+  controls: ProcessControl[];
+  risks: ProcessRisk[];
+}
+
+interface ProcessControl {
+  type: 'preventive' | 'detective' | 'corrective';
+  method: string;
+  frequency: string;
+  responsible: string;
+}
+
+interface ProcessRisk {
+  failure_mode: string;
+  effect: string;
+  severity: number;
+  occurrence: number;
+  detection: number;
+  rpn: number;
+  control: string;
+}
+
+interface QualityAudit {
+  id: string;
+  type: 'internal' | 'external' | 'supplier';
+  scope: string;
+  schedule: AuditSchedule;
+  findings: AuditFinding[];
+  follow_up: AuditFollowUp;
+}
+
+interface AuditSchedule {
+  planned: Date;
+  actual?: Date;
+  duration: number;
+  auditor: string;
+}
+
+interface AuditFinding {
+  id: string;
+  requirement: string;
+  observation: string;
+  evidence: string;
+  classification: 'minor' | 'major' | 'critical';
+}
+
+interface AuditFollowUp {
+  actions: string[];
+  due_date: Date;
+  responsible: string;
+  status: 'open' | 'closed';
+}
+
+interface NonConformance {
+  id: string;
+  source: 'internal' | 'supplier' | 'customer';
+  type: string;
+  description: string;
+  severity: 'minor' | 'major' | 'critical';
+  containment: ContainmentAction;
+  root_cause: RootCauseAnalysis;
+  disposition: DispositionDecision;
+}
+
+interface ContainmentAction {
+  actions: string[];
+  responsible: string;
+  due_date: Date;
+  effectiveness: number;
+}
+
+interface RootCauseAnalysis {
+  method: string;
+  causes: string[];
+  evidence: string[];
+  confirmed: boolean;
+}
+
+interface DispositionDecision {
+  decision: 'use_as_is' | 'rework' | 'repair' | 'scrap' | 'return';
+  authorization: string;
+  date: Date;
+}
+
+interface CorrectiveAction {
+  id: string;
+  nc_id: string;
+  actions: string[];
+  responsible: string;
+  due_date: Date;
+  effectiveness: EffectivenessCheck;
+  closure: ClosureApproval;
+}
+
+interface EffectivenessCheck {
+  method: string;
+  date: Date;
+  result: string;
+  verified: boolean;
+}
+
+interface ClosureApproval {
+  approver: string;
+  date: Date;
+  criteria: string;
+  met: boolean;
+}
+
+interface QualityMetrics {
+  dpmo: number;
+  ftq: number;
+  cpk: number;
+  oee: number;
+  trends: QualityTrend[];
+}
+
+interface QualityTrend {
+  metric: string;
+  data: QualityDataPoint[];
+  target: number;
+  limits: { upper: number; lower: number };
+}
+
+interface QualityDataPoint {
+  date: Date;
+  value: number;
+  sample: number;
+}
+
+// ============================================================================
+// [BI_INTEGRATION] - Бизнес-аналитика
+// ============================================================================
+
+interface BIIntegration {
+  data_sources: DataSource[];
+  data_warehouse: DataWarehouse;
+  etl: ETLProcess[];
+  models: DataModel[];
+  reports: BIReport[];
+  dashboards: Dashboard[];
+  analytics: AdvancedAnalytics;
+}
+
+interface DataSource {
+  id: string;
+  type: 'database' | 'api' | 'file' | 'stream';
+  connection: ConnectionInfo;
+  schema: DataSchema;
+  quality: DataQuality;
+  freshness: DataFreshness;
+}
+
+interface ConnectionInfo {
+  server: string;
+  database: string;
+  credentials: Credentials;
+  parameters: ConnectionParameters;
+}
+
+interface Credentials {
+  type: 'basic' | 'oauth' | 'key';
+  encrypted: boolean;
+  rotation: Date;
+}
+
+interface ConnectionParameters {
+  timeout: number;
+  retries: number;
+  pool_size: number;
+}
+
+interface DataSchema {
+  tables: TableSchema[];
+  relationships: Relationship[];
+  constraints: Constraint[];
+}
+
+interface TableSchema {
+  name: string;
+  columns: ColumnSchema[];
+  rows: number;
+  size: number;
+  indexes: Index[];
+}
+
+interface ColumnSchema {
+  name: string;
+  type: string;
+  nullable: boolean;
+  default: any;
+  unique: boolean;
+  description: string;
+}
+
+interface Index {
+  name: string;
+  columns: string[];
+  type: string;
+  unique: boolean;
+}
+
+interface Relationship {
+  from_table: string;
+  from_column: string;
+  to_table: string;
+  to_column: string;
+  type: 'one_to_one' | 'one_to_many' | 'many_to_many';
+}
+
+interface Constraint {
+  type: 'primary_key' | 'foreign_key' | 'unique' | 'check';
+  name: string;
+  definition: string;
+}
+
+interface DataQuality {
+  completeness: number;
+  accuracy: number;
+  consistency: number;
+  timeliness: number;
+  validity: number;
+  issues: DataIssue[];
+}
+
+interface DataIssue {
+  type: 'missing' | 'duplicate' | 'invalid' | 'outlier';
+  count: number;
+  impact: 'low' | 'medium' | 'high';
+  resolution: string;
+}
+
+interface DataFreshness {
+  last_update: Date;
+  frequency: string;
+  latency: number;
+  sla: FreshnessSLA;
+}
+
+interface FreshnessSLA {
+  target: number;
+  actual: number;
+  violations: number;
+}
+
+interface DataWarehouse {
+  architecture: WarehouseArchitecture;
+  storage: WarehouseStorage;
+  performance: WarehousePerformance;
+  security: WarehouseSecurity;
+  costs: WarehouseCosts;
+}
+
+interface WarehouseArchitecture {
+  type: 'star' | 'snowflake' | 'galaxy';
+  layers: WarehouseLayer[];
+  partitioning: PartitioningStrategy;
+  indexing: IndexingStrategy;
+}
+
+interface WarehouseLayer {
+  name: string;
+  purpose: string;
+  technology: string;
+  latency: number;
+}
+
+interface PartitioningStrategy {
+  method: 'range' | 'list' | 'hash';
+  column: string;
+  partitions: number;
+}
+
+interface IndexingStrategy {
+  type: 'clustered' | 'nonclustered' | 'columnstore';
+  columns: string[];
+  coverage: number;
+}
+
+interface WarehouseStorage {
+  total: number;
+  used: number;
+  compression: number;
+  retention: RetentionPolicy;
+  archiving: ArchivingPolicy;
+}
+
+interface RetentionPolicy {
+  hot: number;
+  warm: number;
+  cold: number;
+  delete_after: number;
+}
+
+interface ArchivingPolicy {
+  criteria: string;
+  destination: string;
+  frequency: string;
+}
+
+interface WarehousePerformance {
+  query_time: number;
+  load_time: number;
+  concurrency: number;
+  cache_hit_rate: number;
+  bottlenecks: PerformanceBottleneck[];
+}
+
+interface PerformanceBottleneck {
+  component: string;
+  impact: number;
+  recommendation: string;
+  priority: 'low' | 'medium' | 'high';
+}
+
+interface WarehouseSecurity {
+  encryption: EncryptionSettings;
+  access_control: AccessControlPolicy;
+  auditing: AuditingSettings;
+  masking: DataMasking;
+}
+
+interface EncryptionSettings {
+  at_rest: boolean;
+  in_transit: boolean;
+  algorithm: string;
+  key_rotation: number;
+}
+
+interface AccessControlPolicy {
+  roles: SecurityRole[];
+  permissions: Permission[];
+  row_level_security: boolean;
+}
+
+interface SecurityRole {
+  name: string;
+  members: string[];
+  privileges: string[];
+}
+
+interface Permission {
+  role: string;
+  object: string;
+  action: string;
+  condition: string;
+}
+
+interface AuditingSettings {
+  enabled: boolean;
+  events: string[];
+  retention: number;
+  alerts: AuditAlert[];
+}
+
+interface AuditAlert {
+  condition: string;
+  action: string;
+  severity: 'low' | 'medium' | 'high';
+}
+
+interface DataMasking {
+  columns: MaskedColumn[];
+  policies: MaskingPolicy[];
+}
+
+interface MaskedColumn {
+  table: string;
+  column: string;
+  method: 'random' | 'fixed' | 'partial' | 'hash';
+  format: string;
+}
+
+interface MaskingPolicy {
+  name: string;
+  condition: string;
+  columns: string[];
+}
+
+interface WarehouseCosts {
+  storage: number;
+  compute: number;
+  data_transfer: number;
+  licensing: number;
+  optimization: CostOptimization[];
+}
+
+interface CostOptimization {
+  type: 'compression' | 'partitioning' | 'indexing' | 'caching';
+  savings: number;
+  implementation: string;
+  roi: number;
+}
+
+interface ETLProcess {
+  id: string;
+  name: string;
+  source: string;
+  destination: string;
+  schedule: ETLSchedule;
+  transformations: Transformation[];
+  monitoring: ETLMonitoring;
+  error_handling: ErrorHandling;
+}
+
+interface ETLSchedule {
+  frequency: string;
+  time: string;
+  dependencies: string[];
+  parallel: boolean;
+}
+
+interface Transformation {
+  step: number;
+  type: 'clean' | 'enrich' | 'aggregate' | 'pivot';
+  logic: string;
+  tests: TransformationTest[];
+}
+
+interface TransformationTest {
+  name: string;
+  condition: string;
+  expected: any;
+  actual: any;
+  passed: boolean;
+}
+
+interface ETLMonitoring {
+  last_run: Date;
+  duration: number;
+  rows_processed: number;
+  success: boolean;
+  logs: ETLLog[];
+}
+
+interface ETLLog {
+  timestamp: Date;
+  level: 'info' | 'warning' | 'error';
+  message: string;
+  details: string;
+}
+
+interface ErrorHandling {
+  retry: RetryPolicy;
+  fallback: FallbackStrategy;
+  notification: ErrorNotification;
+}
+
+interface RetryPolicy {
+  attempts: number;
+  delay: number;
+  backoff: boolean;
+}
+
+interface FallbackStrategy {
+  action: 'skip' | 'default' | 'abort';
+  value: any;
+}
+
+interface ErrorNotification {
+  channels: string[];
+  threshold: number;
+  recipients: string[];
+}
+
+interface DataModel {
+  id: string;
+  name: string;
+  type: 'conceptual' | 'logical' | 'physical';
+  entities: ModelEntity[];
+  relationships: ModelRelationship[];
+  business_rules: BusinessRule[];
+  lineage: DataLineage;
+}
+
+interface ModelEntity {
+  name: string;
+  attributes: EntityAttribute[];
+  keys: EntityKey[];
+  description: string;
+}
+
+interface EntityAttribute {
+  name: string;
+  type: string;
+  description: string;
+  domain: string;
+  derived: boolean;
+}
+
+interface EntityKey {
+  type: 'primary' | 'foreign' | 'alternate';
+  attributes: string[];
+  referenced_entity: string;
+}
+
+interface ModelRelationship {
+  from_entity: string;
+  from_cardinality: string;
+  to_entity: string;
+  to_cardinality: string;
+  description: string;
+}
+
+interface BusinessRule {
+  id: string;
+  condition: string;
+  action: string;
+  priority: number;
+  enabled: boolean;
+}
+
+interface DataLineage {
+  sources: LineageSource[];
+  transformations: LineageTransformation[];
+  targets: LineageTarget[];
+  impact: LineageImpact[];
+}
+
+interface LineageSource {
+  system: string;
+  object: string;
+  columns: string[];
+}
+
+interface LineageTransformation {
+  process: string;
+  logic: string;
+  inputs: string[];
+  outputs: string[];
+}
+
+interface LineageTarget {
+  system: string;
+  object: string;
+  columns: string[];
+}
+
+interface LineageImpact {
+  change: string;
+  affected: string[];
+  severity: 'low' | 'medium' | 'high';
+}
+
+interface BIReport {
+  id: string;
+  name: string;
+  type: 'tabular' | 'matrix' | 'chart' | 'scorecard';
+  dataset: string;
+  filters: ReportFilter[];
+  columns: ReportColumn[];
+  calculations: Calculation[];
+  schedule: ReportSchedule;
+  subscriptions: Subscription[];
+}
+
+interface ReportFilter {
+  field: string;
+  operator: string;
+  value: any;
+  dynamic: boolean;
+}
+
+interface ReportColumn {
+  field: string;
+  alias: string;
+  format: string;
+  sort: 'asc' | 'desc' | 'none';
+  group: boolean;
+}
+
+interface Calculation {
+  name: string;
+  expression: string;
+  format: string;
+  type: 'measure' | 'dimension' | 'kpi';
+}
+
+interface ReportSchedule {
+  frequency: string;
+  time: string;
+  format: string;
+  destination: string;
+}
+
+interface Subscription {
+  user: string;
+  format: string;
+  delivery: string;
+  active: boolean;
+}
+
+interface Dashboard {
+  id: string;
+  name: string;
+  theme: DashboardTheme;
+  layout: DashboardLayout;
+  widgets: DashboardWidget[];
+  interactions: DashboardInteraction[];
+  sharing: DashboardSharing;
+}
+
+interface DashboardTheme {
+  colors: ThemeColors;
+  fonts: ThemeFonts;
+  spacing: ThemeSpacing;
+}
+
+interface ThemeColors {
+  primary: string;
+  secondary: string;
+  accent: string;
+  background: string;
+  text: string;
+}
+
+interface ThemeFonts {
+  family: string;
+  sizes: FontSizes;
+  weights: FontWeights;
+}
+
+interface FontSizes {
+  small: number;
+  medium: number;
+  large: number;
+  xlarge: number;
+}
+
+interface FontWeights {
+  light: number;
+  normal: number;
+  bold: number;
+}
+
+interface ThemeSpacing {
+  xs: number;
+  sm: number;
+  md: number;
+  lg: number;
+  xl: number;
+}
+
+interface DashboardLayout {
+  type: 'grid' | 'free' | 'responsive';
+  rows: number;
+  columns: number;
+  breakpoints: Breakpoint[];
+}
+
+interface Breakpoint {
+  name: string;
+  width: number;
+  layout: string;
+}
+
+interface DashboardWidget {
+  id: string;
+  type: 'chart' | 'table' | 'kpi' | 'map' | 'gauge';
+  position: WidgetPosition;
+  size: WidgetSize;
+  data: WidgetData;
+  styling: WidgetStyling;
+  interactions: WidgetInteraction[];
+}
+
+interface WidgetPosition {
+  row: number;
+  column: number;
+  row_span: number;
+  col_span: number;
+}
+
+interface WidgetSize {
+  width: number;
+  height: number;
+  min_width: number;
+  min_height: number;
+}
+
+interface WidgetData {
+  source: string;
+  query: string;
+  refresh: number;
+  parameters: WidgetParameter[];
+}
+
+interface WidgetParameter {
+  name: string;
+  type: string;
+  default: any;
+  bound: boolean;
+}
+
+interface WidgetStyling {
+  colors: string[];
+  fonts: WidgetFonts;
+  borders: WidgetBorders;
+  effects: WidgetEffects;
+}
+
+interface WidgetFonts {
+  title: FontSettings;
+  label: FontSettings;
+  value: FontSettings;
+}
+
+interface FontSettings {
+  family: string;
+  size: number;
+  weight: number;
+  color: string;
+}
+
+interface WidgetBorders {
+  enabled: boolean;
+  width: number;
+  color: string;
+  radius: number;
+}
+
+interface WidgetEffects {
+  shadow: boolean;
+  gradient: boolean;
+  animation: boolean;
+}
+
+interface WidgetInteraction {
+  type: 'filter' | 'drilldown' | 'tooltip' | 'zoom';
+  target: string;
+  parameters: Record<string, any>;
+}
+
+interface DashboardInteraction {
+  type: 'cross_filter' | 'bookmark' | 'parameter' | 'export';
+  configuration: Record<string, any>;
+}
+
+interface DashboardSharing {
+  users: SharedUser[];
+  groups: SharedGroup[];
+  permissions: SharingPermission[];
+  public: boolean;
+  embed: EmbedSettings;
+}
+
+interface SharedUser {
+  user: string;
+  role: 'viewer' | 'editor' | 'owner';
+  expiration?: Date;
+}
+
+interface SharedGroup {
+  group: string;
+  role: 'viewer' | 'editor';
+}
+
+interface SharingPermission {
+  action: 'view' | 'edit' | 'share' | 'export';
+  allowed: boolean;
+  conditions: string[];
+}
+
+interface EmbedSettings {
+  enabled: boolean;
+  domains: string[];
+  authentication: 'token' | 'oauth' | 'none';
+}
+
+interface AdvancedAnalytics {
+  predictive: PredictiveAnalytics;
+  prescriptive: PrescriptiveAnalytics;
+  diagnostic: DiagnosticAnalytics;
+  cognitive: CognitiveAnalytics;
+}
+
+interface PredictiveAnalytics {
+  models: PredictiveModel[];
+  forecasts: PredictiveForecast[];
+  scenarios: PredictiveScenario[];
+  accuracy: ModelAccuracy;
+}
+
+interface PredictiveModel {
+  id: string;
+  algorithm: string;
+  target: string;
+  features: string[];
+  performance: ModelPerformance;
+  deployment: ModelDeployment;
+}
+
+interface ModelPerformance {
+  accuracy: number;
+  precision: number;
+  recall: number;
+  f1: number;
+  auc: number;
+}
+
+interface ModelDeployment {
+  status: 'training' | 'testing' | 'production' | 'retired';
+  version: string;
+  last_trained: Date;
+  monitoring: ModelMonitoring;
+}
+
+interface ModelMonitoring {
+  drift: number;
+  accuracy: number;
+  alerts: ModelAlert[];
+}
+
+interface ModelAlert {
+  metric: string;
+  threshold: number;
+  current: number;
+  triggered: Date;
+}
+
+interface PredictiveForecast {
+  horizon: number;
+  confidence: number;
+  values: ForecastData[];
+  scenarios: ScenarioAnalysis[];
+}
+
+interface ForecastData {
+  date: Date;
+  prediction: number;
+  lower: number;
+  upper: number;
+}
+
+interface ScenarioAnalysis {
+  scenario: string;
+  assumptions: string[];
+  outcome: number;
+  probability: number;
+}
+
+interface PredictiveScenario {
+  name: string;
+  variables: ScenarioVariable[];
+  outcomes: ScenarioOutcome[];
+  sensitivity: SensitivityAnalysis;
+}
+
+interface ScenarioVariable {
+  name: string;
+  baseline: number;
+  min: number;
+  max: number;
+  distribution: string;
+}
+
+interface ScenarioOutcome {
+  metric: string;
+  value: number;
+  impact: number;
+}
+
+interface SensitivityAnalysis {
+  most_influential: string[];
+  tornado: TornadoChart[];
+}
+
+interface TornadoChart {
+  variable: string;
+  impact: number;
+  range: { low: number; high: number };
+}
+
+interface ModelAccuracy {
+  mae: number;
+  mse: number;
+  rmse: number;
+  mape: number;
+  r2: number;
+}
+
+interface PrescriptiveAnalytics {
+  optimizations: OptimizationModel[];
+  recommendations: PrescriptiveRecommendation[];
+  simulations: PrescriptiveSimulation[];
+  what_if: WhatIfAnalysis[];
+}
+
+interface OptimizationModel {
+  id: string;
+  objective: string;
+  constraints: OptimizationConstraint[];
+  variables: OptimizationVariable[];
+  solution: OptimizationSolution;
+}
+
+interface OptimizationConstraint {
+  type: 'equality' | 'inequality' | 'bounds';
+  expression: string;
+  value: number;
+}
+
+interface OptimizationVariable {
+  name: string;
+  type: 'continuous' | 'discrete' | 'binary';
+  bounds: { lower: number; upper: number };
+}
+
+interface OptimizationSolution {
+  status: 'optimal' | 'feasible' | 'infeasible' | 'unbounded';
+  value: number;
+  variables: Record<string, number>;
+  sensitivity: SensitivityResult[];
+}
+
+interface SensitivityResult {
+  variable: string;
+  shadow_price: number;
+  allowable_increase: number;
+  allowable_decrease: number;
+}
+
+interface PrescriptiveRecommendation {
+  id: string;
+  action: string;
+  impact: number;
+  confidence: number;
+  implementation: RecommendationImplementation;
+  roi: number;
+}
+
+interface RecommendationImplementation {
+  steps: string[];
+  resources: string[];
+  timeline: number;
+  risks: string[];
+}
+
+interface PrescriptiveSimulation {
+  id: string;
+  type: 'monte_carlo' | 'discrete_event' | 'agent_based';
+  parameters: SimulationParameter[];
+  runs: number;
+  results: SimulationResult[];
+}
+
+interface SimulationParameter {
+  name: string;
+  distribution: string;
+  parameters: Record<string, number>;
+}
+
+interface SimulationResult {
+  metric: string;
+  mean: number;
+  std: number;
+  percentiles: Record<number, number>;
+  histogram: HistogramData[];
+}
+
+interface HistogramData {
+  bin: string;
+  count: number;
+  probability: number;
+}
+
+interface WhatIfAnalysis {
+  id: string;
+  changes: WhatIfChange[];
+  impacts: WhatIfImpact[];
+  recommendations: string[];
+}
+
+interface WhatIfChange {
+  variable: string;
+  from: number;
+  to: number;
+  reason: string;
+}
+
+interface WhatIfImpact {
+  metric: string;
+  change: number;
+  percentage: number;
+  significance: 'low' | 'medium' | 'high';
+}
+
+interface DiagnosticAnalytics {
+  root_cause: RootCauseAnalysis[];
+  correlations: CorrelationAnalysis[];
+  anomalies: AnomalyDetection[];
+  segmentation: DiagnosticSegmentation[];
+}
+
+// Строка 5407 - исправить название интерфейса:
+interface DiagnosticRootCauseAnalysis {  // Было: RootCauseAnalysis
+  problem: string;
+  method: string;
+  causes: RootCause[];  // Изменить тип
+  confidence: number;
+  evidence: string[];
+}
+
+interface RootCause {
+  factor: string;
+  contribution: number;
+  relationship: string;
+  actionable: boolean;
+}
+
+interface CorrelationAnalysis {
+  variables: string[];
+  coefficient: number;
+  significance: number;
+  visualization: CorrelationVisualization;
+}
+
+interface CorrelationVisualization {
+  type: 'heatmap' | 'scatter' | 'network';
+  data: any;
+  insights: string[];
+}
+
+interface AnomalyDetection {
+  algorithm: string;
+  threshold: number;
+  anomalies: DetectedAnomaly[];
+  performance: AnomalyPerformance;
+}
+
+interface DetectedAnomaly {
+  timestamp: Date;
+  metric: string;
+  value: number;
+  expected: number;
+  deviation: number;
+  severity: 'low' | 'medium' | 'high';
+}
+
+interface AnomalyPerformance {
+  precision: number;
+  recall: number;
+  f1: number;
+  false_positives: number;
+  false_negatives: number;
+}
+
+interface DiagnosticSegmentation {
+  method: string;
+  segments: DiagnosticSegment[];
+  characteristics: SegmentCharacteristic[];
+  insights: string[];
+}
+
+interface DiagnosticSegment {
+  id: string;
+  size: number;
+  centroid: number[];
+  metrics: Record<string, number>;
+}
+
+interface SegmentCharacteristic {
+  segment: string;
+  defining_features: string[];
+  behavior: Record<string, number>;
+}
+
+interface CognitiveAnalytics {
+  nlp: NLPAnalytics;
+  computer_vision: VisionAnalytics;
+  speech: SpeechAnalytics;
+  recommendation: RecommendationEngine;
+}
+
+interface NLPAnalytics {
+  models: NLPModel[];
+  tasks: NLPTask[];
+  sentiment: SentimentAnalysis[];
+  topics: TopicModeling[];
+}
+
+interface NLPModel {
+  id: string;
+  type: 'classification' | 'ner' | 'summarization' | 'translation';
+  language: string;
+  accuracy: number;
+  training: ModelTraining;
+}
+
+interface ModelTraining {
+  data_size: number;
+  epochs: number;
+  validation: number;
+  metrics: Record<string, number>;
+}
+
+interface NLPTask {
+  input: string;
+  output: string;
+  confidence: number;
+  processing_time: number;
+}
+
+interface SentimentAnalysis {
+  text: string;
+  sentiment: 'positive' | 'neutral' | 'negative';
+  score: number;
+  aspects: AspectSentiment[];
+}
+
+interface AspectSentiment {
+  aspect: string;
+  sentiment: string;
+  score: number;
+  evidence: string[];
+}
+
+interface TopicModeling {
+  topics: DetectedTopic[];
+  documents: DocumentTopic[];
+  coherence: number;
+}
+
+interface DetectedTopic {
+  id: number;
+  keywords: string[];
+  weight: number;
+  label: string;
+}
+
+interface DocumentTopic {
+  document: string;
+  topics: TopicDistribution[];
+  dominant_topic: number;
+}
+
+interface TopicDistribution {
+  topic: number;
+  probability: number;
+}
+
+interface VisionAnalytics {
+  models: VisionModel[];
+  detections: ObjectDetection[];
+  classifications: ImageClassification[];
+  ocr: OCRResult[];
+}
+
+interface VisionModel {
+  id: string;
+  type: 'detection' | 'classification' | 'segmentation';
+  backbone: string;
+  accuracy: number;
+  speed: number;
+}
+
+interface ObjectDetection {
+  image: string;
+  objects: DetectedObject[];
+  confidence: number;
+  processing_time: number;
+}
+
+interface DetectedObject {
+  label: string;
+  confidence: number;
+  bbox: { x: number; y: number; width: number; height: number };
+}
+
+interface ImageClassification {
+  image: string;
+  classes: ClassProbability[];
+  top_class: string;
+  confidence: number;
+}
+
+interface ClassProbability {
+  class: string;
+  probability: number;
+}
+
+interface OCRResult {
+  image: string;
+  text: string;
+  confidence: number;
+  languages: string[];
+  layout: OCRLayout[];
+}
+
+interface OCRLayout {
+  block: number;
+  text: string;
+  bbox: { x: number; y: number; width: number; height: number };
+}
+
+interface SpeechAnalytics {
+  models: SpeechModel[];
+  transcriptions: SpeechTranscription[];
+  sentiment: SpeechSentiment[];
+  commands: VoiceCommand[];
+}
+
+interface SpeechModel {
+  id: string;
+  language: string;
+  sample_rate: number;
+  accuracy: number;
+  real_time: boolean;
+}
+
+interface SpeechTranscription {
+  audio: string;
+  text: string;
+  confidence: number;
+  speaker_diarization: SpeakerSegment[];
+  processing_time: number;
+}
+
+interface SpeakerSegment {
+  speaker: string;
+  start: number;
+  end: number;
+  text: string;
+}
+
+interface SpeechSentiment {
+  audio: string;
+  sentiment: string;
+  score: number;
+  emotions: EmotionDetection[];
+}
+
+interface EmotionDetection {
+  emotion: string;
+  score: number;
+  duration: number;
+}
+
+interface VoiceCommand {
+  audio: string;
+  command: string;
+  confidence: number;
+  parameters: Record<string, any>;
+  action: string;
+}
+
+interface RecommendationEngine {
+  algorithms: RecommendationAlgorithm[];
+  recommendations: UserRecommendation[];
+  performance: RecommendationPerformance;
+  a_b_tests: ABTest[];
+}
+
+interface RecommendationAlgorithm {
+  type: 'collaborative' | 'content' | 'hybrid' | 'contextual';
+  parameters: Record<string, any>;
+  accuracy: number;
+  coverage: number;
+}
+
+interface UserRecommendation {
+  user: string;
+  items: RecommendedItem[];
+  context: RecommendationContext;
+  explanation: string;
+}
+
+interface RecommendedItem {
+  id: string;
+  score: number;
+  reason: string;
+  metadata: Record<string, any>;
+}
+
+interface RecommendationContext {
+  time: Date;
+  location: string;
+  device: string;
+  previous_interactions: string[];
+}
+
+interface RecommendationPerformance {
+  click_through: number;
+  conversion: number;
+  diversity: number;
+  novelty: number;
+  serendipity: number;
+}
+
+interface ABTest {
+  id: string;
+  variants: ABVariant[];
+  metrics: ABMetric[];
+  results: ABResult[];
+}
+
+interface ABVariant {
+  name: string;
+  algorithm: string;
+  parameters: Record<string, any>;
+  users: number;
+}
+
+interface ABMetric {
+  name: string;
+  target: number;
+  significance: number;
+}
+
+interface ABResult {
+  variant: string;
+  metric: string;
+  value: number;
+  confidence: number;
+  winner: boolean;
+}
+
+// ============================================================================
+// [IOT_INTEGRATION] - Интернет вещей
+// ============================================================================
+
+interface IoTIntegration {
+  devices: IoTDevice[];
+  gateways: IoTGateway[];
+  networks: IoTNetwork[];
+  data: IoTDataStream[];
+  analytics: IoTAnalytics;
+  security: IoTSecurity;
+}
+
+interface IoTDevice {
+  id: string;
+  type: 'sensor' | 'actuator' | 'controller' | 'gateway';
+  manufacturer: string;
+  model: string;
+  firmware: DeviceFirmware;
+  capabilities: DeviceCapability[];
+  connectivity: DeviceConnectivity;
+  power: DevicePower;
+  location: DeviceLocation;
+  status: DeviceStatus;
+}
+
+interface DeviceFirmware {
+  version: string;
+  last_update: Date;
+  update_available: boolean;
+  update_url: string;
+}
+
+interface DeviceCapability {
+  type: string;
+  parameters: CapabilityParameter[];
+  sampling_rate: number;
+  accuracy: number;
+  range: { min: number; max: number };
+}
+
+interface CapabilityParameter {
+  name: string;
+  unit: string;
+  resolution: number;
+}
+
+interface DeviceConnectivity {
+  protocol: 'wifi' | 'bluetooth' | 'zigbee' | 'lorawan' | 'cellular';
+  signal_strength: number;
+  connection_status: 'connected' | 'disconnected' | 'sleeping';
+  last_seen: Date;
+}
+
+interface DevicePower {
+  source: 'battery' | 'mains' | 'solar' | 'poe';
+  battery_level?: number;
+  voltage?: number;
+  consumption: number;
+  estimated_lifetime: number;
+}
+
+interface DeviceLocation {
+  coordinates: { lat: number; lng: number };
+  accuracy: number;
+  last_update: Date;
+  movement: DeviceMovement;
+}
+
+interface DeviceMovement {
+  speed: number;
+  direction: number;
+  stationary: boolean;
+}
+
+interface DeviceStatus {
+  health: 'good' | 'warning' | 'critical';
+  uptime: number;
+  errors: DeviceError[];
+  maintenance: DeviceMaintenance;
+}
+
+interface DeviceError {
+  code: string;
+  description: string;
+  timestamp: Date;
+  resolved: boolean;
+}
+
+interface DeviceMaintenance {
+  last_check: Date;
+  next_check: Date;
+  tasks: MaintenanceTask[];
+}
+
+interface IoTGateway {
+  id: string;
+  location: GatewayLocation;
+  connectivity: GatewayConnectivity;
+  devices: ConnectedDevice[];
+  processing: GatewayProcessing;
+  security: GatewaySecurity;
+}
+
+interface GatewayLocation {
+  site: string;
+  building: string;
+  floor: string;
+  room: string;
+  coordinates: { lat: number; lng: number };
+}
+
+interface GatewayConnectivity {
+  upstream: UpstreamConnection;
+  downstream: DownstreamProtocol[];
+  bandwidth: number;
+  latency: number;
+}
+
+interface UpstreamConnection {
+  type: 'ethernet' | 'wifi' | 'cellular' | 'satellite';
+  provider: string;
+  ip: string;
+}
+
+interface DownstreamProtocol {
+  protocol: string;
+  devices: number;
+  range: number;
+}
+
+interface ConnectedDevice {
+  device_id: string;
+  protocol: string;
+  signal: number;
+  last_communication: Date;
+}
+
+interface GatewayProcessing {
+  edge_computing: boolean;
+  applications: EdgeApplication[];
+  storage: EdgeStorage;
+}
+
+interface EdgeApplication {
+  name: string;
+  version: string;
+  status: 'running' | 'stopped' | 'error';
+  resources: ResourceUsage;
+}
+
+interface ResourceUsage {
+  cpu: number;
+  memory: number;
+  storage: number;
+  network: number;
+}
+
+interface EdgeStorage {
+  total: number;
+  used: number;
+  retention: number;
+  encryption: boolean;
+}
+
+interface GatewaySecurity {
+  authentication: AuthenticationMethod;
+  encryption: EncryptionMethod;
+  firewall: FirewallRules;
+  updates: SecurityUpdates;
+}
+
+interface AuthenticationMethod {
+  type: 'certificate' | 'token' | 'password';
+  expiry: Date;
+  rotation: number;
+}
+
+interface EncryptionMethod {
+  protocol: string;
+  key_size: number;
+  rotation: number;
+}
+
+interface FirewallRules {
+  inbound: FirewallRule[];
+  outbound: FirewallRule[];
+  logging: boolean;
+}
+
+interface FirewallRule {
+  action: 'allow' | 'deny';
+  protocol: string;
+  port: string;
+  source: string;
+  destination: string;
+}
+
+interface SecurityUpdates {
+  auto_update: boolean;
+  last_update: Date;
+  next_update: Date;
+  vulnerabilities: Vulnerability[];
+}
+
+interface Vulnerability {
+  id: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  patch_available: boolean;
+}
+
+interface IoTNetwork {
+  id: string;
+  topology: NetworkTopology;
+  segments: NetworkSegment[];
+  routing: NetworkRouting;
+  quality: NetworkQuality;
+  monitoring: NetworkMonitoring;
+}
+
+interface NetworkTopology {
+  type: 'star' | 'mesh' | 'tree' | 'hybrid';
+  nodes: NetworkNode[];
+  edges: NetworkEdge[];
+  diameter: number;
+}
+
+interface NetworkNode {
+  id: string;
+  type: string;
+  location: string;
+  connections: number;
+}
+
+interface NetworkEdge {
+  from: string;
+  to: string;
+  type: string;
+  strength: number;
+}
+
+interface NetworkSegment {
+  id: string;
+  purpose: string;
+  devices: string[];
+  isolation: boolean;
+  policies: SegmentPolicy[];
+}
+
+interface SegmentPolicy {
+  type: 'access' | 'qos' | 'security';
+  rules: string[];
+}
+
+interface NetworkRouting {
+  protocol: string;
+  efficiency: number;
+  redundancy: number;
+  failures: RoutingFailure[];
+}
+
+interface RoutingFailure {
+  node: string;
+  timestamp: Date;
+  duration: number;
+  impact: number;
+}
+
+interface NetworkQuality {
+  packet_loss: number;
+  latency: number;
+  jitter: number;
+  throughput: number;
+  reliability: number;
+}
+
+interface NetworkMonitoring {
+  active: boolean;
+  tools: MonitoringTool[];
+  alerts: NetworkAlert[];
+  metrics: NetworkMetrics;
+}
+
+interface MonitoringTool {
+  name: string;
+  type: 'snmp' | 'netflow' | 'packet_capture';
+  status: 'active' | 'inactive';
+}
+
+interface NetworkAlert {
+  id: string;
+  type: 'performance' | 'security' | 'device';
+  severity: 'low' | 'medium' | 'high';
+  description: string;
+  timestamp: Date;
+  resolved: boolean;
+}
+
+interface NetworkMetrics {
+  availability: number;
+  utilization: number;
+  errors: number;
+  traffic: TrafficStats;
+}
+
+interface TrafficStats {
+  total: number;
+  inbound: number;
+  outbound: number;
+  by_protocol: Record<string, number>;
+}
+
+interface IoTDataStream {
+  device: string;
+  timestamp: Date;
+  measurements: DataMeasurement[];
+  metadata: StreamMetadata;
+  quality: DataQuality;
+  processing: StreamProcessing;
+}
+
+interface DataMeasurement {
+  parameter: string;
+  value: number;
+  unit: string;
+  accuracy: number;
+  status: 'normal' | 'warning' | 'alarm';
+}
+
+interface StreamMetadata {
+  sequence: number;
+  compression: boolean;
+  encryption: boolean;
+  version: string;
+}
+
+interface StreamProcessing {
+  validated: boolean;
+  transformed: boolean;
+  enriched: boolean;
+  stored: boolean;
+}
+
+interface IoTAnalytics {
+  real_time: RealTimeAnalytics;
+  batch: BatchAnalytics;
+  predictive: PredictiveAnalytics;
+  prescriptive: PrescriptiveAnalytics;
+}
+
+interface RealTimeAnalytics {
+  streams: RealTimeStream[];
+  processing: RealTimeProcessing;
+  outputs: RealTimeOutput[];
+  performance: RealTimePerformance;
+}
+
+interface RealTimeStream {
+  id: string;
+  source: string;
+  processing: StreamProcessingConfig;
+  consumers: StreamConsumer[];
+}
+
+interface StreamProcessingConfig {
+  window: number;
+  aggregation: string;
+  filters: string[];
+  transformations: string[];
+}
+
+interface StreamConsumer {
+  type: 'dashboard' | 'alert' | 'storage' | 'api';
+  configuration: Record<string, any>;
+}
+
+interface RealTimeProcessing {
+  latency: number;
+  throughput: number;
+  backpressure: number;
+  errors: number;
+}
+
+interface RealTimeOutput {
+  type: string;
+  format: string;
+  destination: string;
+  frequency: number;
+}
+
+interface RealTimePerformance {
+  cpu_usage: number;
+  memory_usage: number;
+  queue_size: number;
+  processing_rate: number;
+}
+
+interface BatchAnalytics {
+  jobs: BatchJob[];
+  schedules: BatchSchedule[];
+  results: BatchResult[];
+  performance: BatchPerformance;
+}
+
+interface BatchJob {
+  id: string;
+  type: 'etl' | 'analysis' | 'report' | 'cleanup';
+  input: string[];
+  output: string[];
+  configuration: JobConfiguration;
+  dependencies: string[];
+}
+
+interface JobConfiguration {
+  resources: JobResources;
+  parameters: Record<string, any>;
+  timeout: number;
+  retries: number;
+}
+
+interface JobResources {
+  cpu: number;
+  memory: number;
+  storage: number;
+}
+
+interface BatchSchedule {
+  job: string;
+  cron: string;
+  enabled: boolean;
+  last_run: Date;
+  next_run: Date;
+}
+
+interface BatchResult {
+  job: string;
+  start: Date;
+  end: Date;
+  status: 'success' | 'failed' | 'partial';
+  metrics: JobMetrics;
+}
+
+interface JobMetrics {
+  records_processed: number;
+  processing_time: number;
+  errors: number;
+  output_size: number;
+}
+
+interface BatchPerformance {
+  average_duration: number;
+  success_rate: number;
+  resource_utilization: number;
+  queue_time: number;
+}
+
+interface IoTSecurity {
+  devices: DeviceSecurity[];
+  network: NetworkSecurity;
+  data: DataSecurity;
+  compliance: SecurityCompliance;
+}
+
+interface DeviceSecurity {
+  device: string;
+  authentication: DeviceAuth;
+  firmware: FirmwareSecurity;
+  physical: PhysicalSecurity;
+  monitoring: SecurityMonitoring;
+}
+
+interface DeviceAuth {
+  method: string;
+  credentials: DeviceCredentials;
+  rotation: number;
+  revocation: boolean;
+}
+
+interface DeviceCredentials {
+  type: 'certificate' | 'token' | 'key';
+  expiry: Date;
+  issued_by: string;
+}
+
+interface FirmwareSecurity {
+  signed: boolean;
+  verified: boolean;
+  vulnerabilities: number;
+  update_mechanism: string;
+}
+
+interface PhysicalSecurity {
+  tamper_detection: boolean;
+  secure_boot: boolean;
+  trusted_platform: boolean;
+}
+
+interface SecurityMonitoring {
+  anomalies: number;
+  alerts: number;
+  investigations: number;
+}
+
+interface NetworkSecurity {
+  segmentation: boolean;
+  encryption: boolean;
+  intrusion_detection: boolean;
+  access_control: boolean;
+}
+
+interface DataSecurity {
+  encryption: DataEncryption;
+  access: DataAccessControl;
+  retention: DataRetention;
+  privacy: DataPrivacy;
+}
+
+interface DataEncryption {
+  at_rest: boolean;
+  in_transit: boolean;
+  key_management: string;
+}
+
+interface DataAccessControl {
+  roles: DataRole[];
+  policies: AccessPolicy[];
+  auditing: AccessAudit;
+}
+
+interface DataRole {
+  name: string;
+  permissions: string[];
+  devices: string[];
+}
+
+interface AccessPolicy {
+  resource: string;
+  action: string;
+  condition: string;
+}
+
+interface AccessAudit {
+  enabled: boolean;
+  retention: number;
+  alerts: AuditAlert[];
+}
+
+interface DataRetention {
+  duration: number;
+  archival: boolean;
+  deletion: boolean;
+}
+
+interface DataPrivacy {
+  anonymization: boolean;
+  pseudonymization: boolean;
+  consent: boolean;
+}
+
+interface SecurityCompliance {
+  standards: SecurityStandard[];
+  certifications: SecurityCertification[];
+  audits: SecurityAudit[];
+  gaps: ComplianceGap[];
+}
+
+interface SecurityStandard {
+  name: string;
+  version: string;
+  status: 'compliant' | 'partial' | 'non_compliant';
+}
+
+interface SecurityCertification {
+  type: string;
+  issuer: string;
+  valid_until: Date;
+  scope: string;
+}
+
+interface SecurityAudit {
+  date: Date;
+  auditor: string;
+  findings: AuditFinding[];
+  score: number;
+}
+
+interface AuditFinding {
+  severity: 'low' | 'medium' | 'high';
+  description: string;
+  remediation: string;
+  status: 'open' | 'closed';
+}
+
+interface ComplianceGap {
+  requirement: string;
+  current_state: string;
+  target_state: string;
+  effort: number;
+}
+
+// ============================================================================
+// [INDUSTRIAL_COMPONENTS] - Промышленные компоненты
+// ============================================================================
+
+const IndustrialDataGrid = ({ data, columns, title, onRowClick }: {
+  data: any[];
+  columns: GridColumn[];
+  title: string;
+  onRowClick?: (row: any) => void;
+}) => {
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: '', direction: 'asc' });
+  const [filter, setFilter] = useState<Record<string, string>>({});
+  const [page, setPage] = useState(1);
+  const pageSize = 50;
+
+  const sortedData = useMemo(() => {
+    if (!sortConfig.key) return data;
+
+    return [...data].sort((a, b) => {
+      if (a[sortConfig.key] < b[sortConfig.key]) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (a[sortConfig.key] > b[sortConfig.key]) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }, [data, sortConfig]);
+
+  const filteredData = useMemo(() => {
+    return sortedData.filter(row => {
+      return Object.entries(filter).every(([key, value]) => {
+        if (!value) return true;
+        return String(row[key]).toLowerCase().includes(value.toLowerCase());
+      });
+    });
+  }, [sortedData, filter]);
+
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredData.slice(start, start + pageSize);
+  }, [filteredData, page]);
+
+  const handleSort = (key: string) => {
+    setSortConfig(current => ({
+      key,
+      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+
+  return (
+    <div className="bg-black/50 border border-white/10 rounded-3xl p-8">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h3 className="text-2xl font-black italic uppercase">{title}</h3>
+          <p className="text-sm opacity-50">
+            {filteredData.length} records • Page {page} of {totalPages}
+          </p>
+        </div>
+        <div className="flex gap-4">
+          <div className="flex items-center gap-2">
+            {columns.map(col => (
+              <input
+                key={col.key}
+                type="text"
+                placeholder={`Filter ${col.label}...`}
+                value={filter[col.key] || ''}
+                onChange={(e) => setFilter(prev => ({ ...prev, [col.key]: e.target.value }))}
+                className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm w-40"
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-white/10">
+              {columns.map(col => (
+                <th
+                  key={col.key}
+                  className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider cursor-pointer hover:bg-white/5"
+                  onClick={() => handleSort(col.key)}
+                >
+                  <div className="flex items-center gap-2">
+                    {col.label}
+                    {sortConfig.key === col.key && (
+                      <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </div>
+                </th>
+              ))}
+              <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {paginatedData.map((row, index) => (
+              <motion.tr
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="border-b border-white/5 hover:bg-white/5 cursor-pointer"
+                onClick={() => onRowClick?.(row)}
+              >
+                {columns.map(col => (
+                  <td key={col.key} className="py-4 px-6">
+                    {col.render ? col.render(row[col.key], row) : String(row[col.key] || '')}
+                  </td>
+                ))}
+                <td className="py-4 px-6">
+                  <div className="flex gap-2">
+                    <button className="p-2 hover:bg-white/10 rounded-lg">
+                      <Eye size={16} />  {/* Было: EyeIcon */}
+                    </button>
+                    <button className="p-2 hover:bg-white/10 rounded-lg">
+                      <Edit size={16} />  {/* Было: EditIcon */}
+                    </button>
+                    <button className="p-2 hover:bg-white/10 rounded-lg">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </td>
+              </motion.tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex items-center justify-between mt-8">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-4 py-2 bg-white/5 rounded-lg disabled:opacity-30"
+          >
+            Previous
+          </button>
+          <span className="text-sm">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="px-4 py-2 bg-white/5 rounded-lg disabled:opacity-30"
+          >
+            Next
+          </button>
+        </div>
+        <div className="text-sm opacity-50">
+          Showing {paginatedData.length} of {filteredData.length} records
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface GridColumn {
+  key: string;
+  label: string;
+  render?: (value: any, row: any) => React.ReactNode;
+}
+
+const RealTimeDashboard = ({ metrics, alerts, events }: {
+  metrics: SystemMetrics;
+  alerts: SystemAlert[];
+  events: SystemEvent[];
+}) => {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="lg:col-span-2">
+        <div className="bg-black/50 border border-white/10 rounded-3xl p-8">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-2xl font-black italic uppercase">System Metrics</h3>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <span className="text-sm">Real-time</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white/5 rounded-2xl p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Cpu size={24} className="text-[#d67a9d]" />  {/* Было: CpuIcon */}
+              </div>
+
+              <div className="flex items-center gap-3 mb-4">
+                <Activity size={24} className="text-blue-500" />  {/* Было: MemoryIcon */}
+              </div>
+
+              <div className="flex items-center gap-3 mb-4">
+                <Network size={24} className="text-green-500" />  {/* Было: NetworkIcon */}
+              </div>
+
+              <div className="flex items-center gap-3 mb-4">
+                <Database size={24} className="text-yellow-500" />  {/* Было: DatabaseIcon */}
+              </div>
+
+              <div className="flex items-center gap-2 mb-1">
+                <AlertCircle size={16} className="text-red-500" />
+                <Info size={16} className="text-blue-500" />  {/* Было: InfoIcon */}
+              </div>
+              <div className="text-3xl font-black mb-2">{metrics.transactionsPerMinute}/min</div>
+              <div className="h-2 bg-white/10 rounded-full">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-yellow-500 to-amber-500"
+                  style={{ width: `${Math.min(100, metrics.transactionsPerMinute / 10)}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8">
+            <h4 className="text-lg font-bold mb-4">Active Processes</h4>
+            <div className="space-y-3">
+              {[
+                { name: 'Order Processing', cpu: 25, memory: 40 },
+                { name: 'Inventory Sync', cpu: 15, memory: 25 },
+                { name: 'Payment Gateway', cpu: 10, memory: 15 },
+                { name: 'Analytics Engine', cpu: 30, memory: 35 },
+              ].map((process, idx) => (
+                <div key={idx} className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium">{process.name}</span>
+                      <span className="text-sm opacity-70">{process.cpu}% CPU • {process.memory}% MEM</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="flex-1 h-2 bg-white/10 rounded-full">
+                        <div
+                          className="h-full rounded-full bg-[#d67a9d]"
+                          style={{ width: `${process.cpu}%` }}
+                        />
+                      </div>
+                      <div className="flex-1 h-2 bg-white/10 rounded-full">
+                        <div
+                          className="h-full rounded-full bg-blue-500"
+                          style={{ width: `${process.memory}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div className="bg-black/50 border border-white/10 rounded-3xl p-8 mb-8">
+          <h3 className="text-xl font-black italic uppercase mb-6">System Alerts</h3>
+          <div className="space-y-4">
+            {alerts.map((alert, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ x: 20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: idx * 0.1 }}
+                className={`p-4 rounded-xl border ${alert.severity === 'critical'
+                  ? 'bg-red-500/10 border-red-500/20'
+                  : alert.severity === 'warning'
+                    ? 'bg-yellow-500/10 border-yellow-500/20'
+                    : 'bg-blue-500/10 border-blue-500/20'
+                  }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      {alert.severity === 'critical' && <AlertCircle size={16} className="text-red-500" />}
+                      {alert.severity === 'warning' && <AlertCircle size={16} className="text-yellow-500" />}
+                      {alert.severity === 'info' && <Info size={16} className="text-blue-500" />}
+                      <span className="font-bold">{alert.title}</span>
+                    </div>
+                    <p className="text-sm opacity-70">{alert.description}</p>
+                  </div>
+                  <span className="text-xs opacity-50">{alert.timestamp.toLocaleTimeString()}</span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-black/50 border border-white/10 rounded-3xl p-8">
+          <h3 className="text-xl font-black italic uppercase mb-6">Recent Events</h3>
+          <div className="space-y-3">
+            {events.map((event, idx) => (
+              <div key={idx} className="flex items-center justify-between p-3 hover:bg-white/5 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className={`w-2 h-2 rounded-full ${event.type === 'success' ? 'bg-green-500' :
+                    event.type === 'error' ? 'bg-red-500' :
+                      'bg-blue-500'
+                    }`} />
+                  <div>
+                    <p className="text-sm font-medium">{event.message}</p>
+                    <p className="text-xs opacity-50">{event.source}</p>
+                  </div>
+                </div>
+                <span className="text-xs opacity-50">{event.timestamp.toLocaleTimeString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface SystemAlert {
+  severity: 'critical' | 'warning' | 'info';
+  title: string;
+  description: string;
+  timestamp: Date;
+}
+
+interface SystemEvent {
+  type: 'success' | 'error' | 'info';
+  message: string;
+  source: string;
+  timestamp: Date;
+}
+
+const PredictiveAnalyticsDashboard = ({ data, forecasts, insights }: {
+  data: AnalyticsData[];
+  forecasts: PredictiveForecastData[];
+  insights: AnalyticsInsight[];
+}) => {
+  const [selectedMetric, setSelectedMetric] = useState('revenue');
+  const [timeRange, setTimeRange] = useState('7d');
+
+  return (
+    <div className="bg-black/50 border border-white/10 rounded-3xl p-8">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h3 className="text-2xl font-black italic uppercase">Predictive Analytics</h3>
+          <p className="text-sm opacity-50">AI-powered forecasting and insights</p>
+        </div>
+        <div className="flex gap-4">
+          <select
+            value={selectedMetric}
+            onChange={(e) => setSelectedMetric(e.target.value)}
+            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg"
+          >
+            <option value="revenue">Revenue</option>
+            <option value="orders">Orders</option>
+            <option value="customers">Customers</option>
+            <option value="conversion">Conversion Rate</option>
+          </select>
+          <select
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value)}
+            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg"
+          >
+            <option value="24h">24 Hours</option>
+            <option value="7d">7 Days</option>
+            <option value="30d">30 Days</option>
+            <option value="90d">90 Days</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div className="lg:col-span-2">
+          <div className="bg-white/5 rounded-2xl p-6 h-96">
+            <h4 className="text-lg font-bold mb-6">Forecast Trend</h4>
+            {/* График будет здесь */}
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <BarChart size={48} className="mx-auto mb-4 opacity-20" />
+                <p className="text-sm opacity-50">Interactive chart visualization</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div className="bg-white/5 rounded-2xl p-6">
+            <h4 className="text-lg font-bold mb-6">Key Metrics</h4>
+            <div className="space-y-6">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm opacity-70">Accuracy</span>
+                  <span className="font-bold text-green-500">94.2%</span>
+                </div>
+                <div className="h-2 bg-white/10 rounded-full">
+                  <div className="h-full rounded-full bg-green-500" style={{ width: '94.2%' }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm opacity-70">Confidence</span>
+                  <span className="font-bold text-blue-500">87.5%</span>
+                </div>
+                <div className="h-2 bg-white/10 rounded-full">
+                  <div className="h-full rounded-full bg-blue-500" style={{ width: '87.5%' }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm opacity-70">Error Rate</span>
+                  <span className="font-bold text-red-500">5.8%</span>
+                </div>
+                <div className="h-2 bg-white/10 rounded-full">
+                  <div className="h-full rounded-full bg-red-500" style={{ width: '5.8%' }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div>
+          <h4 className="text-lg font-bold mb-6">AI Insights</h4>
+          <div className="space-y-4">
+            {insights.map((insight, idx) => (
+              <div key={idx} className="p-4 bg-white/5 rounded-xl">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#d67a9d]/20 flex items-center justify-center flex-shrink-0">
+                    <Brain size={16} className="text-[#d67a9d]" />  {/* Было: BrainIcon */}
+                  </div>
+                  <div>
+                    <p className="font-medium mb-2">{insight.title}</p>
+                    <p className="text-sm opacity-70">{insight.description}</p>
+                    <div className="flex items-center gap-4 mt-3">
+                      <span className="text-xs px-3 py-1 bg-white/10 rounded-full">
+                        Impact: {insight.impact}%
+                      </span>
+                      <span className="text-xs px-3 py-1 bg-white/10 rounded-full">
+                        Confidence: {insight.confidence}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-lg font-bold mb-6">Recommendations</h4>
+          <div className="space-y-4">
+            {[
+              { action: 'Increase inventory for Product A', impact: '+15% revenue', effort: 'Low' },
+              { action: 'Optimize shipping routes', impact: '-12% costs', effort: 'Medium' },
+              { action: 'Launch targeted promotion', impact: '+8% conversion', effort: 'Low' },
+              { action: 'Update pricing strategy', impact: '+22% margin', effort: 'High' },
+            ].map((rec, idx) => (
+              <div key={idx} className="p-4 bg-white/5 rounded-xl">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium">{rec.action}</span>
+                  <span className={`text-xs px-3 py-1 rounded-full ${rec.effort === 'Low' ? 'bg-green-500/20 text-green-500' :
+                    rec.effort === 'Medium' ? 'bg-yellow-500/20 text-yellow-500' :
+                      'bg-red-500/20 text-red-500'
+                    }`}>
+                    {rec.effort} Effort
+                  </span>
+                </div>
+                <p className="text-sm opacity-70">Expected impact: {rec.impact}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface AnalyticsData {
+  date: Date;
+  value: number;
+}
+
+interface PredictiveForecastData {
+  date: Date;
+  predicted: number;
+  lower_bound: number;
+  upper_bound: number;
+}
+
+interface AnalyticsInsight {
+  title: string;
+  description: string;
+  impact: number;
+  confidence: number;
+  category: string;
+}
+
+const SupplyChainVisualization = ({ nodes, connections, status }: {
+  nodes: SupplyChainNode[];
+  connections: SupplyChainConnection[];
+  status: SupplyChainStatus;
+}) => {
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+
+  return (
+    <div className="bg-black/50 border border-white/10 rounded-3xl p-8">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h3 className="text-2xl font-black italic uppercase">Supply Chain Network</h3>
+          <p className="text-sm opacity-50">Real-time visualization and monitoring</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-green-500" />
+            <span className="text-sm">Operational</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-yellow-500" />
+            <span className="text-sm">Delayed</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-500" />
+            <span className="text-sm">Critical</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <div className="relative h-96 bg-gradient-to-br from-white/5 to-transparent border border-white/10 rounded-2xl p-8">
+            {/* Визуализация сети */}
+            <div className="absolute inset-8">
+              {connections.map((conn, idx) => (
+                <svg key={idx} className="absolute inset-0 w-full h-full">
+                  <line
+                    x1={conn.from.x}
+                    y1={conn.from.y}
+                    x2={conn.to.x}
+                    y2={conn.to.y}
+                    stroke={conn.status === 'normal' ? '#4ade80' : conn.status === 'warning' ? '#fbbf24' : '#ef4444'}
+                    strokeWidth="2"
+                    strokeDasharray={conn.type === 'logistics' ? '5,5' : 'none'}
+                  />
+                </svg>
+              ))}
+
+              {nodes.map((node, idx) => (
+                <motion.div
+                  key={node.id}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: idx * 0.1 }}
+                  className={`absolute w-16 h-16 rounded-full flex items-center justify-center cursor-pointer transform -translate-x-1/2 -translate-y-1/2 ${node.status === 'critical' ? 'bg-red-500/20 border-2 border-red-500' :
+                    node.status === 'warning' ? 'bg-yellow-500/20 border-2 border-yellow-500' :
+                      'bg-green-500/20 border-2 border-green-500'
+                    } ${selectedNode === node.id ? 'ring-4 ring-white/20' : ''}`}
+                  style={{ left: `${node.x}%`, top: `${node.y}%` }}
+                  onClick={() => setSelectedNode(node.id)}
+                  whileHover={{ scale: 1.1 }}
+                >
+                  {node.type === 'warehouse' && <Warehouse size={24} />}
+                  {node.type === 'manufacturer' && <Factory size={24} />}
+                  {node.type === 'supplier' && <Truck size={24} />}
+                  {node.type === 'distribution' && <Package size={24} />}
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="absolute bottom-4 left-4 text-sm opacity-50">
+              {nodes.length} nodes • {connections.length} connections
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div className="bg-white/5 rounded-2xl p-6 h-96 overflow-y-auto">
+            <h4 className="text-lg font-bold mb-6">Node Details</h4>
+            {selectedNode ? (
+              (() => {
+                const node = nodes.find(n => n.id === selectedNode);
+                if (!node) return null;
+
+                return (
+                  <div className="space-y-6">
+                    <div>
+                      <p className="text-sm opacity-70 mb-1">Name</p>
+                      <p className="font-bold text-lg">{node.name}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-sm opacity-70 mb-1">Type</p>
+                      <div className="flex items-center gap-2">
+                        {node.type === 'warehouse' && <Warehouse size={16} />}
+                        {node.type === 'manufacturer' && <Factory size={16} />}
+                        {node.type === 'supplier' && <Truck size={16} />}
+                        {node.type === 'distribution' && <Package size={16} />}
+                        <span className="capitalize">{node.type}</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-sm opacity-70 mb-1">Status</p>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${node.status === 'critical' ? 'bg-red-500' :
+                          node.status === 'warning' ? 'bg-yellow-500' :
+                            'bg-green-500'
+                          }`} />
+                        <span className="capitalize">{node.status}</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-sm opacity-70 mb-1">Location</p>
+                      <p className="font-medium">{node.location}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-sm opacity-70 mb-1">Capacity</p>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Utilization</span>
+                          <span>{node.capacity.utilization}%</span>
+                        </div>
+                        <div className="h-2 bg-white/10 rounded-full">
+                          <div
+                            className={`h-full rounded-full ${node.capacity.utilization > 90 ? 'bg-red-500' :
+                              node.capacity.utilization > 70 ? 'bg-yellow-500' :
+                                'bg-green-500'
+                              }`}
+                            style={{ width: `${node.capacity.utilization}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-sm opacity-70 mb-1">Connected Nodes</p>
+                      <div className="space-y-2">
+                        {connections
+                          .filter(c => c.from.id === node.id || c.to.id === node.id)
+                          .map((conn, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-2 bg-white/5 rounded">
+                              <span className="text-sm">
+                                {conn.from.id === node.id ? conn.to.name : conn.from.name}
+                              </span>
+                              <div className={`w-2 h-2 rounded-full ${conn.status === 'normal' ? 'bg-green-500' :
+                                conn.status === 'warning' ? 'bg-yellow-500' :
+                                  'bg-red-500'
+                                }`} />
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <Network size={48} className="mx-auto mb-4 opacity-20" />
+                  <p className="text-sm opacity-50">Select a node to view details</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white/5 rounded-xl p-6">
+          <div className="text-3xl font-black mb-2">{nodes.length}</div>
+          <p className="text-sm opacity-70">Total Nodes</p>
+        </div>
+
+        <div className="bg-white/5 rounded-xl p-6">
+          <div className="text-3xl font-black mb-2 text-green-500">
+            {nodes.filter(n => n.status === 'normal').length}
+          </div>
+          <p className="text-sm opacity-70">Operational</p>
+        </div>
+
+        <div className="bg-white/5 rounded-xl p-6">
+          <div className="text-3xl font-black mb-2 text-yellow-500">
+            {nodes.filter(n => n.status === 'warning').length}
+          </div>
+          <p className="text-sm opacity-70">Warnings</p>
+        </div>
+
+        <div className="bg-white/5 rounded-xl p-6">
+          <div className="text-3xl font-black mb-2 text-red-500">
+            {nodes.filter(n => n.status === 'critical').length}
+          </div>
+          <p className="text-sm opacity-70">Critical</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+interface SupplyChainNode {
+  id: string;
+  name: string;
+  type: 'warehouse' | 'manufacturer' | 'supplier' | 'distribution';
+  status: 'normal' | 'warning' | 'critical';
+  location: string;
+  capacity: {
+    total: number;
+    used: number;
+    utilization: number;
+  };
+  x: number;
+  y: number;
+}
+
+interface SupplyChainConnection {
+  from: { id: string; name: string; x: number; y: number };
+  to: { id: string; name: string; x: number; y: number };
+  type: 'logistics' | 'supply' | 'distribution';
+  status: 'normal' | 'warning' | 'critical';
+}
+
+interface SupplyChainStatus {
+  overall: 'healthy' | 'degraded' | 'critical';
+  metrics: {
+    on_time_delivery: number;
+    inventory_turnover: number;
+    order_accuracy: number;
+    cost_efficiency: number;
+  };
+}
+
+const QualityControlDashboard = ({ inspections, defects, metrics }: {
+  inspections: QualityInspection[];
+  defects: QualityDefect[];
+  metrics: QualityDashboardMetrics;
+}) => {
+  const [selectedStage, setSelectedStage] = useState<string>('all');
+
+  return (
+    <div className="bg-black/50 border border-white/10 rounded-3xl p-8">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h3 className="text-2xl font-black italic uppercase">Quality Control</h3>
+          <p className="text-sm opacity-50">Real-time quality monitoring and analysis</p>
+        </div>
+        <div className="flex gap-4">
+          <select
+            value={selectedStage}
+            onChange={(e) => setSelectedStage(e.target.value)}
+            className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg"
+          >
+            <option value="all">All Stages</option>
+            <option value="receiving">Receiving</option>
+            <option value="production">Production</option>
+            <option value="assembly">Assembly</option>
+            <option value="packaging">Packaging</option>
+            <option value="shipping">Shipping</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div className="lg:col-span-2">
+          <div className="grid grid-cols-2 gap-6">
+            <div className="bg-white/5 rounded-2xl p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <CheckCircle2 size={24} className="text-green-500" />
+                <span className="text-sm opacity-70">Pass Rate</span>
+              </div>
+              <div className="text-3xl font-black mb-2">{metrics.pass_rate}%</div>
+              <div className="h-2 bg-white/10 rounded-full">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-green-500 to-emerald-500"
+                  style={{ width: `${metrics.pass_rate}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="bg-white/5 rounded-2xl p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <AlertCircle size={24} className="text-yellow-500" />
+                <span className="text-sm opacity-70">Defect Rate</span>
+              </div>
+              <div className="text-3xl font-black mb-2">{metrics.defect_rate}%</div>
+              <div className="h-2 bg-white/10 rounded-full">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-yellow-500 to-amber-500"
+                  style={{ width: `${metrics.defect_rate}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="bg-white/5 rounded-2xl p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <RefreshCw size={24} className="text-blue-500" />
+                <span className="text-sm opacity-70">Rework Rate</span>
+              </div>
+              <div className="text-3xl font-black mb-2">{metrics.rework_rate}%</div>
+              <div className="h-2 bg-white/10 rounded-full">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-500"
+                  style={{ width: `${metrics.rework_rate}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="bg-white/5 rounded-2xl p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Clock size={24} className="text-purple-500" />
+                <span className="text-sm opacity-70">Avg Inspection Time</span>
+              </div>
+              <div className="text-3xl font-black mb-2">{metrics.avg_inspection_time}m</div>
+              <div className="h-2 bg-white/10 rounded-full">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500"
+                  style={{ width: `${Math.min(100, metrics.avg_inspection_time / 10)}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div className="bg-white/5 rounded-2xl p-6 h-full">
+            <h4 className="text-lg font-bold mb-6">Top Defects</h4>
+            <div className="space-y-4">
+              {defects.slice(0, 5).map((defect, idx) => (
+                <div key={idx} className="p-4 bg-white/5 rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium">{defect.type}</span>
+                    <span className={`text-xs px-3 py-1 rounded-full ${defect.severity === 'critical' ? 'bg-red-500/20 text-red-500' :
+                      defect.severity === 'major' ? 'bg-yellow-500/20 text-yellow-500' :
+                        'bg-blue-500/20 text-blue-500'
+                      }`}>
+                      {defect.count} cases
+                    </span>
+                  </div>
+                  <p className="text-sm opacity-70">{defect.description}</p>
+                  <div className="flex items-center gap-4 mt-3">
+                    <span className="text-xs opacity-50">Stage: {defect.stage}</span>
+                    <span className="text-xs opacity-50">Root: {defect.root_cause}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h4 className="text-lg font-bold mb-6">Recent Inspections</h4>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="py-3 px-6 text-left text-sm font-bold">Batch</th>
+                <th className="py-3 px-6 text-left text-sm font-bold">Stage</th>
+                <th className="py-3 px-6 text-left text-sm font-bold">Inspector</th>
+                <th className="py-3 px-6 text-left text-sm font-bold">Result</th>
+                <th className="py-3 px-6 text-left text-sm font-bold">Defects</th>
+                <th className="py-3 px-6 text-left text-sm font-bold">Time</th>
+                <th className="py-3 px-6 text-left text-sm font-bold">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {inspections.map((inspection, idx) => (
+                <motion.tr
+                  key={idx}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="border-b border-white/5 hover:bg-white/5"
+                >
+                  <td className="py-3 px-6">
+                    <div className="font-mono">{inspection.batch_number}</div>
+                  </td>
+                  <td className="py-3 px-6">
+                    <span className="px-3 py-1 bg-white/10 rounded-full text-xs">
+                      {inspection.stage}
+                    </span>
+                  </td>
+                  <td className="py-3 px-6">
+                    // Строка 7241:
+                    <div className="flex items-center gap-2">
+                      <User size={16} />  {/* Было: UserIcon */}
+                      <span>{inspection.inspector}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-6">
+                    <div className={`flex items-center gap-2 ${inspection.result === 'pass' ? 'text-green-500' : 'text-red-500'
+                      }`}>
+                      {inspection.result === 'pass' ? (
+                        <>
+                          <CheckCircle2 size={16} />
+                          <span>Pass</span>
+                        </>
+                      ) : (
+                        <>
+                          <AlertCircle size={16} />
+                          <span>Fail</span>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-3 px-6">
+                    {inspection.defects_count > 0 ? (
+                      <span className="text-red-500 font-bold">{inspection.defects_count}</span>
+                    ) : (
+                      <span className="text-green-500">0</span>
+                    )}
+                  </td>
+                  <td className="py-3 px-6">
+                    <div className="text-sm opacity-70">
+                      {inspection.inspection_time}m
+                    </div>
+                  </td>
+                  <td className="py-3 px-6">
+                    <div className="flex gap-2">
+                      // Строка 7277:
+                      <button className="p-2 hover:bg-white/10 rounded-lg">
+                        <Eye size={16} />  {/* Было: EyeIcon */}
+                      </button>
+                      <button className="p-2 hover:bg-white/10 rounded-lg">
+                        <FileText size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+
+interface QualityInspection {
+  id: string;
+  batch_number: string;
+  stage: string;
+  inspector: string;
+  result: 'pass' | 'fail';
+  defects_count: number;
+  inspection_time: number;
+  timestamp: Date;
+}
+
+interface QualityDefect {
+  type: string;
+  description: string;
+  severity: 'minor' | 'major' | 'critical';
+  count: number;
+  stage: string;
+  root_cause: string;
+}
+
+interface QualityDashboardMetrics {
+  pass_rate: number;
+  defect_rate: number;
+  rework_rate: number;
+  avg_inspection_time: number;
+  first_pass_yield: number;
+}
+
+// ============================================================================
+// [MAIN_APP_COMPONENT] - Основное приложение
+// ============================================================================
+
+const IndustrialECommerceApp = () => {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'inventory' | 'orders' | 'analytics' | 'quality' | 'supply'>('dashboard');
+  const [systemStatus, setSystemStatus] = useState({
+    operational: true,
+    performance: 98.7,
+    lastIncident: '2024-12-15 14:30:00',
+    activeAlerts: 3
+  });
+
+  const mockNodes: SupplyChainNode[] = [
+    { id: '1', name: 'Main Warehouse', type: 'warehouse', status: 'normal', location: 'Moscow', capacity: { total: 10000, used: 7234, utilization: 72.3 }, x: 20, y: 30 },
+    { id: '2', name: 'China Factory', type: 'manufacturer', status: 'warning', location: 'Shenzhen', capacity: { total: 50000, used: 48000, utilization: 96.0 }, x: 80, y: 20 },
+    { id: '3', name: 'German Supplier', type: 'supplier', status: 'normal', location: 'Berlin', capacity: { total: 15000, used: 9800, utilization: 65.3 }, x: 40, y: 70 },
+    { id: '4', name: 'Distribution Hub', type: 'distribution', status: 'critical', location: 'Frankfurt', capacity: { total: 20000, used: 19500, utilization: 97.5 }, x: 60, y: 50 },
+  ];
+
+  const mockConnections: SupplyChainConnection[] = [
+    { from: { id: '2', name: 'China Factory', x: 80, y: 20 }, to: { id: '1', name: 'Main Warehouse', x: 20, y: 30 }, type: 'supply', status: 'normal' },
+    { from: { id: '3', name: 'German Supplier', x: 40, y: 70 }, to: { id: '1', name: 'Main Warehouse', x: 20, y: 30 }, type: 'supply', status: 'warning' },
+    { from: { id: '1', name: 'Main Warehouse', x: 20, y: 30 }, to: { id: '4', name: 'Distribution Hub', x: 60, y: 50 }, type: 'distribution', status: 'critical' },
+  ];
+
+  const mockAlerts: SystemAlert[] = [
+    { severity: 'critical', title: 'High Memory Usage', description: 'Memory usage exceeded 90%', timestamp: new Date() },
+    { severity: 'warning', title: 'Network Latency', description: 'Latency increased by 200%', timestamp: new Date() },
+    { severity: 'info', title: 'Scheduled Maintenance', description: 'System maintenance in 2 hours', timestamp: new Date() },
+  ];
+
+  const mockEvents: SystemEvent[] = [
+    { type: 'success', message: 'Order processed successfully', source: 'Order System', timestamp: new Date() },
+    { type: 'error', message: 'Payment gateway timeout', source: 'Payment System', timestamp: new Date() },
+    { type: 'info', message: 'Inventory synced', source: 'WMS', timestamp: new Date() },
+  ];
+
+  const mockInspections: QualityInspection[] = [
+    { id: '1', batch_number: 'BATCH-001', stage: 'production', inspector: 'John Doe', result: 'pass', defects_count: 0, inspection_time: 12, timestamp: new Date() },
+    { id: '2', batch_number: 'BATCH-002', stage: 'assembly', inspector: 'Jane Smith', result: 'fail', defects_count: 3, inspection_time: 25, timestamp: new Date() },
+    { id: '3', batch_number: 'BATCH-003', stage: 'packaging', inspector: 'Bob Wilson', result: 'pass', defects_count: 1, inspection_time: 8, timestamp: new Date() },
+  ];
+
+  const mockDefects: QualityDefect[] = [
+    { type: 'Scratch', description: 'Surface scratch on product', severity: 'minor', count: 12, stage: 'production', root_cause: 'Handling' },
+    { type: 'Misalignment', description: 'Component misalignment', severity: 'major', count: 5, stage: 'assembly', root_cause: 'Machine calibration' },
+    { type: 'Label Error', description: 'Incorrect labeling', severity: 'minor', count: 8, stage: 'packaging', root_cause: 'Human error' },
+  ];
+
+  const mockMetrics: SystemMetrics = {
+    cpuUsage: 65,
+    memoryUsage: 78,
+    networkLatency: 120,
+    responseTime: 45,
+    errorRate: 0.5,
+    concurrentUsers: 1243,
+    transactionsPerMinute: 89
+  };
+
+  return (
+    <div className="min-h-screen bg-[#020202] text-white font-sans overflow-hidden">
+      {/* Системная панель */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-b border-white/10">
+        <div className="max-w-[2000px] mx-auto px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#d67a9d] to-purple-600 flex items-center justify-center">
+                  <Cpu size={24} />
+                </div>
+                <div>
+                  <h1 className="text-xl font-black italic uppercase">VSGIGA OS PRO</h1>
+                  <p className="text-xs opacity-50">Industrial E-Commerce Platform</p>
+                </div>
+              </div>
+
+              <div className="flex gap-1">
+                {['dashboard', 'inventory', 'orders', 'analytics', 'quality', 'supply'].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab as any)}
+                    className={`px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${activeTab === tab
+                      ? 'bg-[#d67a9d] text-black'
+                      : 'hover:bg-white/10'
+                      }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <div className={`w-3 h-3 rounded-full ${systemStatus.operational ? 'bg-green-500 animate-pulse' : 'bg-red-500'
+                  }`} />
+                <div>
+                  <p className="text-sm font-bold">System Status</p>
+                  <p className="text-xs opacity-50">
+                    {systemStatus.operational ? 'Operational' : 'Degraded'} • {systemStatus.performance}% uptime
+                  </p>
+                </div>
+              </div>
+
+              <div className="h-8 w-px bg-white/10" />
+
+              <div className="flex items-center gap-4">
+                <button className="p-3 hover:bg-white/10 rounded-xl relative">
+                  <Bell size={20} />
+                  {systemStatus.activeAlerts > 0 && (
+                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs flex items-center justify-center">
+                      {systemStatus.activeAlerts}
+                    </div>
+                  )}
+                </button>
+                <button className="p-3 hover:bg-white/10 rounded-xl">
+                  <Settings size={20} />
+                </button>
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                  <User size={20} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Основной контент */}
+      <div className="pt-24 pb-8 px-8 max-w-[2000px] mx-auto">
+        {activeTab === 'dashboard' && (
+          <div className="space-y-8">
+            <RealTimeDashboard
+              metrics={mockMetrics}
+              alerts={mockAlerts}
+              events={mockEvents}
+            />
+
+            <SupplyChainVisualization
+              nodes={mockNodes}
+              connections={mockConnections}
+              status={{
+                overall: 'degraded',
+                metrics: {
+                  on_time_delivery: 87.5,
+                  inventory_turnover: 4.2,
+                  order_accuracy: 99.1,
+                  cost_efficiency: 76.8
+                }
+              }}
+            />
+
+            <IndustrialDataGrid
+              title="Recent Transactions"
+              data={Array.from({ length: 100 }, (_, i) => ({
+                id: `TRX-${1000 + i}`,
+                customer: `Customer ${i + 1}`,
+                amount: Math.random() * 10000,
+                status: ['completed', 'pending', 'failed'][Math.floor(Math.random() * 3)],
+                date: new Date(Date.now() - Math.random() * 10000000000)
+              }))}
+              columns={[
+                { key: 'id', label: 'Transaction ID' },
+                { key: 'customer', label: 'Customer' },
+                { key: 'amount', label: 'Amount', render: (value) => `$${value.toFixed(2)}` },
+                {
+                  key: 'status', label: 'Status', render: (value) => (
+                    <span className={`px-3 py-1 rounded-full text-xs ${value === 'completed' ? 'bg-green-500/20 text-green-500' :
+                      value === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
+                        'bg-red-500/20 text-red-500'
+                      }`}>
+                      {value}
+                    </span>
+                  )
+                },
+                { key: 'date', label: 'Date', render: (value) => value.toLocaleDateString() }
+              ]}
+            />
+          </div>
+        )}
+
+        {activeTab === 'quality' && (
+          <QualityControlDashboard
+            inspections={mockInspections}
+            defects={mockDefects}
+            metrics={{
+              pass_rate: 94.2,
+              defect_rate: 5.8,
+              rework_rate: 3.2,
+              avg_inspection_time: 15,
+              first_pass_yield: 91.5
+            }}
+          />
+        )}
+
+        {activeTab === 'analytics' && (
+          <PredictiveAnalyticsDashboard
+            data={Array.from({ length: 30 }, (_, i) => ({
+              date: new Date(Date.now() - (30 - i) * 24 * 60 * 60 * 1000),
+              value: 10000 + Math.random() * 5000
+            }))}
+            // В строке 7510 обновить mock данные:
+            forecasts={Array.from({ length: 7 }, (_, i) => ({
+              date: new Date(Date.now() + (i + 1) * 24 * 60 * 60 * 1000),
+              predicted: 12000 + Math.random() * 3000,
+              lower_bound: 11000 + Math.random() * 2000,
+              upper_bound: 13000 + Math.random() * 2000
+            }))}
+            insights={[
+              {
+                title: 'Seasonal Demand Increase',
+                description: 'Expected 25% increase in demand for next quarter based on historical patterns',
+                impact: 25,
+                confidence: 92,
+                category: 'demand'
+              },
+              {
+                title: 'Supply Chain Optimization',
+                description: 'Potential 15% cost reduction by optimizing shipping routes',
+                impact: 15,
+                confidence: 87,
+                category: 'cost'
+              },
+              {
+                title: 'Customer Segmentation',
+                description: 'New customer segment identified with high lifetime value potential',
+                impact: 18,
+                confidence: 79,
+                category: 'revenue'
+              }
+            ]}
+          />
+        )}
+
+        {activeTab === 'inventory' && (
+          <IndustrialDataGrid
+            title="Inventory Management"
+            data={Array.from({ length: 500 }, (_, i) => ({
+              sku: `SKU-${10000 + i}`,
+              product: `Product ${i + 1}`,
+              category: ['Electronics', 'Hardware', 'Components', 'Consumables'][Math.floor(Math.random() * 4)],
+              quantity: Math.floor(Math.random() * 1000),
+              location: `WH-${Math.floor(Math.random() * 5) + 1}-A${Math.floor(Math.random() * 10) + 1}`,
+              value: Math.random() * 5000,
+              status: ['In Stock', 'Low Stock', 'Out of Stock', 'Backorder'][Math.floor(Math.random() * 4)],
+              last_updated: new Date(Date.now() - Math.random() * 10000000000)
+            }))}
+            columns={[
+              { key: 'sku', label: 'SKU' },
+              { key: 'product', label: 'Product' },
+              { key: 'category', label: 'Category' },
+              {
+                key: 'quantity', label: 'Quantity', render: (value, row) => (
+                  <div className="flex items-center gap-3">
+                    <span>{value}</span>
+                    {row.status === 'Low Stock' && (
+                      <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+                    )}
+                    {row.status === 'Out of Stock' && (
+                      <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    )}
+                  </div>
+                )
+              },
+              { key: 'location', label: 'Location' },
+              { key: 'value', label: 'Value', render: (value) => `$${value.toFixed(2)}` },
+              {
+                key: 'status', label: 'Status', render: (value) => (
+                  <span className={`px-3 py-1 rounded-full text-xs ${value === 'In Stock' ? 'bg-green-500/20 text-green-500' :
+                    value === 'Low Stock' ? 'bg-yellow-500/20 text-yellow-500' :
+                      value === 'Out of Stock' ? 'bg-red-500/20 text-red-500' :
+                        'bg-blue-500/20 text-blue-500'
+                    }`}>
+                    {value}
+                  </span>
+                )
+              },
+              { key: 'last_updated', label: 'Updated', render: (value) => value.toLocaleDateString() }
+            ]}
+          />
+        )}
+
+        {activeTab === 'orders' && (
+          <IndustrialDataGrid
+            title="Order Management"
+            data={Array.from({ length: 1000 }, (_, i) => ({
+              order_id: `ORD-${10000 + i}`,
+              customer: `Customer ${Math.floor(Math.random() * 100) + 1}`,
+              total: Math.random() * 5000,
+              status: ['Processing', 'Shipped', 'Delivered', 'Cancelled'][Math.floor(Math.random() * 4)],
+              payment: ['Paid', 'Pending', 'Failed'][Math.floor(Math.random() * 3)],
+              items: Math.floor(Math.random() * 10) + 1,
+              created: new Date(Date.now() - Math.random() * 10000000000),
+              estimated: new Date(Date.now() + Math.random() * 10000000000)
+            }))}
+            columns={[
+              { key: 'order_id', label: 'Order ID' },
+              { key: 'customer', label: 'Customer' },
+              { key: 'total', label: 'Total', render: (value) => `$${value.toFixed(2)}` },
+              {
+                key: 'status', label: 'Status', render: (value) => (
+                  <span className={`px-3 py-1 rounded-full text-xs ${value === 'Delivered' ? 'bg-green-500/20 text-green-500' :
+                    value === 'Shipped' ? 'bg-blue-500/20 text-blue-500' :
+                      value === 'Processing' ? 'bg-yellow-500/20 text-yellow-500' :
+                        'bg-red-500/20 text-red-500'
+                    }`}>
+                    {value}
+                  </span>
+                )
+              },
+              {
+                key: 'payment', label: 'Payment', render: (value) => (
+                  <span className={`px-3 py-1 rounded-full text-xs ${value === 'Paid' ? 'bg-green-500/20 text-green-500' :
+                    value === 'Pending' ? 'bg-yellow-500/20 text-yellow-500' :
+                      'bg-red-500/20 text-red-500'
+                    }`}>
+                    {value}
+                  </span>
+                )
+              },
+              { key: 'items', label: 'Items' },
+              { key: 'created', label: 'Created', render: (value) => value.toLocaleDateString() },
+              { key: 'estimated', label: 'Estimated Delivery', render: (value) => value.toLocaleDateString() }
+            ]}
+          />
+        )}
+
+        {activeTab === 'supply' && (
+          <div className="space-y-8">
+            <SupplyChainVisualization
+              nodes={mockNodes}
+              connections={mockConnections}
+              status={{
+                overall: 'degraded',
+                metrics: {
+                  on_time_delivery: 87.5,
+                  inventory_turnover: 4.2,
+                  order_accuracy: 99.1,
+                  cost_efficiency: 76.8
+                }
+              }}
+            />
+
+            <IndustrialDataGrid
+              title="Supplier Performance"
+              data={Array.from({ length: 50 }, (_, i) => ({
+                supplier: `Supplier ${i + 1}`,
+                category: ['Electronics', 'Raw Materials', 'Packaging', 'Logistics'][Math.floor(Math.random() * 4)],
+                rating: Math.floor(Math.random() * 5) + 1,
+                delivery_time: Math.floor(Math.random() * 30) + 1,
+                quality_score: Math.floor(Math.random() * 100),
+                cost_score: Math.floor(Math.random() * 100),
+                status: ['Active', 'On Hold', 'Terminated'][Math.floor(Math.random() * 3)],
+                last_order: new Date(Date.now() - Math.random() * 10000000000)
+              }))}
+              columns={[
+                { key: 'supplier', label: 'Supplier' },
+                { key: 'category', label: 'Category' },
+                {
+                  key: 'rating', label: 'Rating', render: (value) => (
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          size={16}
+                          className={i < value ? 'text-yellow-500 fill-yellow-500' : 'text-gray-500'}
+                        />
+                      ))}
+                    </div>
+                  )
+                },
+                { key: 'delivery_time', label: 'Avg Delivery (days)' },
+                {
+                  key: 'quality_score', label: 'Quality Score', render: (value) => (
+                    <div className="flex items-center gap-3">
+                      <span>{value}%</span>
+                      <div className="flex-1 h-2 bg-white/10 rounded-full">
+                        <div
+                          className={`h-full rounded-full ${value >= 90 ? 'bg-green-500' :
+                            value >= 70 ? 'bg-yellow-500' :
+                              'bg-red-500'
+                            }`}
+                          style={{ width: `${value}%` }}
+                        />
+                      </div>
+                    </div>
+                  )
+                },
+                {
+                  key: 'cost_score', label: 'Cost Score', render: (value) => (
+                    <div className="flex items-center gap-3">
+                      <span>{value}%</span>
+                      <div className="flex-1 h-2 bg-white/10 rounded-full">
+                        <div
+                          className={`h-full rounded-full ${value >= 90 ? 'bg-green-500' :
+                            value >= 70 ? 'bg-yellow-500' :
+                              'bg-red-500'
+                            }`}
+                          style={{ width: `${value}%` }}
+                        />
+                      </div>
+                    </div>
+                  )
+                },
+                {
+                  key: 'status', label: 'Status', render: (value) => (
+                    <span className={`px-3 py-1 rounded-full text-xs ${value === 'Active' ? 'bg-green-500/20 text-green-500' :
+                      value === 'On Hold' ? 'bg-yellow-500/20 text-yellow-500' :
+                        'bg-red-500/20 text-red-500'
+                      }`}>
+                      {value}
+                    </span>
+                  )
+                },
+                { key: 'last_order', label: 'Last Order', render: (value) => value.toLocaleDateString() }
+              ]}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Футер системы */}
+      <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-xl border-t border-white/10">
+        <div className="max-w-[2000px] mx-auto px-8 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span className="text-xs font-mono">SYSTEM_ACTIVE</span>
+              </div>
+              <div className="text-xs opacity-50 font-mono">
+                {new Date().toISOString().replace('T', ' ').substring(0, 19)}
+              </div>
+              <div className="text-xs opacity-50">
+                Uptime: 99.87% • Latency: 45ms • Users: 1,243
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-xs opacity-50 font-mono">
+                VSGIGA OS PRO v12.0.1 • BUILD #20241228
+              </div>
+              <button className="text-xs px-3 py-1 bg-white/10 rounded hover:bg-white/20">
+                Emergency Stop
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default IndustrialECommerceApp;
