@@ -10,22 +10,92 @@ import {
   Trash2, Plus, Minus, ShoppingBag, ArrowRight, 
   ShoppingCart, ShieldCheck, AlertCircle, CheckCircle2, X,
   Truck, Package, Coins, MapPin, User, Phone, Ticket, Zap,
-  Layers, Activity, Terminal, Lock, Cpu, Globe
+  Layers, Activity, Terminal, Lock, Cpu, Globe, Hash, Database, Server, Radio
 } from 'lucide-react'
 
-// --- [СИСТЕМНЫЙ МОДУЛЬ 1: МОНИТОРИНГ ТРАФИКА v5.0] ---
-// Добавлено ~150 строк логики и визуальных эффектов для vsgiga shop
-function SystemBackgroundEffects() {
+// --- [НОВЫЙ МОДУЛЬ: КИБЕРПАНК ТЕРМИНАЛ И МОНИТОРИНГ УЗЛОВ v6.0] ---
+// +200 строк декоративного и системного кода для VSGIGA SHOP
+function CyberTerminalHUD() {
+  const [logs, setLogs] = useState<string[]>([
+    "INITIALIZING_V_LINK...",
+    "HANDSHAKE_WITH_SUPABASE_SUCCESS",
+    "DECRYPTING_USER_SESSION...",
+    "CART_SCANNER_ACTIVE"
+  ]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const sysLogs = [
+        `NODE_${Math.random().toString(36).substring(7).toUpperCase()}_SYNCED`,
+        `LATENCY: ${Math.floor(Math.random() * 20 + 10)}ms`,
+        "ENCRYPTION_LAYER_STABLE",
+        "BUFFER_CLEAN_STATUS_OK",
+        "VSG_CORE_LOAD_2%"
+      ];
+      setLogs(prev => [...prev.slice(-4), sysLogs[Math.floor(Math.random() * sysLogs.length)]]);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#d67a9d]/5 blur-[120px] rounded-full animate-pulse" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#71b3c9]/5 blur-[120px] rounded-full animate-pulse delay-700" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-[0.02] bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
+    <div className="hidden 2xl:block fixed bottom-10 left-10 w-64 font-mono text-[9px] z-50 pointer-events-none">
+      <div className="bg-black/80 border border-white/10 p-4 rounded-2xl backdrop-blur-md">
+        <div className="flex items-center gap-2 mb-3 text-[#d67a9d]">
+          <Terminal size={12} />
+          <span className="font-black tracking-widest uppercase">System_Log</span>
+        </div>
+        <div className="space-y-1 opacity-50">
+          {logs.map((log, i) => (
+            <div key={i} className="flex gap-2">
+              <span className="text-[#71b3c9]">{">"}</span>
+              <span className="text-white uppercase">{log}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 pt-3 border-t border-white/5 flex justify-between items-center italic">
+          <span className="text-white/20">MEM_ALLOC: 44.2MB</span>
+          <div className="flex gap-1">
+             {[1,2,3].map(i => (
+               <motion.div 
+                 key={i} 
+                 animate={{ opacity: [0.2, 1, 0.2] }} 
+                 transition={{ repeat: Infinity, duration: 1.5, delay: i * 0.3 }}
+                 className="w-1 h-1 bg-[#d67a9d] rounded-full" 
+               />
+             ))}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
 
-// --- КОМПОНЕНТ УВЕДОМЛЕНИЯ (TOAST) ---
+function CyberUplinkGrid() {
+  return (
+    <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden opacity-20">
+      <svg width="100%" height="100%" className="absolute inset-0">
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="0.5" strokeOpacity="0.05" />
+        </pattern>
+        <rect width="100%" height="100%" fill="url(#grid)" />
+      </svg>
+      <div className="absolute top-1/4 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#d67a9d]/20 to-transparent animate-scan" />
+    </div>
+  )
+}
+
+function SystemBackgroundEffects() {
+  return (
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+      <CyberUplinkGrid />
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#d67a9d]/5 blur-[120px] rounded-full animate-pulse" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#71b3c9]/5 blur-[120px] rounded-full animate-pulse delay-700" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-[0.02] bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
+      <CyberTerminalHUD />
+    </div>
+  )
+}
+
 const Toast = ({ message, type, onClose }: { message: string, type: 'error' | 'success', onClose: () => void }) => (
   <motion.div
     initial={{ opacity: 0, x: 50, scale: 0.9 }}
@@ -84,13 +154,19 @@ export default function CartPage() {
   useEffect(() => {
     const initPage = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
+        console.log("VSGIGA_DEBUG: Starting Cart Sync...");
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (!session) {
+          console.log("VSGIGA_DEBUG: No Session, redirecting...");
           router.push('/login')
           return
         }
 
+        const user = session.user;
         if (user.user_metadata?.full_name) setFullName(user.user_metadata.full_name)
+        
+        // Fetch Profile
         const { data: profileData } = await supabase
           .from('profiles')
           .select('bonuses')
@@ -98,25 +174,33 @@ export default function CartPage() {
           .single()
         if (profileData) setUserBonuses(profileData.bonuses || 0)
 
+        // Fetch Cart with Product Join
+        console.log("VSGIGA_DEBUG: Fetching DB Cart for", user.id);
         const { data: cartData, error } = await supabase
           .from('cart')
           .select('*, product:products(*)')
           .eq('user_id', user.id)
 
-        if (error) throw error
+        if (error) {
+           console.error("VSGIGA_DEBUG_DB_ERROR:", error);
+           throw error;
+        }
+
+        console.log("VSGIGA_DEBUG: Raw Cart Data:", cartData);
 
         if (cartData && cartData.length > 0) {
           const formattedCart = cartData
-            .filter((item: any) => item.product !== null) // Защита от битых связей
+            .filter((item: any) => item.product !== null) 
             .map((item: any) => ({
               ...item.product,
               quantity: item.quantity,
               selectedSize: item.size || 'OS', 
               cartItemId: item.id 
             }))
+          console.log("VSGIGA_DEBUG: Formatted Cart:", formattedCart);
           setDbCart(formattedCart)
         } else {
-          setDbCart([]) // Если в базе пусто, принудительно ставим пустой массив
+          setDbCart([]) 
         }
       } catch (e) {
         console.error('Ошибка загрузки корзины:', e)
@@ -357,7 +441,6 @@ export default function CartPage() {
       </AnimatePresence>
 
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* --- [ПРАВКА: ВЫРАВНИВАНИЕ ЛОГОТИПА И ЗАГОЛОВКА] --- */}
         <div className="flex items-center gap-6 mb-12 border-b border-white/5 pb-10 justify-start">
           <motion.div 
             whileHover={{ rotate: 15 }}
@@ -634,6 +717,38 @@ export default function CartPage() {
             </div>
           )}
         </AnimatePresence>
+      </div>
+
+      {/* --- [НИЖНИЙ ИНТЕРФЕЙСНЫЙ БАР: VSGIGA INFRASTRUCTURE] --- */}
+      <div className="max-w-7xl mx-auto mt-32 border-t border-white/5 pt-20 grid grid-cols-2 md:grid-cols-4 gap-12 pb-20 opacity-40">
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-[#d67a9d]">
+            <Database size={14} />
+            <span className="text-[10px] font-black uppercase tracking-widest">Database_Cluster</span>
+          </div>
+          <p className="text-[8px] font-bold uppercase leading-relaxed text-white/40">SUPABASE_POSTGRES_V15<br/>REG: EU_CENTRAL_1</p>
+        </div>
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-[#71b3c9]">
+            <Cpu size={14} />
+            <span className="text-[10px] font-black uppercase tracking-widest">Render_Engine</span>
+          </div>
+          <p className="text-[8px] font-bold uppercase leading-relaxed text-white/40">NEXT_JS_APP_ROUTER<br/>VERCEL_EDGE_NODE</p>
+        </div>
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-white/40">
+            <Radio size={14} />
+            <span className="text-[10px] font-black uppercase tracking-widest">Uplink_Signal</span>
+          </div>
+          <p className="text-[8px] font-bold uppercase leading-relaxed text-white/40">SSL_ENCRYPTED_TLS_1.3<br/>HANDSHAKE: 2048_BIT</p>
+        </div>
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-green-500/50">
+            <Activity size={14} />
+            <span className="text-[10px] font-black uppercase tracking-widest">Network_Stability</span>
+          </div>
+          <p className="text-[8px] font-bold uppercase leading-relaxed text-white/40">99.9%_UPTIME_RECORD<br/>ALL_SYSTEMS_OPERATIONAL</p>
+        </div>
       </div>
     </main>
   )
