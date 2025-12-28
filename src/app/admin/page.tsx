@@ -8,7 +8,7 @@ import {
   Package, MapPin, ChevronDown, ChevronUp, User, ShoppingBag, 
   Phone, Contact2, X, Image as ImageIcon, Plus, Ticket, 
   Trash2, Zap, Target, EyeOff, LayoutGrid, RefreshCw, Search, Save,
-  Newspaper // Добавили иконку для новостей
+  Newspaper, ShieldCheck, Globe, Barcode // Добавлены иконки для новых полей
 } from 'lucide-react'
 
 export default function AdminPage() {
@@ -71,7 +71,7 @@ export default function AdminPage() {
     inStock: true
   }))
 
-  // Формы
+  // Формы (ОБНОВЛЕНО: добавлены material, origin, article)
   const [form, setForm] = useState({ 
     name: '', 
     price: '', 
@@ -79,7 +79,10 @@ export default function AdminPage() {
     image: '', 
     images: [] as string[],
     description: '',
-    sizes: CLOTHES_SIZES 
+    sizes: CLOTHES_SIZES,
+    material: '', // New
+    origin: '',   // New
+    article: ''   // New
   })
 
   const [promoForm, setPromoForm] = useState({
@@ -262,7 +265,7 @@ export default function AdminPage() {
       const filePath = `news/${fileName}`
 
       const { error: uploadError } = await supabase.storage
-        .from('product-images') // Используем тот же бакет или создай отдельный 'news-images'
+        .from('product-images') // Используем тот же бакет
         .upload(filePath, file)
 
       if (uploadError) throw uploadError
@@ -297,7 +300,6 @@ export default function AdminPage() {
     setForm({ ...form, sizes: updatedSizes })
   }
 
-  // --- ОБРАБОТЧИК СМЕНЫ КАТЕГОРИИ (ИСПРАВЛЕНО) ---
   const handleCategoryChange = (cat: string) => {
     let newSizes: { size: string; inStock: boolean }[] = []
     
@@ -318,6 +320,12 @@ export default function AdminPage() {
 
   const handleSubmitProduct = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // ЛОГИКА АРТИКУЛА: Если пустой -> генерируем VSG-{рандом}
+    const finalArticle = form.article.trim() 
+      ? form.article.toUpperCase() 
+      : `VSG-${Math.floor(100000 + Math.random() * 900000)}`
+
     const payload = {
       name: form.name,
       price: Number(form.price),
@@ -325,7 +333,11 @@ export default function AdminPage() {
       description: form.description,
       image: form.images[0] || form.image,
       images: form.images,
-      sizes: form.sizes
+      sizes: form.sizes,
+      // Новые поля
+      material: form.material || 'CYBER_FIBER_SYNTH',
+      origin: form.origin || 'KOREA_REPUBLIC',
+      article: finalArticle
     }
 
     const { error } = editingId 
@@ -339,6 +351,7 @@ export default function AdminPage() {
         `✨ <b>vsgiga shop: Инвентарь</b>\n` +
         `Действие: <b>${editingId ? 'Обновление' : 'Создание'} товара</b>\n` +
         `Название: <code>${form.name}</code>\n` +
+        `Артикул: <code>${finalArticle}</code>\n` +
         `Цена: <b>${form.price} ₽</b>`
       )
 
@@ -356,7 +369,11 @@ export default function AdminPage() {
       description: product.description || '',
       image: product.image,
       images: product.images || [product.image],
-      sizes: product.sizes || []
+      sizes: product.sizes || [],
+      // Заполняем новые поля
+      material: product.material || '',
+      origin: product.origin || '',
+      article: product.article || ''
     })
   }
 
@@ -369,7 +386,10 @@ export default function AdminPage() {
       image: '',
       images: [],
       description: '',
-      sizes: CLOTHES_SIZES
+      sizes: CLOTHES_SIZES,
+      material: '',
+      origin: '',
+      article: ''
     })
   }
 
@@ -556,6 +576,38 @@ export default function AdminPage() {
                       <option className="bg-black" value="accessories">АКСЕССУАРЫ</option>
                     </select>
                   </div>
+
+                  {/* НОВЫЙ БЛОК: ХАРАКТЕРИСТИКИ ТОВАРА */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="relative">
+                      <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={16}/>
+                      <input 
+                        placeholder="МАТЕРИАЛ" 
+                        className="w-full bg-black/50 border border-white/10 p-5 pl-12 rounded-2xl outline-none text-[10px] font-bold uppercase" 
+                        value={form.material} 
+                        onChange={e => setForm({...form, material: e.target.value})} 
+                      />
+                    </div>
+                    <div className="relative">
+                      <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={16}/>
+                      <input 
+                        placeholder="СТРАНА" 
+                        className="w-full bg-black/50 border border-white/10 p-5 pl-12 rounded-2xl outline-none text-[10px] font-bold uppercase" 
+                        value={form.origin} 
+                        onChange={e => setForm({...form, origin: e.target.value})} 
+                      />
+                    </div>
+                    <div className="relative">
+                      <Barcode className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={16}/>
+                      <input 
+                        placeholder="АРТИКУЛ (AUTO)" 
+                        className="w-full bg-black/50 border border-white/10 p-5 pl-12 rounded-2xl outline-none text-[10px] font-bold uppercase" 
+                        value={form.article} 
+                        onChange={e => setForm({...form, article: e.target.value})} 
+                      />
+                    </div>
+                  </div>
+
                   <textarea 
                     placeholder="ОПИСАНИЕ ТОВАРА" 
                     className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl h-32 resize-none outline-none" 
@@ -623,6 +675,8 @@ export default function AdminPage() {
                       <div>
                         <h3 className="font-black text-xs uppercase italic">{product.name}</h3>
                         <p className="text-[#71b3c9] text-[10px] font-bold mt-1">{product.price} ₽</p>
+                        {/* Показываем артикул в списке */}
+                        <p className="text-white/20 text-[8px] font-black mt-1 uppercase">{product.article || 'NO_ARTICLE'}</p>
                       </div>
                     </div>
                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import { useCart } from '@/context/CartContext'
 import { useToast } from '@/context/ToastContext'
-import { ArrowLeft, ShoppingBag, ShieldCheck, Truck, Star, Maximize2 } from 'lucide-react'
+import { ArrowLeft, ShoppingBag, ShieldCheck, Truck, Star, Maximize2, Info, Package, MapPin } from 'lucide-react'
 
 // --- КОМПОНЕНТ ОТЗЫВОВ (ОСТАВЛЕН БЕЗ ИЗМЕНЕНИЙ) ---
 function ProductReviews({ productId }: { productId: string }) {
@@ -144,7 +144,6 @@ export default function ProductPage() {
   const [adding, setAdding] = useState(false)
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
 
-  // Новые стейты для галереи и зума
   const [activeImage, setActiveImage] = useState<string>('')
   const [zoomStyle, setZoomStyle] = useState({ display: 'none', backgroundPosition: '0% 0%' })
 
@@ -171,7 +170,6 @@ export default function ProductPage() {
   }, [id, router, showToast])
 
   const handleAddToCart = () => {
-    // ПРОВЕРКА: Если категория НЕ аксессуары и ЕСТЬ доступные размеры, то требуем выбор
     const hasSizes = product.sizes && product.sizes.length > 0 && product.category !== 'accessories';
     
     if (hasSizes && !selectedSize) {
@@ -185,7 +183,6 @@ export default function ProductPage() {
     setTimeout(() => setAdding(false), 1000)
   }
 
-  // Логика зума (перемещение мыши)
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect()
     const x = ((e.clientX - left) / width) * 100
@@ -208,7 +205,6 @@ export default function ProductPage() {
 
   if (!product) return null
 
-  // Собираем все картинки в один массив для галереи
   const galleryImages = (product.images && product.images.length > 0) 
     ? product.images 
     : [product.image]
@@ -216,7 +212,6 @@ export default function ProductPage() {
   return (
     <main className="min-h-screen bg-black text-white pt-32 pb-20 px-6 overflow-x-hidden">
       <div className="max-w-7xl mx-auto">
-        {/* КНОПКА НАЗАД */}
         <button 
           onClick={() => router.back()}
           className="flex items-center gap-2 text-white/40 hover:text-white transition-colors mb-12 group uppercase text-[10px] font-black tracking-widest"
@@ -227,13 +222,11 @@ export default function ProductPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-start">
           
-          {/* ЛЕВАЯ КОЛОНКА: ГАЛЕРЕЯ И ЗУМ */}
           <motion.div 
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex flex-col gap-6"
           >
-            {/* ГЛАВНОЕ ИЗОБРАЖЕНИЕ С ЗУМОМ */}
             <div 
               className="relative aspect-square rounded-[3rem] overflow-hidden bg-zinc-900 border border-white/10 group cursor-crosshair"
               onMouseMove={handleMouseMove}
@@ -245,7 +238,6 @@ export default function ProductPage() {
                 className="w-full h-full object-cover pointer-events-none"
               />
               
-              {/* Слой зума */}
               <div 
                 className="absolute inset-0 bg-no-repeat pointer-events-none z-10"
                 style={{
@@ -262,7 +254,6 @@ export default function ProductPage() {
               </div>
             </div>
 
-            {/* МИНИАТЮРЫ */}
             {galleryImages.length > 1 && (
               <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                 {galleryImages.map((img: string, idx: number) => (
@@ -281,7 +272,6 @@ export default function ProductPage() {
             )}
           </motion.div>
 
-          {/* ПРАВАЯ КОЛОНКА: ИНФО */}
           <motion.div 
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
@@ -295,14 +285,56 @@ export default function ProductPage() {
               {product.name}
             </h1>
 
-            <div className="flex items-baseline gap-4 mb-12">
+            <div className="flex items-baseline gap-4 mb-8">
               <span className="text-4xl font-black italic text-[#71b3c9]">
                 {product.price.toLocaleString()} ₽
               </span>
               <span className="text-white/20 text-xs font-bold uppercase tracking-widest">VAT_INCLUDED</span>
             </div>
 
-            {/* ВЫБОР РАЗМЕРА (СКРЫВАЕТСЯ ДЛЯ АКСЕССУАРОВ ИЛИ ЕСЛИ ПУСТО) */}
+            {/* БЛОК ХАРАКТЕРИСТИК (СПЕЦИФИКАЦИИ) */}
+            <div className="mb-12 bg-white/5 rounded-3xl border border-white/10 p-6 backdrop-blur-md">
+              <div className="flex items-center gap-2 mb-4">
+                <Info size={14} className="text-[#d67a9d]" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Technical_Specifications</span>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { label: 'Origin', value: product.origin || 'KOREA_REPUBLIC' },
+                  { label: 'Material', value: product.material || 'CYBER_FIBER_SYNTH' },
+                  { label: 'Serial_Num', value: product.article || product.id.slice(0,8).toUpperCase() },
+                  { label: 'Status', value: 'IN_STOCK_READY' }
+                ].map((spec, i) => (
+                  <div key={i} className="flex justify-between border-b border-white/5 pb-2">
+                    <span className="text-[9px] font-bold text-white/20 uppercase italic">{spec.label}</span>
+                    <span className="text-[9px] font-black text-white/80 uppercase">{spec.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* БЛОК ДОСТАВКИ */}
+            <div className="mb-12 grid grid-cols-1 gap-4">
+               <div className="p-5 rounded-2xl bg-white/5 border border-white/10 flex items-start gap-4">
+                  <div className="p-3 bg-[#71b3c9]/10 rounded-xl">
+                    <Package className="text-[#71b3c9]" size={20} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase block mb-1">Logistics_Terminal</span>
+                    <span className="text-[9px] text-white/40 uppercase font-bold italic">Estimated_Arrival: 2-4_CYCLES</span>
+                  </div>
+               </div>
+               <div className="p-5 rounded-2xl bg-white/5 border border-white/10 flex items-start gap-4">
+                  <div className="p-3 bg-[#d67a9d]/10 rounded-xl">
+                    <MapPin className="text-[#d67a9d]" size={20} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase block mb-1">Access_Point</span>
+                    <span className="text-[9px] text-white/40 uppercase font-bold italic">Standard_Global_Shipping_Available</span>
+                  </div>
+               </div>
+            </div>
+
             {product.category !== 'accessories' && product.sizes && product.sizes.length > 0 && (
               <div className="mb-12">
                 <label className="text-[10px] font-black uppercase text-white/30 tracking-widest mb-4 block">Select_Module_Size</label>
@@ -333,7 +365,6 @@ export default function ProductPage() {
               </div>
             )}
 
-            {/* БЛОК ХАРАКТЕРИСТИК */}
             <div className="grid grid-cols-2 gap-4 mb-12">
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3">
                 <ShieldCheck className="text-[#d67a9d]" size={20} />
@@ -345,12 +376,10 @@ export default function ProductPage() {
               </div>
             </div>
 
-            {/* ОПИСАНИЕ */}
             <p className="text-white/50 text-sm leading-relaxed mb-12 font-medium uppercase tracking-tight whitespace-pre-wrap">
               {product.description || "NO_DESCRIPTION_AVAILABLE_IN_DATABASE"}
             </p>
 
-            {/* КНОПКА ДОБАВЛЕНИЯ */}
             <button
               onClick={handleAddToCart}
               disabled={adding}
@@ -365,7 +394,6 @@ export default function ProductPage() {
               </span>
             </button>
 
-            {/* ТЕХНИЧЕСКИЙ ФУТЕР */}
             <div className="mt-12 pt-8 border-t border-white/10">
               <div className="flex justify-between text-[8px] font-black text-white/20 uppercase tracking-[0.5em]">
                 <span>Global_ID: {product.id.slice(0,18)}</span>
@@ -375,7 +403,6 @@ export default function ProductPage() {
           </motion.div>
         </div>
 
-        {/* СЕКЦИЯ ОТЗЫВОВ */}
         <ProductReviews productId={product.id} />
       </div>
     </main>
