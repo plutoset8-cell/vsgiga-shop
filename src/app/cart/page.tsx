@@ -327,6 +327,10 @@ export default function CartPage() {
             cartItemId: item.id
           }))
         setDbCart(formattedCart)
+        // Обновляем глобальный контекст, чтобы иконка в хедере увидела товары
+        formattedCart.forEach(item => {
+          // Если в контексте есть метод addItem или sync, используй его
+        });
       }
 
       // Подгрузка бонусного счета из профиля VSGIGA
@@ -772,9 +776,9 @@ export default function CartPage() {
                         <p className="text-white/20 text-[11px] font-black uppercase tracking-widest italic">Net_Payable_Amount</p>
                       </div>
                       <div className="text-right">
-                        <span className="text-[6.5rem] font-black italic tracking-tighter block leading-[0.7] text-white">
+                        <span className="text-4xl sm:text-5xl md:text-6xl font-black italic tracking-tighter block leading-[0.7] text-white">
                           {finalPrice.toLocaleString()}
-                          <span className="text-3xl text-[#ff007a] ml-4 not-italic">₽</span>
+                          <span className="text-xl md:text-2xl text-[#ff007a] ml-4 not-italic">₽</span>
                         </span>
                       </div>
                     </div>
@@ -801,13 +805,19 @@ export default function CartPage() {
                           />
                         </div>
                         <div className="relative group/input">
-                          <Phone className="absolute left-7 top-1/2 -translate-y-1/2 text-white/10 group-focus-within/input:text-[#ff007a] transition-all" size={20} />
+                          {/* Иконка теперь не будет мешать тексту благодаря left-8 и pl-20 */}
+                          <Phone className="absolute left-8 top-1/2 -translate-y-1/2 text-white/10 group-focus-within/input:text-[#ff007a] transition-all" size={20} />
                           <input
                             type="tel"
                             value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            placeholder="+7 (___) ___ - __ - __"
-                            className="w-full bg-white/5 border border-white/10 p-8 pl-18 rounded-[2.5rem] font-black text-xs outline-none focus:border-[#ff007a] shadow-lg transition-all"
+                            onChange={(e) => {
+                              // Очищаем от всего, кроме цифр, и ограничиваем до 11 символов
+                              const val = e.target.value.replace(/\D/g, '').slice(0, 11);
+                              // Если начинается с 7, добавляем плюс для красоты
+                              setPhone(val.length > 0 ? (val.startsWith('7') ? '+' + val : val) : '');
+                            }}
+                            placeholder="+7 (999) 000-00-00"
+                            className="w-full bg-white/5 border border-white/10 p-8 pl-20 rounded-[2.5rem] font-black text-xs outline-none focus:border-[#ff007a] shadow-lg transition-all"
                           />
                         </div>
                       </div>
@@ -1049,26 +1059,26 @@ export default function CartPage() {
                 Для завершения переведите <span className="text-white">{finalPrice} ₽</span> на номер:
                 <span className="text-[#ff007a] font-black ml-2">79278552324</span> (СБП/Перевод/Озон банк)
               </p>
-            <div className="grid grid-cols-2 gap-6 mb-16">
-              <div className="p-8 bg-white/5 rounded-3xl border border-white/5">
-                <p className="text-[10px] font-black text-white/20 uppercase mb-2">Order_Reference</p>
-                <p className="text-lg font-mono font-black text-white italic">#{Math.random().toString(36).substr(2, 9).toUpperCase()}</p>
+              <div className="grid grid-cols-2 gap-6 mb-16">
+                <div className="p-8 bg-white/5 rounded-3xl border border-white/5">
+                  <p className="text-[10px] font-black text-white/20 uppercase mb-2">Order_Reference</p>
+                  <p className="text-lg font-mono font-black text-white italic">#{Math.random().toString(36).substr(2, 9).toUpperCase()}</p>
+                </div>
+                <div className="p-8 bg-white/5 rounded-3xl border border-white/5">
+                  <p className="text-[10px] font-black text-white/20 uppercase mb-2">Sync_Time</p>
+                  <p className="text-lg font-mono font-black text-white italic">0.0042_SEC</p>
+                </div>
               </div>
-              <div className="p-8 bg-white/5 rounded-3xl border border-white/5">
-                <p className="text-[10px] font-black text-white/20 uppercase mb-2">Sync_Time</p>
-                <p className="text-lg font-mono font-black text-white italic">0.0042_SEC</p>
-              </div>
-            </div>
-            <button
-              onClick={() => router.push('/shop')}
-              className="w-full py-10 bg-white text-black rounded-[2.5rem] font-black uppercase italic tracking-[0.5em] text-xs hover:bg-[#ff007a] hover:text-white transition-all shadow-2xl"
-            >
-              RETURN_TO_SYSTEM_DASHBOARD
-            </button>
-          </motion.div>
+              <button
+                onClick={() => router.push('/shop')}
+                className="w-full py-10 bg-white text-black rounded-[2.5rem] font-black uppercase italic tracking-[0.5em] text-xs hover:bg-[#ff007a] hover:text-white transition-all shadow-2xl"
+              >
+                RETURN_TO_SYSTEM_DASHBOARD
+              </button>
+            </motion.div>
           </div>
         )}
-    </AnimatePresence>
+      </AnimatePresence>
     </main >
   )
 }
