@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+// Мы оставляем useCart только для сброса счетчика в хедере, если нужно, 
+// но основную логику переводим на БД
 import { useCart } from '@/context/CartContext'
 import { supabase } from '@/lib/supabase'
-import Link from 'next/link' // ИСПРАВЛЕНО: Для компонентов используется next/link
+import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { 
@@ -40,7 +42,12 @@ const Toast = ({ message, type, onClose }: { message: string, type: 'error' | 's
 )
 
 export default function CartPage() {
-  const { cart, totalPrice, removeFromCart, updateQuantity, clearCart, totalItems } = useCart()
+  // Используем локальный стейт для корзины из БД
+  const [dbCart, setDbCart] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  
+  // Контекст оставляем только для глобальной очистки, если она влияет на хедер
+  const { clearCart: contextClearCart } = useCart()
   
   // Состояния для полей ввода
   const [fullName, setFullName] = useState('')
@@ -72,42 +79,81 @@ export default function CartPage() {
   
   const router = useRouter()
 
-  // --- ФУНКЦИЯ ФОРМАТИРОВАНИЯ НОМЕРА ---
-  const formatPhoneNumber = (value: string) => {
-    const digits = value.replace(/\D/g, '');
-    if (!digits) return '';
-    
-    let res = '+7 ';
-    if (digits.length <= 1) return res;
-    
-    const mainDigits = digits.startsWith('7') || digits.startsWith('8') ? digits.slice(1) : digits;
-    
-    if (mainDigits.length > 0) res += '(' + mainDigits.substring(0, 3);
-    if (mainDigits.length >= 4) res += ') ' + mainDigits.substring(3, 6);
-    if (mainDigits.length >= 7) res += '-' + mainDigits.substring(6, 8);
-    if (mainDigits.length >= 9) res += '-' + mainDigits.substring(8, 10);
-    
-    return res;
-  };
+  const addToast = useCallback((message: string, type: 'error' | 'success') => {
+    const id = Date.now()
+    setToasts(prev => [...prev, { id, message, type }])
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000)
+  }, [])
 
-  // Загружаем данные пользователя
+  // --- 1. ЗАГРУЗКА ДАННЫХ ИЗ БД (SUPABASE) ---
   useEffect(() => {
-    const fetchUserData = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        if (user.user_metadata?.full_name) setFullName(user.user_metadata.full_name)
+    const initPage = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
         
+        // ВАРИАНТ А: Если нет пользователя - на логин
+        if (!user) {
+          router.push('/login')
+          return
+        }
+
+        // Загружаем профиль
+        if (user.user_metadata?.full_name) setFullName(user.user_metadata.full_name)
         const { data: profileData } = await supabase
           .from('profiles')
           .select('bonuses')
           .eq('id', user.id)
           .single()
-        
         if (profileData) setUserBonuses(profileData.bonuses || 0)
+
+        // Загружаем корзину из БД
+        // Предполагаем связь: cart -> product_id -> products
+        const { data: cartData, error } = await supabase
+          .from('cart')
+          .select('*, product:products(*)')
+          .eq('user_id', user.id)
+
+        if (error) throw error
+
+        if (cartData) {
+          // Форматируем данные под структуру UI
+          const formattedCart = cartData.map((item: any) => ({
+            ...item.product, // берем поля товара (name, price, image)
+            quantity: item.quantity,
+            // Если в БД нет размера, ставим дефолтный или тот что в item
+            selectedSize: item.size || 'OS', 
+            // Сохраняем ID записи корзины для удаления, или используем product_id
+            cartItemId: item.id 
+          }))
+          setDbCart(formattedCart)
+        }
+      } catch (e) {
+        console.error('Ошибка загрузки корзины:', e)
+      } finally {
+        setIsLoading(false)
       }
     }
-    fetchUserData()
-  }, [])
+
+    initPage()
+  }, [router])
+
+  // --- РАСЧЕТЫ НА ОСНОВЕ dbCart ---
+  const totalPrice = dbCart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+  const totalItems = dbCart.reduce((sum, item) => sum + item.quantity, 0)
+
+  // --- ФУНКЦИЯ ФОРМАТИРОВАНИЯ НОМЕРА ---
+  const formatPhoneNumber = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    if (!digits) return '';
+    let res = '+7 ';
+    if (digits.length <= 1) return res;
+    const mainDigits = digits.startsWith('7') || digits.startsWith('8') ? digits.slice(1) : digits;
+    if (mainDigits.length > 0) res += '(' + mainDigits.substring(0, 3);
+    if (mainDigits.length >= 4) res += ') ' + mainDigits.substring(3, 6);
+    if (mainDigits.length >= 7) res += '-' + mainDigits.substring(6, 8);
+    if (mainDigits.length >= 9) res += '-' + mainDigits.substring(8, 10);
+    return res;
+  };
 
   // --- НОВЫЙ ЭФФЕКТ: СИНХРОНИЗАЦИЯ ЦЕНЫ С БД ---
   useEffect(() => {
@@ -118,7 +164,6 @@ export default function CartPage() {
           .select('total_amount')
           .ilike('id', `${lastOrderId}%`)
           .single()
-        
         if (data) {
           setConfirmedPrice(data.total_amount)
           setDisplayPrice(data.total_amount)
@@ -131,7 +176,6 @@ export default function CartPage() {
   // Применение промокода
   const handleApplyPromo = async () => {
     if (!promoInput.trim()) return
-    
     setIsCheckingPromo(true)
     try {
       const { data, error } = await supabase
@@ -147,12 +191,10 @@ export default function CartPage() {
         setAppliedPromo(null)
         return
       }
-
       if (Number(data.used_count) >= Number(data.usage_limit)) {
         addToast('ЛИМИТ ИСПОЛЬЗОВАНИЙ ИСЧЕРПАН', 'error')
         return
       }
-
       setAppliedPromo(data)
       addToast(`ДОСТУП РАЗРЕШЕН: -${data.discount}₽`, 'success')
     } catch (err) {
@@ -170,16 +212,35 @@ export default function CartPage() {
   const promoDiscount = appliedPromo ? Number(appliedPromo.discount) : 0
   const finalPrice = Math.max(0, totalPrice - spendAmount - promoDiscount)
 
-  const addToast = useCallback((message: string, type: 'error' | 'success') => {
-    const id = Date.now()
-    setToasts(prev => [...prev, { id, message, type }])
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000)
-  }, [])
+  // --- ФУНКЦИИ РАБОТЫ С БД ---
 
-  const handleUpdateQuantity = (id: string, size: string, newQty: number) => {
+  const handleUpdateQuantity = async (id: string, size: string, newQty: number) => {
     if (newQty < 1) return
-    if (updateQuantity) {
-      updateQuantity(id, size, newQty)
+    
+    // Оптимистичное обновление интерфейса
+    setDbCart(prev => prev.map(item => item.id === id ? { ...item, quantity: newQty } : item))
+
+    // Обновление в БД
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      await supabase
+        .from('cart')
+        .update({ quantity: newQty })
+        .match({ user_id: user.id, product_id: id })
+    }
+  }
+
+  const handleRemoveFromCart = async (id: string, size: string) => {
+    // Оптимистичное удаление
+    setDbCart(prev => prev.filter(item => item.id !== id))
+
+    // Удаление из БД
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      await supabase
+        .from('cart')
+        .delete()
+        .match({ user_id: user.id, product_id: id })
     }
   }
 
@@ -191,10 +252,8 @@ export default function CartPage() {
     }
 
     if (fullName.trim().length < 2) return addToast('ВВЕДИТЕ ВАШЕ ИМЯ', 'error')
-    
     const digitsOnly = phone.replace(/\D/g, '');
     if (digitsOnly.length < 11) return addToast('ВВЕДИТЕ КОРРЕКТНЫЙ НОМЕР ТЕЛЕФОНА', 'error')
-    
     if (deliveryMethod === 'mail' && address.trim().length < 10) return addToast('ВВЕДИТЕ ТОЧНЫЙ АДРЕС ПОЧТЫ', 'error')
     
     setIsOrdering(true)
@@ -208,7 +267,7 @@ export default function CartPage() {
 
       const orderPayload: any = {
         user_id: user.id,
-        items: cart, 
+        items: dbCart, // Отправляем корзину из БД
         total_amount: finalPrice,
         address: deliveryMethod === 'pickup' ? 'САМОВЫВОЗ' : address,
         delivery_type: deliveryMethod,
@@ -230,19 +289,7 @@ export default function CartPage() {
         .select()
         .single()
 
-      if (orderError && orderError.message.includes('promo_code')) {
-        delete orderPayload.promo_code
-        const { data: retryData, error: retryError } = await supabase
-          .from('orders')
-          .insert([orderPayload])
-          .select()
-          .single()
-        
-        if (retryError) throw retryError
-        orderData = retryData
-      } else if (orderError) {
-        throw orderError
-      }
+      if (orderError) throw orderError
 
       const finalOrder = orderData
 
@@ -258,29 +305,15 @@ export default function CartPage() {
 
       const historyRecords = []
       if (finalOrder) {
-        if (earnedBonuses > 0) {
-          historyRecords.push({
-            user_id: user.id,
-            amount: earnedBonuses,
-            reason: `Начисление за заказ #${finalOrder.id.slice(0, 8)}`,
-            type: 'earn'
-          })
-        }
-        if (spendAmount > 0) {
-          historyRecords.push({
-            user_id: user.id,
-            amount: -spendAmount,
-            reason: `Списание в заказе #${finalOrder.id.slice(0, 8)}`,
-            type: 'spend'
-          })
-        }
+        if (earnedBonuses > 0) historyRecords.push({ user_id: user.id, amount: earnedBonuses, reason: `Начисление за заказ #${finalOrder.id.slice(0, 8)}`, type: 'earn' })
+        if (spendAmount > 0) historyRecords.push({ user_id: user.id, amount: -spendAmount, reason: `Списание в заказе #${finalOrder.id.slice(0, 8)}`, type: 'spend' })
       }
+      if (historyRecords.length > 0) await supabase.from('bonus_history').insert(historyRecords)
 
-      if (historyRecords.length > 0) {
-        await supabase.from('bonus_history').insert(historyRecords)
-      }
+      // ОЧИСТКА КОРЗИНЫ В БД ПОСЛЕ ЗАКАЗА
+      await supabase.from('cart').delete().eq('user_id', user.id)
 
-      // ФИКСАЦИЯ ДАННЫХ ПЕРЕД ОЧИСТКОЙ
+      // ФИКСАЦИЯ ДАННЫХ ПЕРЕД ОЧИСТКОЙ СТЕЙТА
       const savedPrice = finalOrder?.total_amount || finalPrice;
       setConfirmedPrice(savedPrice); 
       setDisplayPrice(savedPrice);
@@ -288,9 +321,10 @@ export default function CartPage() {
       
       setShowPaymentModal(true);
       
-      // Небольшая задержка перед очисткой для стабильности стейта
+      // Очистка локального стейта и контекста
       setTimeout(() => {
-        clearCart();
+        setDbCart([])
+        if (contextClearCart) contextClearCart()
       }, 100);
       
     } catch (error: any) {
@@ -302,7 +336,7 @@ export default function CartPage() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white pt-32 pb-20 px-6 font-sans">
+    <main className="min-h-screen bg-black text-white pt-32 pb-20 px-6 font-sans relative overflow-hidden">
       <AnimatePresence>
         {toasts.map(t => (
           <Toast 
@@ -365,7 +399,7 @@ export default function CartPage() {
         )}
       </AnimatePresence>
 
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto relative z-10">
         <div className="flex items-center gap-5 mb-12 border-b border-white/5 pb-10">
           <motion.div 
             whileHover={{ rotate: 15 }}
@@ -378,29 +412,39 @@ export default function CartPage() {
             <div className="flex items-center gap-3">
               <span className="text-[10px] font-black text-[#d67a9d] uppercase tracking-[0.2em]">vsgiga shop</span>
               <div className="w-1 h-1 bg-white/20 rounded-full" />
-              <span className="text-[10px] font-medium text-white/40 uppercase tracking-widest">{totalItems} ТОВАРА(ОВ)</span>
+              <span className="text-[10px] font-medium text-white/40 uppercase tracking-widest">
+                {isLoading ? '...' : totalItems} ТОВАРА(ОВ)
+              </span>
             </div>
           </div>
         </div>
 
         <AnimatePresence mode="wait">
-          {cart.length === 0 && !showPaymentModal ? (
+          {dbCart.length === 0 && !showPaymentModal && !isLoading ? (
             <motion.div 
               key="empty-cart"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="py-32 flex flex-col items-center justify-center text-center rounded-[3rem] bg-[#050505] border border-white/5"
+              className="relative py-32 flex flex-col items-center justify-center text-center rounded-[3rem] bg-[#050505] border border-white/5 overflow-hidden"
             >
-              <div className="w-24 h-24 bg-white/[0.02] rounded-full flex items-center justify-center mb-6 border border-white/5">
-                <ShoppingBag size={40} className="text-white/10" />
+              {/* --- НОВАЯ АНИМАЦИЯ (AURORA) --- */}
+              <div className="absolute inset-0 opacity-30 pointer-events-none">
+                <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#d67a9d] rounded-full blur-[120px] animate-pulse" />
+                <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#71b3c9] rounded-full blur-[120px] animate-pulse delay-1000" />
               </div>
-              <h2 className="text-xl font-black italic uppercase mb-3 opacity-50">Здесь пока ничего нет</h2>
-              <Link href="/catalog">
-                <button className="px-10 py-4 bg-white text-black hover:bg-[#d67a9d] hover:text-white rounded-xl font-black uppercase text-[10px] tracking-widest transition-all duration-300">
-                  ОТКРЫТЬ КАТАЛОГ
-                </button>
-              </Link>
+
+              <div className="relative z-10">
+                <div className="w-24 h-24 bg-white/[0.02] rounded-full flex items-center justify-center mb-6 border border-white/5 backdrop-blur-sm">
+                  <ShoppingBag size={40} className="text-white/10" />
+                </div>
+                <h2 className="text-xl font-black italic uppercase mb-3 opacity-50">Здесь пока ничего нет</h2>
+                <Link href="/catalog">
+                  <button className="px-10 py-4 bg-white text-black hover:bg-[#d67a9d] hover:text-white rounded-xl font-black uppercase text-[10px] tracking-widest transition-all duration-300">
+                    ОТКРЫТЬ КАТАЛОГ
+                  </button>
+                </Link>
+              </div>
             </motion.div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
@@ -433,7 +477,7 @@ export default function CartPage() {
                 </motion.div>
 
                 <div className="space-y-4">
-                  {cart.map((item: any) => (
+                  {dbCart.map((item: any) => (
                     <motion.div 
                       key={`${item.id}-${item.selectedSize}`}
                       layout
@@ -453,7 +497,7 @@ export default function CartPage() {
                         <div className="flex justify-between items-start">
                           <h3 className="text-[16px] font-black italic uppercase truncate tracking-tight mb-1">{item.name}</h3>
                           <button 
-                            onClick={() => removeFromCart(item.id, item.selectedSize)} 
+                            onClick={() => handleRemoveFromCart(item.id, item.selectedSize)} 
                             className="text-white/10 hover:text-red-500 transition-colors p-1"
                           >
                             <Trash2 size={16} />
