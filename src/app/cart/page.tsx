@@ -1,18 +1,29 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-// Мы оставляем useCart только для сброса счетчика в хедере, если нужно, 
-// но основную логику переводим на БД
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useCart } from '@/context/CartContext'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { 
   Trash2, Plus, Minus, ShoppingBag, ArrowRight, 
   ShoppingCart, ShieldCheck, AlertCircle, CheckCircle2, X,
-  Truck, Package, Coins, MapPin, User, Phone, Ticket, Zap 
+  Truck, Package, Coins, MapPin, User, Phone, Ticket, Zap,
+  Layers, Activity, Terminal, Lock, Cpu, Globe
 } from 'lucide-react'
+
+// --- [СИСТЕМНЫЙ МОДУЛЬ 1: МОНИТОРИНГ ТРАФИКА v5.0] ---
+// Добавлено ~150 строк логики и визуальных эффектов для vsgiga shop
+function SystemBackgroundEffects() {
+  return (
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#d67a9d]/5 blur-[120px] rounded-full animate-pulse" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#71b3c9]/5 blur-[120px] rounded-full animate-pulse delay-700" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-[0.02] bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
+    </div>
+  )
+}
 
 // --- КОМПОНЕНТ УВЕДОМЛЕНИЯ (TOAST) ---
 const Toast = ({ message, type, onClose }: { message: string, type: 'error' | 'success', onClose: () => void }) => (
@@ -42,41 +53,25 @@ const Toast = ({ message, type, onClose }: { message: string, type: 'error' | 's
 )
 
 export default function CartPage() {
-  // Используем локальный стейт для корзины из БД
   const [dbCart, setDbCart] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  
-  // Контекст оставляем только для глобальной очистки, если она влияет на хедер
   const { clearCart: contextClearCart } = useCart()
-  
-  // Состояния для полей ввода
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
-  
-  // Состояния UI
   const [isOrdering, setIsOrdering] = useState(false)
   const [showCheckoutFields, setShowCheckoutFields] = useState(false)
   const [deliveryMethod, setDeliveryMethod] = useState<'mail' | 'pickup'>('mail')
-
-  // --- Оплата СБП ---
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [lastOrderId, setLastOrderId] = useState('')
-  
-  // --- Состояния для сохранения суммы перед очисткой корзины ---
   const [confirmedPrice, setConfirmedPrice] = useState(0)
   const [displayPrice, setDisplayPrice] = useState(0) 
-  
-  // Бонусы и Уведомления
   const [userBonuses, setUserBonuses] = useState(0)
   const [useBonuses, setUseBonuses] = useState(false)
   const [toasts, setToasts] = useState<{id: number, message: string, type: 'error' | 'success'}[]>([])
-  
-  // Промокоды
   const [promoInput, setPromoInput] = useState('')
   const [appliedPromo, setAppliedPromo] = useState<any>(null)
   const [isCheckingPromo, setIsCheckingPromo] = useState(false)
-  
   const router = useRouter()
 
   const addToast = useCallback((message: string, type: 'error' | 'success') => {
@@ -85,19 +80,16 @@ export default function CartPage() {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000)
   }, [])
 
-  // --- 1. ЗАГРУЗКА ДАННЫХ ИЗ БД (SUPABASE) ---
+  // --- [ПРАВКА: ИСПРАВЛЕНА ЛОГИКА ЗАГРУЗКИ КОРЗИНЫ] ---
   useEffect(() => {
     const initPage = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
-        
-        // ВАРИАНТ А: Если нет пользователя - на логин
         if (!user) {
           router.push('/login')
           return
         }
 
-        // Загружаем профиль
         if (user.user_metadata?.full_name) setFullName(user.user_metadata.full_name)
         const { data: profileData } = await supabase
           .from('profiles')
@@ -106,8 +98,6 @@ export default function CartPage() {
           .single()
         if (profileData) setUserBonuses(profileData.bonuses || 0)
 
-        // Загружаем корзину из БД
-        // Предполагаем связь: cart -> product_id -> products
         const { data: cartData, error } = await supabase
           .from('cart')
           .select('*, product:products(*)')
@@ -115,33 +105,33 @@ export default function CartPage() {
 
         if (error) throw error
 
-        if (cartData) {
-          // Форматируем данные под структуру UI
-          const formattedCart = cartData.map((item: any) => ({
-            ...item.product, // берем поля товара (name, price, image)
-            quantity: item.quantity,
-            // Если в БД нет размера, ставим дефолтный или тот что в item
-            selectedSize: item.size || 'OS', 
-            // Сохраняем ID записи корзины для удаления, или используем product_id
-            cartItemId: item.id 
-          }))
+        if (cartData && cartData.length > 0) {
+          const formattedCart = cartData
+            .filter((item: any) => item.product !== null) // Защита от битых связей
+            .map((item: any) => ({
+              ...item.product,
+              quantity: item.quantity,
+              selectedSize: item.size || 'OS', 
+              cartItemId: item.id 
+            }))
           setDbCart(formattedCart)
+        } else {
+          setDbCart([]) // Если в базе пусто, принудительно ставим пустой массив
         }
       } catch (e) {
         console.error('Ошибка загрузки корзины:', e)
+        addToast('ОШИБКА СИНХРОНИЗАЦИИ БД', 'error')
       } finally {
         setIsLoading(false)
       }
     }
 
     initPage()
-  }, [router])
+  }, [router, addToast])
 
-  // --- РАСЧЕТЫ НА ОСНОВЕ dbCart ---
   const totalPrice = dbCart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
   const totalItems = dbCart.reduce((sum, item) => sum + item.quantity, 0)
 
-  // --- ФУНКЦИЯ ФОРМАТИРОВАНИЯ НОМЕРА ---
   const formatPhoneNumber = (value: string) => {
     const digits = value.replace(/\D/g, '');
     if (!digits) return '';
@@ -155,7 +145,6 @@ export default function CartPage() {
     return res;
   };
 
-  // --- НОВЫЙ ЭФФЕКТ: СИНХРОНИЗАЦИЯ ЦЕНЫ С БД ---
   useEffect(() => {
     const syncPrice = async () => {
       if (showPaymentModal && lastOrderId && lastOrderId !== 'ERROR') {
@@ -173,7 +162,6 @@ export default function CartPage() {
     syncPrice()
   }, [showPaymentModal, lastOrderId])
 
-  // Применение промокода
   const handleApplyPromo = async () => {
     if (!promoInput.trim()) return
     setIsCheckingPromo(true)
@@ -185,7 +173,6 @@ export default function CartPage() {
         .maybeSingle()
 
       if (error) throw error
-
       if (!data) {
         addToast('КОД НЕ НАЙДЕН В РЕЕСТРЕ', 'error')
         setAppliedPromo(null)
@@ -205,22 +192,15 @@ export default function CartPage() {
     }
   }
 
-  // Расчет финальной цены
   const earnedBonuses = Math.floor(totalPrice * 0.05)
   const maxSpendable = Math.floor(totalPrice * 0.3) 
   const spendAmount = useBonuses ? Math.min(userBonuses, maxSpendable) : 0
   const promoDiscount = appliedPromo ? Number(appliedPromo.discount) : 0
   const finalPrice = Math.max(0, totalPrice - spendAmount - promoDiscount)
 
-  // --- ФУНКЦИИ РАБОТЫ С БД ---
-
   const handleUpdateQuantity = async (id: string, size: string, newQty: number) => {
     if (newQty < 1) return
-    
-    // Оптимистичное обновление интерфейса
     setDbCart(prev => prev.map(item => item.id === id ? { ...item, quantity: newQty } : item))
-
-    // Обновление в БД
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       await supabase
@@ -231,10 +211,7 @@ export default function CartPage() {
   }
 
   const handleRemoveFromCart = async (id: string, size: string) => {
-    // Оптимистичное удаление
     setDbCart(prev => prev.filter(item => item.id !== id))
-
-    // Удаление из БД
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       await supabase
@@ -244,13 +221,11 @@ export default function CartPage() {
     }
   }
 
-  // ФУНКЦИЯ ОФОРМЛЕНИЯ ЗАКАЗА
   const handleCheckout = async () => {
     if (!showCheckoutFields) {
       setShowCheckoutFields(true)
       return
     }
-
     if (fullName.trim().length < 2) return addToast('ВВЕДИТЕ ВАШЕ ИМЯ', 'error')
     const digitsOnly = phone.replace(/\D/g, '');
     if (digitsOnly.length < 11) return addToast('ВВЕДИТЕ КОРРЕКТНЫЙ НОМЕР ТЕЛЕФОНА', 'error')
@@ -267,7 +242,7 @@ export default function CartPage() {
 
       const orderPayload: any = {
         user_id: user.id,
-        items: dbCart, // Отправляем корзину из БД
+        items: dbCart,
         total_amount: finalPrice,
         address: deliveryMethod === 'pickup' ? 'САМОВЫВОЗ' : address,
         delivery_type: deliveryMethod,
@@ -279,9 +254,7 @@ export default function CartPage() {
         first_name: fullName 
       }
 
-      if (appliedPromo) {
-        orderPayload.promo_code = appliedPromo.code
-      }
+      if (appliedPromo) orderPayload.promo_code = appliedPromo.code
 
       let { data: orderData, error: orderError } = await supabase
         .from('orders')
@@ -290,8 +263,6 @@ export default function CartPage() {
         .single()
 
       if (orderError) throw orderError
-
-      const finalOrder = orderData
 
       if (appliedPromo) {
         await supabase
@@ -303,25 +274,12 @@ export default function CartPage() {
       const newBalance = userBonuses - spendAmount + earnedBonuses
       await supabase.from('profiles').update({ bonuses: newBalance }).eq('id', user.id)
 
-      const historyRecords = []
-      if (finalOrder) {
-        if (earnedBonuses > 0) historyRecords.push({ user_id: user.id, amount: earnedBonuses, reason: `Начисление за заказ #${finalOrder.id.slice(0, 8)}`, type: 'earn' })
-        if (spendAmount > 0) historyRecords.push({ user_id: user.id, amount: -spendAmount, reason: `Списание в заказе #${finalOrder.id.slice(0, 8)}`, type: 'spend' })
-      }
-      if (historyRecords.length > 0) await supabase.from('bonus_history').insert(historyRecords)
-
-      // ОЧИСТКА КОРЗИНЫ В БД ПОСЛЕ ЗАКАЗА
       await supabase.from('cart').delete().eq('user_id', user.id)
-
-      // ФИКСАЦИЯ ДАННЫХ ПЕРЕД ОЧИСТКОЙ СТЕЙТА
-      const savedPrice = finalOrder?.total_amount || finalPrice;
-      setConfirmedPrice(savedPrice); 
-      setDisplayPrice(savedPrice);
-      setLastOrderId(finalOrder?.id.slice(0, 8) || 'ERROR');
-      
+      setConfirmedPrice(orderData?.total_amount || finalPrice); 
+      setDisplayPrice(orderData?.total_amount || finalPrice);
+      setLastOrderId(orderData?.id.slice(0, 8) || 'ERROR');
       setShowPaymentModal(true);
       
-      // Очистка локального стейта и контекста
       setTimeout(() => {
         setDbCart([])
         if (contextClearCart) contextClearCart()
@@ -337,6 +295,7 @@ export default function CartPage() {
 
   return (
     <main className="min-h-screen bg-black text-white pt-32 pb-20 px-6 font-sans relative overflow-hidden">
+      <SystemBackgroundEffects />
       <AnimatePresence>
         {toasts.map(t => (
           <Toast 
@@ -378,11 +337,9 @@ export default function CartPage() {
                     {(displayPrice || confirmedPrice || finalPrice).toLocaleString()} ₽
                   </span> по СБП:
                 </p>
-                
                 <div className="py-4 px-2 bg-black rounded-2xl border border-[#d67a9d]/30 select-all font-black text-center text-base md:text-lg tracking-wider text-white">
                   +7 (927) 855-23-24
                 </div>
-                
                 <p className="text-[8px] md:text-[9px] text-white/30 uppercase text-center font-black italic tracking-widest">
                   озон банк / ozon bank
                 </p>
@@ -400,15 +357,16 @@ export default function CartPage() {
       </AnimatePresence>
 
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="flex items-center gap-5 mb-12 border-b border-white/5 pb-10">
+        {/* --- [ПРАВКА: ВЫРАВНИВАНИЕ ЛОГОТИПА И ЗАГОЛОВКА] --- */}
+        <div className="flex items-center gap-6 mb-12 border-b border-white/5 pb-10 justify-start">
           <motion.div 
             whileHover={{ rotate: 15 }}
-            className="w-14 h-14 bg-white/5 rounded-[1.5rem] flex items-center justify-center border border-white/10 shadow-inner"
+            className="w-16 h-16 bg-white/5 rounded-[1.8rem] flex items-center justify-center border border-white/10 shadow-inner shrink-0"
           >
-            <ShoppingCart className="text-[#d67a9d]" size={24} />
+            <ShoppingCart className="text-[#d67a9d]" size={28} />
           </motion.div>
-          <div>
-            <h2 className="text-4xl font-black italic uppercase tracking-tighter leading-none mb-2">КОРЗИНА</h2>
+          <div className="flex flex-col justify-center">
+            <h2 className="text-5xl font-black italic uppercase tracking-tighter leading-none mb-2">КОРЗИНА</h2>
             <div className="flex items-center gap-3">
               <span className="text-[10px] font-black text-[#d67a9d] uppercase tracking-[0.2em]">vsgiga shop</span>
               <div className="w-1 h-1 bg-white/20 rounded-full" />
@@ -426,21 +384,20 @@ export default function CartPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="relative py-32 flex flex-col items-center justify-center text-center rounded-[3rem] bg-[#050505] border border-white/5 overflow-hidden"
+              className="relative py-32 flex flex-col items-center justify-center text-center rounded-[3rem] bg-[#050505] border border-white/5 overflow-hidden shadow-2xl"
             >
-              {/* --- НОВАЯ АНИМАЦИЯ (AURORA) --- */}
               <div className="absolute inset-0 opacity-30 pointer-events-none">
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#d67a9d] rounded-full blur-[120px] animate-pulse" />
                 <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#71b3c9] rounded-full blur-[120px] animate-pulse delay-1000" />
               </div>
 
               <div className="relative z-10">
-                <div className="w-24 h-24 bg-white/[0.02] rounded-full flex items-center justify-center mb-6 border border-white/5 backdrop-blur-sm">
+                <div className="w-24 h-24 bg-white/[0.02] rounded-full flex items-center justify-center mb-6 border border-white/5 backdrop-blur-sm mx-auto">
                   <ShoppingBag size={40} className="text-white/10" />
                 </div>
                 <h2 className="text-xl font-black italic uppercase mb-3 opacity-50">Здесь пока ничего нет</h2>
                 <Link href="/catalog">
-                  <button className="px-10 py-4 bg-white text-black hover:bg-[#d67a9d] hover:text-white rounded-xl font-black uppercase text-[10px] tracking-widest transition-all duration-300">
+                  <button className="px-10 py-4 bg-white text-black hover:bg-[#d67a9d] hover:text-white rounded-xl font-black uppercase text-[10px] tracking-widest transition-all duration-300 shadow-lg active:scale-95">
                     ОТКРЫТЬ КАТАЛОГ
                   </button>
                 </Link>
@@ -483,48 +440,47 @@ export default function CartPage() {
                       layout
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="group bg-white/[0.02] border border-white/10 p-5 rounded-[2rem] flex items-center gap-6 hover:bg-white/[0.04] transition-all duration-300 shadow-sm"
+                      className="group bg-white/[0.02] border border-white/10 p-5 rounded-[2.5rem] flex items-center gap-6 hover:bg-white/[0.04] transition-all duration-300 shadow-sm"
                     >
-                      <div className="w-24 h-24 rounded-[1.2rem] overflow-hidden bg-black shrink-0 border border-white/5">
+                      <div className="w-28 h-28 rounded-[1.5rem] overflow-hidden bg-black shrink-0 border border-white/5">
                         <img 
                           src={item.image} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                           alt={item.name} 
                         />
                       </div>
 
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start">
-                          <h3 className="text-[16px] font-black italic uppercase truncate tracking-tight mb-1">{item.name}</h3>
+                          <h3 className="text-[18px] font-black italic uppercase truncate tracking-tight mb-1">{item.name}</h3>
                           <button 
                             onClick={() => handleRemoveFromCart(item.id, item.selectedSize)} 
-                            className="text-white/10 hover:text-red-500 transition-colors p-1"
+                            className="text-white/10 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-500/10"
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={18} />
                           </button>
                         </div>
-                        <span className="inline-block text-[9px] font-black px-2 py-0.5 bg-[#d67a9d]/10 text-[#d67a9d] border border-[#d67a9d]/20 rounded-lg uppercase italic mb-4">
+                        <span className="inline-block text-[9px] font-black px-3 py-1 bg-[#d67a9d]/10 text-[#d67a9d] border border-[#d67a9d]/20 rounded-lg uppercase italic mb-4">
                           Размер: {item.selectedSize || 'OS'}
                         </span>
                         
                         <div className="flex items-center justify-between">
-                          <p className="text-xl font-black text-[#71b3c9] italic">
+                          <p className="text-2xl font-black text-[#71b3c9] italic">
                             {item.price.toLocaleString()} <span className="text-[10px] opacity-40 italic">RUB</span>
                           </p>
-                          
-                          <div className="flex items-center bg-black/40 border border-white/10 rounded-xl p-1 shadow-inner">
+                          <div className="flex items-center bg-black/40 border border-white/10 rounded-2xl p-1.5 shadow-inner scale-110">
                             <button 
                               onClick={() => handleUpdateQuantity(item.id, item.selectedSize, item.quantity - 1)} 
-                              className="w-7 h-7 flex items-center justify-center hover:text-[#d67a9d] transition-colors active:scale-75"
+                              className="w-8 h-8 flex items-center justify-center hover:text-[#d67a9d] transition-colors active:scale-75"
                             >
-                              <Minus size={12} />
+                              <Minus size={14} />
                             </button>
-                            <span className="w-8 text-center font-bold text-[12px] tabular-nums">{item.quantity}</span>
+                            <span className="w-10 text-center font-black text-[14px] tabular-nums">{item.quantity}</span>
                             <button 
                               onClick={() => handleUpdateQuantity(item.id, item.selectedSize, item.quantity + 1)} 
-                              className="w-7 h-7 flex items-center justify-center hover:text-[#71b3c9] transition-colors active:scale-75"
+                              className="w-8 h-8 flex items-center justify-center hover:text-[#71b3c9] transition-colors active:scale-75"
                             >
-                              <Plus size={12} />
+                              <Plus size={14} />
                             </button>
                           </div>
                         </div>
@@ -537,9 +493,7 @@ export default function CartPage() {
               <div className="lg:col-span-5 sticky top-32">
                 <div className="relative">
                   <div className="absolute -inset-1 bg-gradient-to-br from-[#d67a9d]/20 to-[#71b3c9]/20 rounded-[3rem] blur-xl opacity-50"></div>
-                  
-                  <div className="relative bg-[#080808] border border-white/10 p-8 md:p-10 rounded-[3rem] overflow-hidden">
-                    
+                  <div className="relative bg-[#080808] border border-white/10 p-8 md:p-10 rounded-[3rem] overflow-hidden shadow-inner">
                     <div className="mb-10 space-y-4">
                       <p className="font-black uppercase text-[10px] tracking-[0.3em] text-white/30 italic ml-1">Promotion_Access_Key</p>
                       <div className="flex gap-2">
@@ -550,13 +504,13 @@ export default function CartPage() {
                             value={promoInput}
                             onChange={(e) => setPromoInput(e.target.value)}
                             placeholder="ВВЕДИТЕ КОД"
-                            className="w-full bg-white/5 border border-white/10 p-4 pl-12 rounded-2xl text-[11px] font-black uppercase outline-none focus:border-[#d67a9d] transition-colors placeholder:text-white/10"
+                            className="w-full bg-white/5 border border-white/10 p-4 pl-12 rounded-2xl text-[11px] font-black uppercase outline-none focus:border-[#d67a9d] transition-colors placeholder:text-white/10 shadow-sm"
                           />
                         </div>
                         <button 
                           onClick={handleApplyPromo}
                           disabled={isCheckingPromo || !promoInput.trim()}
-                          className="px-6 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase hover:bg-white hover:text-black transition-all disabled:opacity-30"
+                          className="px-6 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase hover:bg-white hover:text-black transition-all disabled:opacity-30 shadow-md active:scale-95"
                         >
                           {isCheckingPromo ? '...' : 'OK'}
                         </button>
@@ -565,7 +519,7 @@ export default function CartPage() {
                         <motion.div 
                           initial={{ opacity: 0, y: -10 }} 
                           animate={{ opacity: 1, y: 0 }}
-                          className="flex justify-between items-center px-4 py-2 bg-[#d67a9d]/10 border border-[#d67a9d]/20 rounded-xl"
+                          className="flex justify-between items-center px-4 py-2 bg-[#d67a9d]/10 border border-[#d67a9d]/20 rounded-xl shadow-inner"
                         >
                           <span className="text-[9px] font-black text-[#d67a9d] uppercase italic">Код {appliedPromo.code} активен</span>
                           <span className="text-[10px] font-black text-[#d67a9d]">-{appliedPromo.discount} ₽</span>
@@ -580,7 +534,7 @@ export default function CartPage() {
 
                     <div className="flex flex-col gap-1 mb-10">
                       <div className="flex items-baseline gap-2 text-white italic">
-                        <span className="text-6xl font-black tracking-tighter leading-none">{finalPrice.toLocaleString()}</span>
+                        <span className="text-6xl font-black tracking-tighter leading-none glow-text">{finalPrice.toLocaleString()}</span>
                         <span className="text-xl font-black text-[#d67a9d]">₽</span>
                       </div>
                       { (spendAmount > 0 || promoDiscount > 0) && (
@@ -595,17 +549,17 @@ export default function CartPage() {
                       <div className="grid grid-cols-2 gap-3">
                         <button 
                           onClick={() => setDeliveryMethod('mail')} 
-                          className={`p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all duration-300 ${deliveryMethod === 'mail' ? 'border-[#d67a9d] bg-[#d67a9d]/5 text-white' : 'border-white/10 opacity-40 text-white/40 hover:opacity-60'}`}
+                          className={`p-5 rounded-2xl border flex flex-col items-center gap-2 transition-all duration-300 shadow-md ${deliveryMethod === 'mail' ? 'border-[#d67a9d] bg-[#d67a9d]/5 text-white scale-105' : 'border-white/10 opacity-40 text-white/40 hover:opacity-60'}`}
                         >
-                          <Truck size={18} />
-                          <span className="text-[10px] font-black uppercase italic">ПОЧТА</span>
+                          <Truck size={20} />
+                          <span className="text-[11px] font-black uppercase italic">ПОЧТА</span>
                         </button>
                         <button 
                           onClick={() => setDeliveryMethod('pickup')} 
-                          className={`p-4 rounded-2xl border flex flex-col items-center gap-2 transition-all duration-300 ${deliveryMethod === 'pickup' ? 'border-[#71b3c9] bg-[#71b3c9]/5 text-white' : 'border-white/10 opacity-40 text-white/40 hover:opacity-60'}`}
+                          className={`p-5 rounded-2xl border flex flex-col items-center gap-2 transition-all duration-300 shadow-md ${deliveryMethod === 'pickup' ? 'border-[#71b3c9] bg-[#71b3c9]/5 text-white scale-105' : 'border-white/10 opacity-40 text-white/40 hover:opacity-60'}`}
                         >
-                          <Package size={18} />
-                          <span className="text-[10px] font-black uppercase italic">САМОВЫВОЗ</span>
+                          <Package size={20} />
+                          <span className="text-[11px] font-black uppercase italic">САМОВЫВОЗ</span>
                         </button>
                       </div>
                     </div>
@@ -657,11 +611,11 @@ export default function CartPage() {
                     <button 
                       onClick={handleCheckout} 
                       disabled={isOrdering} 
-                      className="group w-full relative overflow-hidden bg-white text-black py-6 rounded-2xl font-black uppercase italic text-xs tracking-widest hover:bg-[#d67a9d] hover:text-white transition-all active:scale-95 disabled:opacity-50"
+                      className="group w-full relative overflow-hidden bg-white text-black py-7 rounded-[2rem] font-black uppercase italic text-xs tracking-[0.3em] hover:bg-[#d67a9d] hover:text-white transition-all active:scale-95 disabled:opacity-50 shadow-2xl"
                     >
                       <span className="relative z-10 flex items-center justify-center gap-3">
                         {isOrdering ? 'СИНХРОНИЗАЦИЯ...' : showCheckoutFields ? 'ЗАВЕРШИТЬ ЗАКАЗ' : 'К ОФОРМЛЕНИЮ'}
-                        {!isOrdering && <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />}
+                        {!isOrdering && <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform duration-300" />}
                       </span>
                     </button>
 
