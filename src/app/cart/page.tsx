@@ -470,26 +470,32 @@ export default function CartPage() {
       }
 
       // СОБИРАЕМ ТОВАРЫ ДЛЯ БД (Исправляем проблему отсутствия размера)
-      const itemsForOrder = dbCart.map(item => {
-        // Ищем размер, который помечен как выбранный в твоем массиве sizes
-        const selectedSizeObj = Array.isArray(item.sizes)
-          ? item.sizes.find((s: any) => s.selected === true || s.active === true)
-          : null;
+      const itemsForDatabase = dbCart.map(item => {
+        // Логируем каждый айтем, чтобы в консоли (F12) увидеть, где именно лежит XL
+        console.log("Проверка товара перед отправкой в БД:", item);
+
+        // 1. Пытаемся найти XL в разных полях
+        const selectedSize =
+          item.selectedSize || // Самый частый вариант
+          item.size ||         // Твой текущий вариант
+          item.variant ||      // Иногда размер называют вариантом
+          (item.sizes && Array.isArray(item.sizes) && item.sizes.find((s: any) => s.selected === true)?.name);
 
         return {
           id: item.id,
+          product_id: item.product_id || item.id,
           name: item.name || 'Товар',
           price: item.price,
           quantity: item.quantity || 1,
-          // Если нашли выбранный в массиве - берем его, иначе ищем в корне, иначе OS
-          size: selectedSizeObj?.name || selectedSizeObj?.value || item.size || item.selectedSize || 'OS',
+          // Если нашли XL — пишем его, если нет — пишем OS
+          size: selectedSize || 'OS',
           image: item.image || (item.images && item.images[0]) || ''
         };
       });
 
       const { error: orderError } = await supabase.from('orders').insert([{
         user_id: user.id,
-        items: itemsForOrder,
+        items: itemsForDatabase,
         total_amount: finalPrice,
         address,
         delivery_type: deliveryMethod,
