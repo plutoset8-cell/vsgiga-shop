@@ -461,22 +461,34 @@ export default function CartPage() {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser()
 
+      // Расчет цены (твои оригинальные строки, перенесены чуть выше, чтобы сработать до return)
+      const calculatedPrice = Math.max(0, totalPrice - spendAmount - (appliedPromo ? Number(appliedPromo.discount) : 0));
+
       if (userError || !user) {
         addToast('ОШИБКА: ВЫ НЕ АВТОРИЗОВАНЫ', 'error')
+        setOrderPrice(calculatedPrice); // Твоя строка
         setIsOrdering(false)
         return;
-
-        const calculatedPrice = Math.max(0, totalPrice - spendAmount - (appliedPromo ? Number(appliedPromo.discount) : 0));
-        setOrderPrice(calculatedPrice);
       }
+
+      // СОХРАНЯЕМ ВСЕ ДАННЫЕ ТОВАРОВ, ВКЛЮЧАЯ РАЗМЕР
+      // Это гарантирует, что в поле items в БД попадет объект с ключом "size"
+      const itemsForOrder = dbCart.map(item => ({
+        id: item.product_id || item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        size: item.size || 'OS', // Вот здесь фиксируем размер
+        image_url: item.image || item.image_url
+      }));
 
       const { error: orderError } = await supabase.from('orders').insert([{
         user_id: user.id,
-        items: dbCart,
+        items: itemsForOrder, // Используем подготовленный массив
         total_amount: finalPrice,
         address,
         delivery_type: deliveryMethod,
-        customer_name: fullName,
+        customer_name: fullName, // Твоё ФИО
         phone,
         status: 'pending',
         payment_method: 'transfer_to_phone',
@@ -487,6 +499,7 @@ export default function CartPage() {
         // Это выведет реальную причину (например: "column items does not exist")
         addToast(`ОШИБКА БД: ${orderError.message}`, 'error')
         console.error(orderError)
+        setIsOrdering(false)
         return
       }
 
@@ -494,7 +507,8 @@ export default function CartPage() {
       contextClearCart()
       setDbCart([])
       setShowPaymentModal(true)
-      // Считаем финальную сумму один раз при нажатии кнопки
+
+      // Считаем финальную сумму один раз при нажатии кнопки (твои строки)
       const finalPayable = Math.max(0, totalPrice - spendAmount - (appliedPromo ? Number(appliedPromo.discount) : 0));
       setConfirmedPrice(finalPayable);
       setIsOrdering(true);
@@ -505,6 +519,8 @@ export default function CartPage() {
       setIsOrdering(false)
     }
   }
+
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
