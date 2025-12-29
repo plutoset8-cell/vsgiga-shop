@@ -435,10 +435,8 @@ export default function CartPage() {
 
     const priceToPay = finalPrice;
     setFrozenPrice(priceToPay);
-
     setOrderAmount(finalPrice);
 
-    // Проверка телефона (убираем + и считаем цифры)
     const purePhone = phone.replace(/\D/g, '');
 
     if (fullName.length < 5) {
@@ -460,6 +458,8 @@ export default function CartPage() {
 
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+      // Твои оригинальные расчеты
       const calculatedPrice = Math.max(0, totalPrice - spendAmount - (appliedPromo ? Number(appliedPromo.discount) : 0));
 
       if (userError || !user) {
@@ -469,25 +469,27 @@ export default function CartPage() {
         return;
       }
 
-      // ФИНАЛЬНЫЙ ФИКС СБОРА ДАННЫХ
+      // СОБИРАЕМ ТОВАРЫ ДЛЯ БД (Исправляем проблему отсутствия размера)
       const itemsForOrder = dbCart.map(item => {
-        // Логируем в консоль, чтобы ты сам увидел, что лежит в item, если снова не сработает
-        console.log("Данные товара из корзины:", item); 
+        // Ищем размер, который помечен как выбранный в твоем массиве sizes
+        const selectedSizeObj = Array.isArray(item.sizes)
+          ? item.sizes.find((s: any) => s.selected === true || s.active === true)
+          : null;
 
         return {
-          id: item.product_id || item.id,
-          name: item.name || item.title || 'Товар',
+          id: item.id,
+          name: item.name || 'Товар',
           price: item.price,
-          quantity: item.quantity,
-          // Проверяем все возможные варианты, где может прятаться размер
-          size: item.size || item.selectedSize || item.variant || 'OS', 
-          image: item.image || item.image_url
+          quantity: item.quantity || 1,
+          // Если нашли выбранный в массиве - берем его, иначе ищем в корне, иначе OS
+          size: selectedSizeObj?.name || selectedSizeObj?.value || item.size || item.selectedSize || 'OS',
+          image: item.image || (item.images && item.images[0]) || ''
         };
       });
 
       const { error: orderError } = await supabase.from('orders').insert([{
         user_id: user.id,
-        items: itemsForOrder, 
+        items: itemsForOrder,
         total_amount: finalPrice,
         address,
         delivery_type: deliveryMethod,
@@ -497,10 +499,8 @@ export default function CartPage() {
         payment_method: 'transfer_to_phone',
         payment_target: '79278552324'
       }])
-// ... остальной твой код без изменений
 
       if (orderError) {
-        // Это выведет реальную причину (например: "column items does not exist")
         addToast(`ОШИБКА БД: ${orderError.message}`, 'error')
         console.error(orderError)
         setIsOrdering(false)
@@ -512,7 +512,6 @@ export default function CartPage() {
       setDbCart([])
       setShowPaymentModal(true)
 
-      // Считаем финальную сумму один раз при нажатии кнопки (твои строки)
       const finalPayable = Math.max(0, totalPrice - spendAmount - (appliedPromo ? Number(appliedPromo.discount) : 0));
       setConfirmedPrice(finalPayable);
       setIsOrdering(true);
