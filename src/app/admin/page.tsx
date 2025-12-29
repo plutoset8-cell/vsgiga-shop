@@ -113,7 +113,8 @@ export default function AdminPage() {
     'Отгружен на складе',
     'Отправлен в город получателя',
     'В пункте выдачи',
-    'Получен'
+    'Получен',
+    'ОТКЛОНЕН: НЕ ОПЛАЧЕН (48Ч)' // Добавляем этот статус
   ]
 
   // Инициализация
@@ -716,6 +717,21 @@ export default function AdminPage() {
                       >
                         {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
+                      {/* КНОПКА БЫСТРОЙ ОТМЕНЫ (ТОЛЬКО ЕСЛИ ЗАКАЗ ЕЩЕ НЕ ОТКЛОНЕН) */}
+                      {order.status !== 'ОТКЛОНЕН: НЕ ОПЛАЧЕН (48Ч)' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation(); // Чтобы не открывалась карточка заказа при клике
+                            if (confirm('ОТКЛОНИТЬ ЗАКАЗ ЗА НЕУПЛАТУ?')) {
+                              updateOrderStatus(e as any, order.id, 'ОТКЛОНЕН: НЕ ОПЛАЧЕН (48Ч)');
+                            }
+                          }}
+                          className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all border border-red-500/20 group"
+                          title="Отклонить: не оплачен 48ч"
+                        >
+                          <EyeOff size={18} className="group-hover:scale-110 transition-transform" />
+                        </button>
+                      )}
                       <button
                         onClick={(e) => toggleOrder(e, order.id)}
                         className="p-4 bg-white/5 rounded-2xl"
@@ -770,9 +786,31 @@ export default function AdminPage() {
                             <h4 className="flex items-center gap-3 text-[10px] font-black text-white uppercase tracking-[0.3em] italic">
                               <ShoppingBag size={14} /> Состав заказа
                             </h4>
+
+                            {/* ВЫВОД ПРОМОКОДА И СКИДКИ (ЕСЛИ ЕСТЬ) */}
+                            {(order.applied_promo || (order.discount_amount > 0)) && (
+                              <div className="bg-[#71b3c9]/10 border border-[#71b3c9]/20 p-4 rounded-2xl mb-2">
+                                <p className="text-[9px] font-black text-[#71b3c9] uppercase tracking-widest mb-1">Примененный бонус:</p>
+                                <div className="flex justify-between items-center">
+                                  <p className="font-black italic text-sm uppercase">{order.applied_promo || 'ПРОМОКОД'}</p>
+                                  <p className="font-black text-[#d67a9d] text-sm">-{order.discount_amount?.toLocaleString()} ₽</p>
+                                </div>
+                              </div>
+                            )}
+
                             <div className="space-y-2">
                               {order.items?.map((item: any, i: number) => (
-                                <div key={i} className="flex justify-between items-center bg-white text-black p-4 rounded-xl">
+                                <div key={i} className="flex justify-between items-center bg-white text-black p-4 rounded-xl gap-4">
+
+                                  {/* ФОТО ТОВАРА В ЗАКАЗЕ */}
+                                  <div className="w-12 h-12 rounded-lg bg-black overflow-hidden border border-black/10 flex-shrink-0">
+                                    <img
+                                      src={item.image || (item.images && item.images[0]) || ''}
+                                      className="w-full h-full object-cover"
+                                      alt={item.name}
+                                    />
+                                  </div>
+
                                   <div className="flex-1">
                                     <p className="text-[10px] font-black uppercase leading-none">{item.name || 'Товар'}</p>
                                     <div className="flex gap-2 mt-1">
