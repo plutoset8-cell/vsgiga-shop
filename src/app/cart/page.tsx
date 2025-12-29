@@ -579,14 +579,14 @@ export default function CartPage() {
                       damping: 20,
                       delay: idx * 0.1
                     }}
-                    className="bg-[#080808] border border-white/5 p-12 rounded-[5rem] flex flex-col md:flex-row items-center gap-16 group hover:border-[#ff007a]/40 transition-all duration-700 relative overflow-hidden shadow-2xl"
+                    className="bg-[#080808] border border-white/5 p-4 md:p-12 rounded-[1.5rem] md:rounded-[5rem] flex flex-row items-center gap-4 md:gap-16 group hover:border-[#ff007a]/40 transition-all duration-700 relative overflow-hidden shadow-2xl"
                   >
                     {/* ТЕКСТУРНЫЙ СЛОЙ КАРТОЧКИ */}
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
                     <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-[#ff007a]/5 rounded-full blur-[100px] pointer-events-none group-hover:bg-[#ff007a]/10 transition-colors" />
 
                     {/* ПРЕВЬЮ ОБЪЕКТА */}
-                    <div className="w-56 h-72 bg-black rounded-[3.5rem] overflow-hidden border border-white/5 shrink-0 relative shadow-[0_30px_60px_rgba(0,0,0,0.5)]">
+                    <div className="w-20 h-24 md:w-56 md:h-72 bg-black rounded-lg md:rounded-[3.5rem] overflow-hidden border border-white/5 shrink-0 relative shadow-2xl">
                       <motion.img
                         whileHover={{ scale: 1.15, rotate: 2 }}
                         src={item.image}
@@ -606,7 +606,7 @@ export default function CartPage() {
                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                             <span className="text-[10px] text-white/20 font-black uppercase tracking-widest">Status: Asset_Synchronized</span>
                           </motion.div>
-                          <h3 className="text-5xl font-black italic uppercase tracking-tighter leading-none group-hover:text-[#ff007a] transition-colors duration-500">
+                          <h3 className="text-sm md:text-5xl font-black italic uppercase tracking-tighter leading-none group-hover:text-[#ff007a] transition-colors duration-500">
                             {item.name}
                           </h3>
                         </div>
@@ -619,7 +619,7 @@ export default function CartPage() {
                       </div>
 
                       {/* ТАБЛИЦА ИНЖЕНЕРНЫХ СПЕЦИФИКАЦИЙ */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 p-6 bg-white/[0.02] rounded-[2.5rem] border border-white/[0.05] mb-10">
+                      <div className="hidden md:grid grid-cols-2 sm:grid-cols-4 gap-6 p-6 bg-white/[0.02] rounded-[2.5rem] border border-white/5 backdrop-blur-sm mt-8">
                         <div className="space-y-1.5">
                           <p className="text-[8px] font-black text-white/20 uppercase tracking-widest italic text-center">Protocol</p>
                           <p className="text-[11px] font-mono text-white/60 text-center uppercase tracking-tighter">OPIUM_v{idx + 1}</p>
@@ -647,7 +647,7 @@ export default function CartPage() {
                         </div>
 
                         {/* ПАНЕЛЬ УПРАВЛЕНИЯ КОЛИЧЕСТВОМ */}
-                        <div className="flex items-center bg-black border-2 border-white/5 p-4 rounded-[2.5rem] gap-10 shadow-inner group-hover:border-[#ff007a]/20 transition-all">
+                        <div className="flex items-center bg-black border border-white/5 p-1 md:p-4 rounded-lg md:rounded-[2.5rem] gap-2 md:gap-10 shadow-inner">
                           <motion.button
                             whileTap={{ scale: 0.7 }}
                             onClick={() => handleUpdateQuantity(item.id, item.quantity, -1)}
