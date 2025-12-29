@@ -472,14 +472,14 @@ export default function CartPage() {
       }
 
       // СОХРАНЯЕМ ВСЕ ДАННЫЕ ТОВАРОВ, ВКЛЮЧАЯ РАЗМЕР
-      // Это гарантирует, что в поле items в БД попадет объект с ключом "size"
+      // Добавлена поддержка title/name и image для полной совместимости с логистикой админки
       const itemsForOrder = dbCart.map(item => ({
         id: item.product_id || item.id,
-        name: item.name,
+        name: item.name || item.title || 'Товар', // Гарантируем имя для админки
         price: item.price,
         quantity: item.quantity,
-        size: item.size || 'OS', // Вот здесь фиксируем размер
-        image_url: item.image || item.image_url
+        size: item.size || item.selectedSize || 'OS', // Захватываем размер из любого возможного поля
+        image: item.image || item.image_url // Чтобы в админке была видна картинка
       }));
 
       const { error: orderError } = await supabase.from('orders').insert([{
@@ -519,7 +519,6 @@ export default function CartPage() {
       setIsOrdering(false)
     }
   }
-
 
   if (isLoading) {
     return (
