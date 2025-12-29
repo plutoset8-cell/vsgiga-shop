@@ -402,6 +402,7 @@ export default function CartPage() {
   // ======================================================================
   // 1. ПРИМЕНЕНИЕ ПРОМОКОДА
   // 1. ПРИМЕНЕНИЕ ПРОМОКОДА (ВОЗВРАЩАЕМ УДАЛЕННУЮ ФУНКЦИЮ)
+  // 1. ЛОГИКА ПРОМОКОДА
   const handleApplyPromo = async () => {
     if (!promoInput.trim()) return;
     addToast('DECRYPTING_PROMO...', 'success');
@@ -421,11 +422,11 @@ export default function CartPage() {
     addToast('СКИДКА УСПЕШНО АКТИВИРОВАНА', 'success');
   };
 
-  // 2. РАСЧЕТ ЦЕНЫ (ВОЗВРАЩАЕМ ПЕРЕМЕННЫЕ)
+  // 2. РАСЧЕТ ЦЕНЫ (ВОЗВРАЩАЕМ ПЕРЕМЕННЫЕ ДЛЯ КОМПИЛЯЦИИ)
   const spendAmount = useBonuses ? Math.min(userBonuses, Math.floor(totalPrice * 0.3)) : 0;
   const finalPrice = Math.max(0, totalPrice - spendAmount - (appliedPromo ? Number(appliedPromo.discount) : 0));
 
-  // 3. ТВОЯ ФУНКЦИЯ ОФОРМЛЕНИЯ ЗАКАЗА (С ИСПРАВЛЕНИЕМ РАЗМЕРА И ОЧИСТКОЙ)
+  // 3. ФУНКЦИЯ ОФОРМЛЕНИЯ ЗАКАЗА (С ИСПРАВЛЕНИЕМ РАЗМЕРА И ОЧИСТКОЙ БД)
   const handleCheckout = async () => {
     if (!showCheckoutFields) {
       setShowCheckoutFields(true);
@@ -464,20 +465,29 @@ export default function CartPage() {
         return;
       }
 
-      // Формируем товары
+      // Формируем товары (Забираем размер из таблицы cart)
       const itemsForDatabase = dbCart.map((item: any) => {
-        const selectedSizeFromList = Array.isArray(item.sizes)
+        // Логируем для отладки, чтобы видеть, что пришло из БД cart
+        console.log("DEBUG: Данные из таблицы cart:", item); 
+
+        // 1. Ищем размер (size теперь приоритет, так как он в таблице cart)
+        const sizeFromDb = item.size || item.selectedSize;
+
+        // 2. Запасной поиск в массиве
+        const sizeFromList = Array.isArray(item.sizes)
           ? item.sizes.find((s: any) => s.selected === true || s.active === true)?.name
           : null;
 
+        // 3. Финальный результат (теперь точно не XL по дефолту)
+        const finalSize = sizeFromDb || sizeFromList || 'OS';
+
         return {
-          id: item.id,
-          product_id: item.id,
+          id: item.product_id || item.id,
+          product_id: item.product_id || item.id,
           name: item.name || item.title || 'Товар',
           price: item.price,
           quantity: item.quantity || 1,
-          // ТЕПЕРЬ ОН УВИДИТ ТВОЙ 33 РАЗМЕР (из item.size)
-          size: item.size || item.selectedSize || selectedSizeFromList || 'XL',
+          size: String(finalSize), 
           image: item.image || (item.images && item.images[0]) || ''
         };
       });
@@ -485,7 +495,7 @@ export default function CartPage() {
       // Запись в orders
       const { error: orderError } = await supabase.from('orders').insert([{
         user_id: user.id,
-        items: itemsForDatabase,
+        items: itemsForDatabase, // Здесь будет размер из корзины
         total_amount: finalPrice,
         address: address,
         delivery_type: deliveryMethod,
@@ -502,10 +512,10 @@ export default function CartPage() {
         return;
       }
 
-      // ЧИСТИМ БД КОРЗИНУ (ЧТОБЫ ТОВАРЫ ИСЧЕЗЛИ)
+      // ЧИСТИМ ТАБЛИЦУ CART В БАЗЕ ДАННЫХ
       await supabase.from('cart').delete().eq('user_id', user.id);
 
-      // Очистка локальной корзины
+      // Очистка локальной корзины (стейт)
       if (typeof contextClearCart === 'function') contextClearCart();
       setDbCart([]);
 

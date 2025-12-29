@@ -321,7 +321,9 @@ export default function ProductPage() {
 
   // --- ОБНОВЛЕННАЯ ФУНКЦИЯ ДОБАВЛЕНИЯ В КОРЗИНУ (БАЗА ДАННЫХ) ---
   const handleAddToCart = async () => {
-    // Проверка наличия размеров (исключая аксессуары)
+    // Подключите ваш контекст корзины
+    const { addToCart } = useCart();
+    // Проверка наличия размеров
     const hasSizes = product.sizes && product.sizes.length > 0 && product.category !== 'accessories';
 
     if (hasSizes && !selectedSize) {
@@ -332,7 +334,7 @@ export default function ProductPage() {
     setAdding(true)
 
     try {
-      // 1. Проверяем авторизацию
+      // 1. Проверка авторизации
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
@@ -342,31 +344,36 @@ export default function ProductPage() {
         return
       }
 
-      // 2. Подготовка данных
       const sizeToSave = hasSizes ? selectedSize : 'OS'
 
-      // 3. Отправка в Supabase (Таблица cart)
-      // ИСПРАВЛЕНО: Добавлен игнор дубликатов или инкремент, чтобы не плодить ошибки 
-      // и четкое соответствие поля size
+      // 2. Отправка в существующую таблицу cart
       const { error } = await supabase
         .from('cart')
         .upsert({
           user_id: user.id,
           product_id: product.id,
-          size: sizeToSave, // Твой "33" размер теперь точно здесь
+          size: sizeToSave, // Твой "33" размер
           quantity: 1
         }, {
-          onConflict: 'user_id, product_id, size',
-          ignoreDuplicates: false // Важно: ставим false, чтобы он мог обновить запись
+          onConflict: 'user_id, product_id, size'
         })
 
       if (error) throw error;
 
-      showToast('ОБЪЕКТ ИНТЕГРИРОВАН В КОРЗИНУ', 'success')
+      // 3. Обновляем локальный стейт (контекст), чтобы корзина "ожила" сразу
+      if (typeof addToCart === 'function') {
+        addToCart({
+          ...product,
+          size: sizeToSave,
+          quantity: 1
+        });
+      }
+
+      showToast('ОБЪЕКТ ИНТЕГРИРОВАН В БАЗУ', 'success')
 
     } catch (err: any) {
-      console.error(err)
-      showToast('КРИТИЧЕСКИЙ СБОЙ СИНХРОНИЗАЦИИ', 'error')
+      console.error('Ошибка корзины:', err)
+      showToast(`ОШИБКА: ${err.message || 'СБОЙ СИНХРОНИЗАЦИИ'}`, 'error')
     } finally {
       setAdding(false)
     }
