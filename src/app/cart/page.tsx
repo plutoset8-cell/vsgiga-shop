@@ -268,6 +268,7 @@ const Toast = ({ message, type, onClose }: { message: string, type: 'error' | 's
 
 export default function CartPage() {
   // --- [STATE_MANAGEMENT: MAXIMUM_PRECISION] ---
+  const [frozenPrice, setFrozenPrice] = useState(0);
   const [orderAmount, setOrderAmount] = useState(0);
   const [confirmedPrice, setConfirmedPrice] = useState(0);
   const [orderPrice, setOrderPrice] = useState(0); // Состояние для фиксации суммы заказа
@@ -432,6 +433,9 @@ export default function CartPage() {
       return
     }
 
+    const priceToPay = finalPrice;
+    setFrozenPrice(priceToPay);
+
     setOrderAmount(finalPrice);
 
     // Проверка телефона (убираем + и считаем цифры)
@@ -453,7 +457,7 @@ export default function CartPage() {
     }
 
     setIsOrdering(true);
-    
+
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser()
 
@@ -1110,54 +1114,41 @@ export default function CartPage() {
               initial={{ scale: 0.8, opacity: 0, y: 100 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.8, opacity: 0, y: 100 }}
-              className="relative z-10 w-full max-w-2xl bg-[#0a0a0a] border border-white/10 rounded-[4rem] p-12 text-center shadow-[0_100px_200px_rgba(0,0,0,1)] overflow-hidden"
+              className="relative z-[200] w-full max-w-xl bg-[#0a0a0a] border border-white/10 rounded-[3rem] p-8 text-center shadow-[0_50px_100px_rgba(0,0,0,1)] overflow-hidden"
             >
-              <div className="absolute top-0 left-0 w-full h-2 bg-[#ff007a] animate-pulse" />
+              <div className="absolute top-0 left-0 w-full h-1 bg-[#ff007a] animate-pulse" />
 
-              <div className="mb-6 inline-flex p-6 bg-green-500/10 rounded-[2rem] text-green-500 border border-green-500/20">
-                <CheckCircle2 size={50} className="animate-bounce" />
+              <div className="mb-4 inline-flex p-4 bg-green-500/10 rounded-2xl text-green-500 border border-green-500/20">
+                <CheckCircle2 size={32} className="animate-bounce" />
               </div>
 
-              <h2 className="text-4xl font-black uppercase italic tracking-tighter mb-6 leading-none">
-                ЗАКАЗ <br /> <span className="text-[#ff007a]">УСПЕШНО ПРИНЯТ</span>
+              <h2 className="text-2xl font-black uppercase italic tracking-tighter mb-4">
+                ЗАКАЗ <span className="text-[#ff007a]">ПРИНЯТ</span>
               </h2>
 
-              <div className="text-center relative z-10">
-                <h3 className="text-2xl font-black text-white mb-4 italic tracking-tighter uppercase">Подтверждение оплаты</h3>
-
-                <p className="text-xs font-bold text-white/40 uppercase tracking-widest leading-loose mb-6 max-w-md mx-auto italic">
-                  Для завершения переведите
-                  <span className="text-[#ff007a] font-black mx-2 text-xl">
-                    {/* Используем finalPrice, так как она уже посчитана в основном коде */}
-                    {finalPrice.toLocaleString()} ₽
-                  </span>
-                  на номер: <br />
-                  <span className="text-white font-black text-lg">79278552324</span> <span className="text-[10px] opacity-50">(СБП / Любой банк)</span>
+              <div className="bg-white/5 border border-white/5 p-4 rounded-2xl mb-6">
+                <p className="text-[10px] font-black text-white/30 uppercase mb-1">Сумма к оплате</p>
+                <p className="text-3xl font-black text-[#ff007a] italic">
+                  {frozenPrice.toLocaleString()} ₽
                 </p>
-
-                {/* Блок с инструкцией */}
-                <div className="bg-[#ff007a]/5 border border-[#ff007a]/20 p-5 rounded-3xl mb-8 text-[9px] font-black uppercase tracking-[0.15em] text-[#ff007a] leading-relaxed max-w-sm mx-auto shadow-[0_0_30px_rgba(255,0,122,0.05)]">
-                  ОБЯЗАТЕЛЬНО В ПОЛЕ КОММЕНТАРИЯ К ПЕРЕВОДУ УКАЗЫВАЙТЕ НОМЕР ЗАКАЗА. <br />
-                  ЕСЛИ СТАТУС НЕ МЕНЯЕТСЯ В ТЕЧЕНИИ ДВУХ ДНЕЙ — ОБРАТИТЕСЬ К МЕНЕДЖЕРУ НА СТРАНИЦЕ КОНТАКТОВ.
-                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-8">
-                <div className="p-6 bg-white/5 rounded-2xl border border-white/5">
-                  <p className="text-[9px] font-black text-white/20 uppercase mb-1">Order_Reference</p>
-                  <p className="text-sm font-mono font-black text-white italic">#{Math.random().toString(36).substr(2, 9).toUpperCase()}</p>
-                </div>
-                <div className="p-6 bg-white/5 rounded-2xl border border-white/5">
-                  <p className="text-[9px] font-black text-white/20 uppercase mb-1">Sync_Time</p>
-                  <p className="text-sm font-mono font-black text-white italic">0.0042_SEC</p>
-                </div>
+              <p className="text-[11px] font-bold text-white/60 uppercase tracking-widest leading-relaxed mb-6">
+                Переведите на номер: <br />
+                <span className="text-white font-black text-base">79278552324</span> <br />
+                <span className="text-[9px] opacity-40">(СБП / Любой банк)</span>
+              </p>
+
+              <div className="bg-[#ff007a]/10 border border-[#ff007a]/20 p-4 rounded-xl mb-6 text-[9px] font-black uppercase tracking-wider text-[#ff007a] leading-relaxed">
+                ОБЯЗАТЕЛЬНО УКАЗЫВАЙТЕ НОМЕР ЗАКАЗА В КОММЕНТАРИИ. <br />
+                ЕСЛИ СТАТУС НЕ ОБНОВИТСЯ ЗА 48Ч — ПИШИТЕ В ПОДДЕРЖКУ.
               </div>
 
               <button
                 onClick={() => router.push('/catalog')}
-                className="w-full py-8 bg-white text-black rounded-[2rem] font-black uppercase italic tracking-[0.4em] text-[10px] hover:bg-[#ff007a] hover:text-white transition-all shadow-2xl"
+                className="w-full py-5 bg-white text-black rounded-xl font-black uppercase italic tracking-[0.3em] text-[10px] hover:bg-[#ff007a] hover:text-white transition-all shadow-xl"
               >
-                В КАТАЛОГ
+                ВЕРНУТЬСЯ В КАТАЛОГ
               </button>
             </motion.div>
           </div>
