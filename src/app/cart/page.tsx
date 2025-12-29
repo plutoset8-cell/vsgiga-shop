@@ -508,11 +508,13 @@ export default function CartPage() {
 
       <div className="max-w-[1600px] mx-auto relative z-10">
         {/* --- [HEADER: VSGIGA_MANIFEST] --- */}
-        <header className="mb-32 flex flex-col xl:flex-row items-center gap-16 relative">
+        <header className="mb-12 md:mb-32 flex flex-col xl:flex-row items-center gap-8 md:gap-16 relative">
+
+          {/* ГИГАНТСКАЯ ИКОНКА — Теперь скрыта на мобилках (hidden xl:flex) */}
           <motion.div
             onClick={() => { setExplosion(true); setTimeout(() => setExplosion(false), 800); }}
             whileHover={{ scale: 1.1, rotate: 5 }}
-            className="w-40 h-40 bg-[#ff007a] rounded-[4rem] flex items-center justify-center shadow-[0_0_80px_rgba(255,0,122,0.5)] cursor-pointer relative group"
+            className="hidden xl:flex w-40 h-40 bg-[#ff007a] rounded-[4rem] items-center justify-center shadow-[0_0_80px_rgba(255,0,122,0.5)] cursor-pointer relative group shrink-0"
           >
             <ShoppingCart size={60} className="text-white group-hover:animate-bounce" />
             <AnimatePresence>
@@ -533,32 +535,56 @@ export default function CartPage() {
             </AnimatePresence>
           </motion.div>
 
-          <div className="text-center xl:text-left">
-            <motion.div initial={{ x: -100, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="flex items-center gap-6 mb-4">
-              <div className="h-[3px] w-20 bg-[#ff007a]" />
-              <span className="text-[#ff007a] font-black uppercase tracking-[0.6em] text-[12px]">vsgiga shop / encrypted_cart</span>
+          <div className="text-center xl:text-left flex-1 w-full">
+            <motion.div
+              initial={{ x: -100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              className="flex items-center justify-between xl:justify-start gap-6 mb-4"
+            >
+              <div className="flex items-center gap-6">
+                <div className="h-[3px] w-12 md:w-20 bg-[#ff007a]" />
+                <span className="text-[#ff007a] font-black uppercase tracking-[0.4em] md:tracking-[0.6em] text-[10px] md:text-[12px]">vsgiga shop</span>
+              </div>
+
+              {/* МАЛЕНЬКАЯ ИКОНКА КОРЗИНЫ — Появится только на мобилках в углу */}
+              <div className="xl:hidden relative pr-4">
+                <ShoppingBag size={24} className="text-[#ff007a]" />
+                <span className="absolute -top-2 -right-1 bg-white text-black text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#080808]">
+                  {totalItems}
+                </span>
+              </div>
             </motion.div>
-            <h1 className="text-[4rem] sm:text-[7rem] md:text-[9rem] lg:text-[10rem] font-black italic uppercase tracking-tighter leading-[0.8] select-none text-center lg:text-left">
+
+            {/* АДАПТИВНЫЙ ЗАГОЛОВОК — text-[2.5rem] на мобилках */}
+            <h1 className="text-[2.5rem] sm:text-[5rem] md:text-[7rem] lg:text-[9rem] xl:text-[10rem] font-black italic uppercase tracking-tighter leading-[0.8] select-none text-left">
               КОРЗИН<span className="text-[#ff007a] animate-pulse">А</span>
             </h1>
-            <div className="mt-10 flex flex-wrap justify-center xl:justify-start gap-10 opacity-30 font-black text-[11px] uppercase tracking-[0.4em] italic">
-              <div className="flex items-center gap-3 text-green-500"><Activity size={16} /> Net: Stable</div>
-              <div className="flex items-center gap-3"><Lock size={16} /> Sec: AES-256</div>
-              <div className="flex items-center gap-3 text-[#ff007a]"><Layers size={16} /> Assets: {totalItems}</div>
+
+            <div className="mt-6 md:mt-10 flex flex-wrap justify-start gap-6 md:gap-10 opacity-30 font-black text-[9px] md:text-[11px] uppercase tracking-[0.4em] italic">
+              <div className="flex items-center gap-3 text-green-500"><Activity size={14} /> Net: Stable</div>
+              <div className="flex items-center gap-3"><Lock size={14} /> Sec: AES-256</div>
+              <div className="flex items-center gap-3 text-[#ff007a]"><Layers size={14} /> Assets: {totalItems}</div>
             </div>
           </div>
         </header>
         {dbCart.length === 0 ? (
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="py-80 text-center border-2 border-dashed border-white/5 rounded-[6rem] bg-white/[0.01] backdrop-blur-3xl relative overflow-hidden group"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="relative p-8 md:p-20 text-center border-2 border-dashed border-white/5 rounded-[2rem] md:rounded-[8rem] bg-white/[0.02] overflow-hidden group mb-10"
           >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,0,122,0.05),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-            <ShoppingBag size={120} className="mx-auto text-white/5 mb-12 group-hover:text-[#ff007a]/20 transition-colors duration-700" />
-            <p className="text-white/20 font-black uppercase tracking-[2em] text-xs animate-pulse">Storage_Empty_Waiting_For_Data</p>
-            <Link href="/shop" className="inline-block mt-16 px-16 py-8 bg-white/5 border border-white/10 rounded-full font-black uppercase text-[11px] tracking-[0.5em] hover:bg-[#ff007a] hover:border-[#ff007a] hover:text-white transition-all shadow-2xl">
-              Return_to_Catalog_Link
+            {/* Эта часть теперь видна ТОЛЬКО на больших экранах (hidden md:block) */}
+            <div className="hidden md:block">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,0,122,0.05)_0%,transparent_70%)]" />
+              <ShoppingBag size={120} className="mx-auto text-white/5 mb-12 group-hover:text-[#ff007a]/20 transition-colors duration-700" />
+              <p className="text-white/20 font-black uppercase tracking-[2em] text-xs animate-pulse">
+                Return_to_Catalog_Link
+              </p>
+            </div>
+
+            {/* Кнопка возврата в каталог — сделаем её поменьше для мобилок */}
+            <Link href="/shop" className="inline-block mt-4 md:mt-16 px-8 py-4 md:px-16 md:py-8 bg-white/5 border border-white/10 rounded-full hover:bg-[#ff007a] hover:text-white transition-all duration-500 uppercase font-black italic tracking-widest text-[10px] md:text-sm">
+              Back to Catalog
             </Link>
           </motion.div>
         ) : (
