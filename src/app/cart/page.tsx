@@ -579,101 +579,102 @@ export default function CartPage() {
                       damping: 20,
                       delay: idx * 0.1
                     }}
-                    className="bg-[#080808] border border-white/5 p-4 md:p-12 rounded-[1.5rem] md:rounded-[5rem] flex flex-row items-center gap-4 md:gap-16 group hover:border-[#ff007a]/40 transition-all duration-700 relative overflow-hidden shadow-2xl"
+                    // Адаптивные отступы и закругления: p-6 на мобилках, p-12 на десктопе
+                    className="bg-[#080808] border border-white/5 p-6 md:p-12 rounded-[2.5rem] md:rounded-[5rem] flex flex-col md:flex-row items-center gap-8 md:gap-16 group hover:border-[#ff007a]/40 transition-all duration-700 relative overflow-hidden shadow-2xl"
                   >
                     {/* ТЕКСТУРНЫЙ СЛОЙ КАРТОЧКИ */}
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
                     <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-[#ff007a]/5 rounded-full blur-[100px] pointer-events-none group-hover:bg-[#ff007a]/10 transition-colors" />
 
                     {/* ПРЕВЬЮ ОБЪЕКТА */}
-                    <div className="w-20 h-24 md:w-56 md:h-72 bg-black rounded-lg md:rounded-[3.5rem] overflow-hidden border border-white/5 shrink-0 relative shadow-2xl">
+                    <div className="w-40 h-48 md:w-56 md:h-72 bg-black rounded-[2rem] md:rounded-[3.5rem] overflow-hidden border border-white/5 shrink-0 relative shadow-2xl">
                       <motion.img
                         whileHover={{ scale: 1.15, rotate: 2 }}
                         src={item.image}
                         className="w-full h-full object-cover grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-1000"
                         alt={item.name}
                       />
-                      <div className="absolute top-6 left-6 bg-black/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10">
-                        <span className="text-[10px] font-black text-[#ff007a] tracking-tighter">OBJ_ID_{item.id.slice(0, 6).toUpperCase()}</span>
+                      <div className="absolute top-4 left-4 md:top-6 md:left-6 bg-black/80 backdrop-blur-md px-3 md:px-4 py-1.5 rounded-full border border-white/10">
+                        <span className="text-[8px] md:text-[10px] font-black text-[#ff007a] tracking-tighter italic">OBJ_{item.id.slice(0, 4).toUpperCase()}</span>
                       </div>
                     </div>
 
                     {/* ИНФОРМАЦИОННЫЙ СТЕК */}
-                    <div className="flex-1 w-full">
-                      <div className="flex justify-between items-start mb-10">
-                        <div>
-                          <motion.div className="flex items-center gap-3 mb-3">
+                    <div className="flex-1 w-full min-w-0">
+                      <div className="flex justify-between items-start mb-6 md:mb-10">
+                        <div className="min-w-0">
+                          <motion.div className="flex items-center gap-3 mb-2 md:mb-3">
                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                            <span className="text-[10px] text-white/20 font-black uppercase tracking-widest">Status: Asset_Synchronized</span>
+                            <span className="text-[9px] md:text-[10px] text-white/20 font-black uppercase tracking-widest truncate">Status: Asset_Synchronized</span>
                           </motion.div>
-                          <h3 className="text-sm md:text-5xl font-black italic uppercase tracking-tighter leading-none group-hover:text-[#ff007a] transition-colors duration-500">
+                          <h3 className="text-2xl md:text-5xl font-black italic uppercase tracking-tighter leading-none group-hover:text-[#ff007a] transition-colors duration-500 truncate">
                             {item.name}
                           </h3>
                         </div>
                         <button
                           onClick={() => handleRemoveFromCart(item.id)}
-                          className="w-14 h-14 rounded-[1.5rem] border border-white/5 flex items-center justify-center text-white/10 hover:text-red-500 hover:border-red-500/40 hover:bg-red-500/5 transition-all duration-300"
+                          className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-[1.5rem] border border-white/5 flex items-center justify-center text-white/10 hover:text-red-500 hover:border-red-500/40 hover:bg-red-500/5 transition-all duration-300 shrink-0"
                         >
-                          <Trash2 size={22} />
+                          <Trash2 size={20} />
                         </button>
                       </div>
 
-                      {/* ТАБЛИЦА ИНЖЕНЕРНЫХ СПЕЦИФИКАЦИЙ */}
-                      <div className="hidden md:grid grid-cols-2 sm:grid-cols-4 gap-6 p-6 bg-white/[0.02] rounded-[2.5rem] border border-white/5 backdrop-blur-sm mt-8">
-                        <div className="space-y-1.5">
-                          <p className="text-[8px] font-black text-white/20 uppercase tracking-widest italic text-center">Protocol</p>
-                          <p className="text-[11px] font-mono text-white/60 text-center uppercase tracking-tighter">OPIUM_v{idx + 1}</p>
+                      {/* ТАБЛИЦА СПЕЦИФИКАЦИЙ — Видна только на больших экранах (md) */}
+                      <div className="hidden md:grid grid-cols-4 gap-6 p-6 bg-white/[0.02] rounded-[2.5rem] border border-white/5 backdrop-blur-sm mb-10">
+                        <div className="space-y-1.5 text-center">
+                          <p className="text-[8px] font-black text-white/20 uppercase tracking-widest italic">Protocol</p>
+                          <p className="text-[11px] font-mono text-white/60 uppercase">OPIUM_v{idx + 1}</p>
                         </div>
-                        <div className="space-y-1.5 border-l border-white/5">
-                          <p className="text-[8px] font-black text-white/20 uppercase tracking-widest italic text-center">Encryption</p>
-                          <p className="text-[11px] font-mono text-[#ff007a] text-center uppercase tracking-tighter italic">AES_256</p>
+                        <div className="space-y-1.5 border-l border-white/5 text-center">
+                          <p className="text-[8px] font-black text-white/20 uppercase tracking-widest italic">Encryption</p>
+                          <p className="text-[11px] font-mono text-[#ff007a] uppercase italic">AES_256</p>
                         </div>
-                        <div className="space-y-1.5 border-l border-white/5">
-                          <p className="text-[8px] font-black text-white/20 uppercase tracking-widest italic text-center">Hash_Sum</p>
-                          <p className="text-[11px] font-mono text-white/60 text-center uppercase tracking-tighter">SHA_2025</p>
+                        <div className="space-y-1.5 border-l border-white/5 text-center">
+                          <p className="text-[8px] font-black text-white/20 uppercase tracking-widest italic">Hash_Sum</p>
+                          <p className="text-[11px] font-mono text-white/60 uppercase">SHA_2025</p>
                         </div>
-                        <div className="space-y-1.5 border-l border-white/5">
-                          <p className="text-[8px] font-black text-white/20 uppercase tracking-widest italic text-center">Load</p>
-                          <p className="text-[11px] font-mono text-green-500/60 text-center uppercase tracking-tighter">NOMINAL</p>
+                        <div className="space-y-1.5 border-l border-white/5 text-center">
+                          <p className="text-[8px] font-black text-white/20 uppercase tracking-widest italic">Load</p>
+                          <p className="text-[11px] font-mono text-green-500/60 uppercase">NOMINAL</p>
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between gap-6">
-                        <div className="space-y-2">
-                          <p className="text-[11px] text-white/20 font-black uppercase italic tracking-[0.3em]">Unit_Value</p>
-                          <span className="text-5xl font-black italic text-white tracking-tighter block">
-                            {item.price.toLocaleString()} <span className="text-2xl text-[#ff007a]">₽</span>
+                      <div className="flex flex-row items-center justify-between gap-4 md:gap-6">
+                        <div className="space-y-1 md:space-y-2">
+                          <p className="text-[9px] md:text-[11px] text-white/20 font-black uppercase italic tracking-[0.3em] hidden sm:block">Unit_Value</p>
+                          <span className="text-2xl md:text-5xl font-black italic text-white tracking-tighter block whitespace-nowrap">
+                            {item.price.toLocaleString()} <span className="text-lg md:text-2xl text-[#ff007a]">₽</span>
                           </span>
                         </div>
 
                         {/* ПАНЕЛЬ УПРАВЛЕНИЯ КОЛИЧЕСТВОМ */}
-                        <div className="flex items-center bg-black border border-white/5 p-1 md:p-4 rounded-lg md:rounded-[2.5rem] gap-2 md:gap-10 shadow-inner">
+                        <div className="flex items-center bg-black border border-white/5 p-2 md:p-4 rounded-2xl md:rounded-[2.5rem] gap-4 md:gap-10 shadow-inner">
                           <motion.button
                             whileTap={{ scale: 0.7 }}
                             onClick={() => handleUpdateQuantity(item.id, item.quantity, -1)}
-                            className="w-10 h-10 flex items-center justify-center text-white/20 hover:text-[#ff007a] transition-colors"
+                            className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center text-white/20 hover:text-[#ff007a] transition-colors"
                           >
-                            <Minus size={24} strokeWidth={3} />
+                            <Minus size={20} strokeWidth={3} />
                           </motion.button>
                           <div className="relative">
-                            <span className="font-black text-4xl w-12 text-center font-mono text-white flex items-center justify-center">
+                            <span className="font-black text-xl md:text-4xl w-8 md:w-12 text-center font-mono text-white flex items-center justify-center">
                               {item.quantity}
                             </span>
-                            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#ff007a] rounded-full animate-ping" />
+                            <div className="absolute -bottom-3 md:-bottom-4 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#ff007a] rounded-full animate-ping" />
                           </div>
                           <motion.button
                             whileTap={{ scale: 0.7 }}
                             onClick={() => handleUpdateQuantity(item.id, item.quantity, 1)}
-                            className="w-10 h-10 flex items-center justify-center text-white/20 hover:text-[#ff007a] transition-colors"
+                            className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center text-white/20 hover:text-[#ff007a] transition-colors"
                           >
-                            <Plus size={24} strokeWidth={3} />
+                            <Plus size={20} strokeWidth={3} />
                           </motion.button>
                         </div>
                       </div>
 
-                      {/* ВИЗУАЛЬНЫЙ СКАНЕР-ПОЛОСКА ВНИЗУ */}
-                      <div className="mt-10 flex gap-1.5 h-1 opacity-20">
-                        {[...Array(50)].map((_, i) => (
+                      {/* ВИЗУАЛЬНЫЙ СКАНЕР-ПОЛОСКА */}
+                      <div className="mt-8 md:mt-10 flex gap-1 md:gap-1.5 h-1 opacity-20 overflow-hidden">
+                        {[...Array(30)].map((_, i) => (
                           <motion.div
                             key={i}
                             animate={{
@@ -681,7 +682,7 @@ export default function CartPage() {
                               backgroundColor: i % 10 === 0 ? "#ff007a" : "#fff"
                             }}
                             transition={{ repeat: Infinity, duration: 1.5, delay: i * 0.03 }}
-                            className="flex-1 h-full rounded-full"
+                            className="flex-1 h-full rounded-full min-w-[2px]"
                           />
                         ))}
                       </div>
