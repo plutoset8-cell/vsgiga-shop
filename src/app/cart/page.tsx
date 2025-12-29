@@ -629,7 +629,7 @@ export default function CartPage() {
                     {/* ИНФОРМАЦИОННЫЙ СТЕК - ВЕСЬ ТВОЙ КОД ТУТ */}
                     <div className="flex-1 w-full min-w-0">
                       <div className="flex justify-between items-start mb-4 md:mb-10">
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <motion.div className="flex items-center gap-2 mb-1 md:mb-3">
                             <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
                             <span className="text-[8px] md:text-[10px] text-white/20 font-black uppercase tracking-widest truncate">Status: Asset_Synchronized</span>
@@ -669,37 +669,40 @@ export default function CartPage() {
                       </div>
 
                       <div className="flex flex-row items-center justify-between gap-2 md:gap-6">
-                        <div className="space-y-1 md:space-y-2">
-                          <span className="text-xl md:text-5xl font-black italic text-white tracking-tighter block whitespace-nowrap">
+                        {/* ЦЕНА - Теперь с flex-1 и min-w-0, чтобы не толкать кнопки */}
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xl md:text-5xl font-black italic text-white tracking-tighter block truncate">
                             {item.price.toLocaleString()} <span className="text-sm md:text-2xl text-[#ff007a]">₽</span>
                           </span>
                         </div>
 
-                        {/* УПРАВЛЕНИЕ КОЛИЧЕСТВОМ - ТЕПЕРЬ РОВНОЕ */}
-                        <div className="flex items-center bg-black border border-white/5 p-1.5 md:p-4 rounded-xl md:rounded-[2.5rem] gap-2 md:gap-8 shadow-inner">
+                        {/* УПРАВЛЕНИЕ КОЛИЧЕСТВОМ - shrink-0 (запрет сжатия) */}
+                        <div className="flex items-center bg-black border border-white/5 p-1.5 md:p-4 rounded-xl md:rounded-[2.5rem] gap-2 md:gap-8 shadow-inner shrink-0">
                           <motion.button
                             whileTap={{ scale: 0.7 }}
                             onClick={() => handleUpdateQuantity(item.id, item.quantity, -1)}
-                            className="w-7 h-7 md:w-10 md:h-10 flex items-center justify-center text-white/20 hover:text-[#ff007a]"
+                            className="w-7 h-7 md:w-10 md:h-10 flex items-center justify-center text-white/20 hover:text-[#ff007a] shrink-0"
                           >
                             <Minus size={14} className="md:w-[20px] md:h-[20px]" strokeWidth={3} />
                           </motion.button>
 
-                          <span className="font-black text-sm md:text-4xl w-5 md:w-12 text-center font-mono text-white flex items-center justify-center">
-                            {item.quantity}
-                          </span>
+                          <div className="w-5 md:w-12 flex justify-center items-center shrink-0">
+                            <span className="font-black text-sm md:text-4xl font-mono text-white leading-none">
+                              {item.quantity}
+                            </span>
+                          </div>
 
                           <motion.button
                             whileTap={{ scale: 0.7 }}
                             onClick={() => handleUpdateQuantity(item.id, item.quantity, 1)}
-                            className="w-7 h-7 md:w-10 md:h-10 flex items-center justify-center text-white/20 hover:text-[#ff007a]"
+                            className="w-7 h-7 md:w-10 md:h-10 flex items-center justify-center text-white/20 hover:text-[#ff007a] shrink-0"
                           >
                             <Plus size={14} className="md:w-[20px] md:h-[20px]" strokeWidth={3} />
                           </motion.button>
                         </div>
                       </div>
 
-                      {/* ТВОЙ ВИЗУАЛЬНЫЙ СКАНЕР ВНИЗУ */}
+                      {/* ТВОЙ ВИЗУАЛЬНЫЙ СКАНЕР ВНИЗУ - СОХРАНЕН */}
                       <div className="mt-4 md:mt-10 flex gap-0.5 md:gap-1.5 h-[2px] md:h-1 opacity-20">
                         {[...Array(20)].map((_, i) => (
                           <div key={i} className={`flex-1 h-full rounded-full ${i % 4 === 0 ? 'bg-[#ff007a]' : 'bg-white'}`} />
