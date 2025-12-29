@@ -268,6 +268,7 @@ const Toast = ({ message, type, onClose }: { message: string, type: 'error' | 's
 
 export default function CartPage() {
   // --- [STATE_MANAGEMENT: MAXIMUM_PRECISION] ---
+  const [orderPrice, setOrderPrice] = useState(0); // Состояние для фиксации суммы заказа
   const [dbCart, setDbCart] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isHudVisible, setIsHudVisible] = useState(true)
@@ -454,7 +455,10 @@ export default function CartPage() {
       if (userError || !user) {
         addToast('ОШИБКА: ВЫ НЕ АВТОРИЗОВАНЫ', 'error')
         setIsOrdering(false)
-        return
+        return;
+
+        const calculatedPrice = Math.max(0, totalPrice - spendAmount - (appliedPromo ? Number(appliedPromo.discount) : 0));
+        setOrderPrice(calculatedPrice);
       }
 
       const { error: orderError } = await supabase.from('orders').insert([{
@@ -589,12 +593,17 @@ export default function CartPage() {
             className="relative p-8 md:p-20 text-center border-2 border-dashed border-white/5 rounded-[2rem] md:rounded-[8rem] bg-white/[0.02] overflow-hidden group mb-10"
           >
             {/* Эта часть теперь видна ТОЛЬКО на больших экранах (hidden md:block) */}
-            <div className="hidden md:block">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,0,122,0.05)_0%,transparent_70%)]" />
-              <ShoppingBag size={120} className="mx-auto text-white/5 mb-12 group-hover:text-[#ff007a]/20 transition-colors duration-700" />
-              <p className="text-white/20 font-black uppercase tracking-[2em] text-xs animate-pulse">
-                Return_to_Catalog_Link
-              </p>
+            <div className="flex flex-col items-center justify-center py-20 relative z-50">
+              <ShoppingBag size={80} className="text-white/5 mb-8 animate-pulse" />
+              <h2 className="text-2xl font-black text-white italic tracking-[0.3em] mb-12">CART_IS_EMPTY</h2>
+
+              {/* ИСПРАВЛЕННАЯ КНОПКА */}
+              <Link
+                href="/catalog"
+                className="relative z-[100] px-12 py-6 bg-white text-black font-black uppercase italic rounded-full hover:bg-[#ff007a] hover:text-white transition-all shadow-2xl cursor-pointer pointer-events-auto inline-block"
+              >
+                В КАТАЛОГ
+              </Link>
             </div>
 
             {/* Кнопка возврата в каталог — сделаем её поменьше для мобилок */}
@@ -1101,14 +1110,25 @@ export default function CartPage() {
               <h2 className="text-6xl font-black uppercase italic tracking-tighter mb-8 leading-none">
                 ЗАКАЗ <br /> <span className="text-[#ff007a]">УСПЕШНО ПРИНЯТ</span>
               </h2>
-              <p className="text-sm font-bold text-white/40 uppercase tracking-widest leading-loose mb-12 max-w-md mx-auto italic">
-                Мы уже готовим товары к отправке <br />
-                Для завершения переведите <span className="text-[#ff007a] font-black mx-2 text-xl">
-                  {/* Math.max гарантирует, что сумма не будет отрицательной */}
-                  {Math.max(0, totalPrice - spendAmount - (appliedPromo ? Number(appliedPromo.discount) : 0)).toLocaleString()} ₽
-                </span>
-                на номер: <span className="text-white font-black">79278552324</span> (СБП/Любой банк)
-              </p>
+              <div className="text-center relative z-10">
+                <h3 className="text-4xl font-black text-white mb-6 italic tracking-tighter uppercase">Подтверждение оплаты</h3>
+
+                <p className="text-sm font-bold text-white/40 uppercase tracking-widest leading-loose mb-8 max-w-md mx-auto italic">
+                  Для завершения переведите
+                  <span className="text-[#ff007a] font-black mx-2 text-2xl">
+                    {/* Считаем сумму "на лету" прямо здесь */}
+                    {Math.max(0, (dbCart.reduce((sum, item) => sum + (item.price * item.quantity), 0)) - spendAmount - (appliedPromo ? Number(appliedPromo.discount) : 0)).toLocaleString()} ₽
+                  </span>
+                  на номер: <br />
+                  <span className="text-white font-black text-xl">79278552324</span> <span className="text-xs opacity-50">(СБП / Любой банк)</span>
+                </p>
+
+                {/* Твой новый текст про комментарий и менеджера */}
+                <div className="bg-white/[0.03] border border-white/10 p-6 rounded-3xl mb-12 text-[10px] font-black uppercase tracking-[0.2em] text-[#ff007a] leading-relaxed max-w-sm mx-auto shadow-[0_0_30px_rgba(255,0,122,0.1)]">
+                  ОБЯЗАТЕЛЬНО В ПОЛЕ КОММЕНТАРИЯ К ПЕРЕВОДУ УКАЗЫВАЙТЕ НОМЕР ЗАКАЗА.
+                  ЕСЛИ СТАТУС НЕ МЕНЯЕТСЯ В ТЕЧЕНИИ ДВУХ ДНЕЙ — ОБРАТИТЕСЬ К МЕНЕДЖЕРУ НА СТРАНИЦЕ КОНТАКТОВ.
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-6 mb-16">
                 <div className="p-8 bg-white/5 rounded-3xl border border-white/5">
                   <p className="text-[10px] font-black text-white/20 uppercase mb-2">Order_Reference</p>
