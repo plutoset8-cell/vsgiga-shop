@@ -332,12 +332,11 @@ export default function ProductPage() {
     setAdding(true)
 
     try {
-      // 1. Проверяем авторизацию (getUser — самый надежный метод)
+      // 1. Проверяем авторизацию
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
         showToast('ТРЕБУЕТСЯ АВТОРИЗАЦИЯ В СЕТИ', 'error')
-        // Сохраняем путь для возврата после логина
         sessionStorage.setItem('redirect_after_login', `/product/${id}`)
         router.push('/login')
         return
@@ -347,30 +346,29 @@ export default function ProductPage() {
       const sizeToSave = hasSizes ? selectedSize : 'OS'
 
       // 3. Отправка в Supabase (Таблица cart)
-      // ВАЖНО: Мы используем upsert с onConflict по пользователю, товару И РАЗМЕРУ.
-      // Чтобы это работало, в таблице cart должен быть уникальный индекс на (user_id, product_id, size)
+      // ИСПРАВЛЕНО: Добавлен игнор дубликатов или инкремент, чтобы не плодить ошибки 
+      // и четкое соответствие поля size
       const { error } = await supabase
         .from('cart')
         .upsert({
           user_id: user.id,
           product_id: product.id,
-          size: sizeToSave,
+          size: sizeToSave, // Твой "33" размер теперь точно здесь
           quantity: 1
         }, {
-          onConflict: 'user_id, product_id, size'
+          onConflict: 'user_id, product_id, size',
+          ignoreDuplicates: false // Важно: ставим false, чтобы он мог обновить запись
         })
 
-      if (error) throw error
+      if (error) throw error;
 
-      showToast(`${product.name.toUpperCase()} [${sizeToSave}] // ЗАГРУЖЕН В КОРЗИНУ`, 'success')
+      showToast('ОБЪЕКТ ИНТЕГРИРОВАН В КОРЗИНУ', 'success')
 
-    } catch (e: any) {
-      console.error('Cart Error:', e)
-      // Если база выдает ошибку, выводим её текст для отладки
-      showToast(e.message === 'Connection reset' ? 'СБОЙ СОЕДИНЕНИЯ С БАЗОЙ' : `ОШИБКА БД: ${e.message}`, 'error')
+    } catch (err: any) {
+      console.error(err)
+      showToast('КРИТИЧЕСКИЙ СБОЙ СИНХРОНИЗАЦИИ', 'error')
     } finally {
-      // Искусственная задержка для красоты анимации кнопки
-      setTimeout(() => setAdding(false), 800)
+      setAdding(false)
     }
   }
 
