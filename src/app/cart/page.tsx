@@ -268,6 +268,7 @@ const Toast = ({ message, type, onClose }: { message: string, type: 'error' | 's
 
 export default function CartPage() {
   // --- [STATE_MANAGEMENT: MAXIMUM_PRECISION] ---
+  const [confirmedPrice, setConfirmedPrice] = useState(0);
   const [orderPrice, setOrderPrice] = useState(0); // Состояние для фиксации суммы заказа
   const [dbCart, setDbCart] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -485,6 +486,10 @@ export default function CartPage() {
       contextClearCart()
       setDbCart([])
       setShowPaymentModal(true)
+      // Считаем финальную сумму один раз при нажатии кнопки
+      const finalPayable = Math.max(0, totalPrice - spendAmount - (appliedPromo ? Number(appliedPromo.discount) : 0));
+      setConfirmedPrice(finalPayable);
+      setIsOrdering(true);
 
     } catch (e: any) {
       addToast(`СБОЙ: ${e.message}`, 'error')
@@ -1101,49 +1106,54 @@ export default function CartPage() {
               initial={{ scale: 0.8, opacity: 0, y: 100 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.8, opacity: 0, y: 100 }}
-              className="relative z-10 w-full max-w-3xl bg-[#0a0a0a] border border-white/10 rounded-[5rem] p-20 text-center shadow-[0_100px_200px_rgba(0,0,0,1)] overflow-hidden"
+              className="relative z-10 w-full max-w-2xl bg-[#0a0a0a] border border-white/10 rounded-[4rem] p-12 text-center shadow-[0_100px_200px_rgba(0,0,0,1)] overflow-hidden"
             >
               <div className="absolute top-0 left-0 w-full h-2 bg-[#ff007a] animate-pulse" />
-              <div className="mb-12 inline-flex p-10 bg-green-500/10 rounded-[3rem] text-green-500 border border-green-500/20">
-                <CheckCircle2 size={80} className="animate-bounce" />
+
+              <div className="mb-6 inline-flex p-6 bg-green-500/10 rounded-[2rem] text-green-500 border border-green-500/20">
+                <CheckCircle2 size={50} className="animate-bounce" />
               </div>
-              <h2 className="text-6xl font-black uppercase italic tracking-tighter mb-8 leading-none">
+
+              <h2 className="text-4xl font-black uppercase italic tracking-tighter mb-6 leading-none">
                 ЗАКАЗ <br /> <span className="text-[#ff007a]">УСПЕШНО ПРИНЯТ</span>
               </h2>
-              <div className="text-center relative z-10">
-                <h3 className="text-4xl font-black text-white mb-6 italic tracking-tighter uppercase">Подтверждение оплаты</h3>
 
-                <p className="text-sm font-bold text-white/40 uppercase tracking-widest leading-loose mb-8 max-w-md mx-auto italic">
+              <div className="text-center relative z-10">
+                <h3 className="text-2xl font-black text-white mb-4 italic tracking-tighter uppercase">Подтверждение оплаты</h3>
+
+                <p className="text-xs font-bold text-white/40 uppercase tracking-widest leading-loose mb-6 max-w-md mx-auto italic">
                   Для завершения переведите
-                  <span className="text-[#ff007a] font-black mx-2 text-2xl">
-                    {/* Считаем сумму "на лету" прямо здесь */}
-                    {Math.max(0, (dbCart.reduce((sum, item) => sum + (item.price * item.quantity), 0)) - spendAmount - (appliedPromo ? Number(appliedPromo.discount) : 0)).toLocaleString()} ₽
+                  <span className="text-[#ff007a] font-black mx-2 text-xl">
+                    {/* Используем finalPrice, так как она уже посчитана в основном коде */}
+                    {finalPrice.toLocaleString()} ₽
                   </span>
                   на номер: <br />
-                  <span className="text-white font-black text-xl">79278552324</span> <span className="text-xs opacity-50">(СБП / Любой банк)</span>
+                  <span className="text-white font-black text-lg">79278552324</span> <span className="text-[10px] opacity-50">(СБП / Любой банк)</span>
                 </p>
 
-                {/* Твой новый текст про комментарий и менеджера */}
-                <div className="bg-white/[0.03] border border-white/10 p-6 rounded-3xl mb-12 text-[10px] font-black uppercase tracking-[0.2em] text-[#ff007a] leading-relaxed max-w-sm mx-auto shadow-[0_0_30px_rgba(255,0,122,0.1)]">
-                  ОБЯЗАТЕЛЬНО В ПОЛЕ КОММЕНТАРИЯ К ПЕРЕВОДУ УКАЗЫВАЙТЕ НОМЕР ЗАКАЗА.
+                {/* Блок с инструкцией */}
+                <div className="bg-[#ff007a]/5 border border-[#ff007a]/20 p-5 rounded-3xl mb-8 text-[9px] font-black uppercase tracking-[0.15em] text-[#ff007a] leading-relaxed max-w-sm mx-auto shadow-[0_0_30px_rgba(255,0,122,0.05)]">
+                  ОБЯЗАТЕЛЬНО В ПОЛЕ КОММЕНТАРИЯ К ПЕРЕВОДУ УКАЗЫВАЙТЕ НОМЕР ЗАКАЗА. <br />
                   ЕСЛИ СТАТУС НЕ МЕНЯЕТСЯ В ТЕЧЕНИИ ДВУХ ДНЕЙ — ОБРАТИТЕСЬ К МЕНЕДЖЕРУ НА СТРАНИЦЕ КОНТАКТОВ.
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-6 mb-16">
-                <div className="p-8 bg-white/5 rounded-3xl border border-white/5">
-                  <p className="text-[10px] font-black text-white/20 uppercase mb-2">Order_Reference</p>
-                  <p className="text-lg font-mono font-black text-white italic">#{Math.random().toString(36).substr(2, 9).toUpperCase()}</p>
+
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                <div className="p-6 bg-white/5 rounded-2xl border border-white/5">
+                  <p className="text-[9px] font-black text-white/20 uppercase mb-1">Order_Reference</p>
+                  <p className="text-sm font-mono font-black text-white italic">#{Math.random().toString(36).substr(2, 9).toUpperCase()}</p>
                 </div>
-                <div className="p-8 bg-white/5 rounded-3xl border border-white/5">
-                  <p className="text-[10px] font-black text-white/20 uppercase mb-2">Sync_Time</p>
-                  <p className="text-lg font-mono font-black text-white italic">0.0042_SEC</p>
+                <div className="p-6 bg-white/5 rounded-2xl border border-white/5">
+                  <p className="text-[9px] font-black text-white/20 uppercase mb-1">Sync_Time</p>
+                  <p className="text-sm font-mono font-black text-white italic">0.0042_SEC</p>
                 </div>
               </div>
+
               <button
-                onClick={() => router.push('/shop')}
-                className="w-full py-10 bg-white text-black rounded-[2.5rem] font-black uppercase italic tracking-[0.5em] text-xs hover:bg-[#ff007a] hover:text-white transition-all shadow-2xl"
+                onClick={() => router.push('/catalog')}
+                className="w-full py-8 bg-white text-black rounded-[2rem] font-black uppercase italic tracking-[0.4em] text-[10px] hover:bg-[#ff007a] hover:text-white transition-all shadow-2xl"
               >
-                RETURN_TO_SYSTEM_DASHBOARD
+                В КАТАЛОГ
               </button>
             </motion.div>
           </div>
