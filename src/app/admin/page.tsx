@@ -689,7 +689,7 @@ export default function AdminPage() {
 
           {activeTab === 'logistics' && (
             <motion.div key="log" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-              {orders.map((order) => (
+              {orders.map((order: any) => ( // Добавил : any, чтобы убрать ошибки типизации
                 <div key={order.id} className="bg-white/5 border border-white/10 rounded-[2.5rem] overflow-hidden">
                   <div className="p-8 flex flex-wrap items-center justify-between gap-6">
                     <div className="flex items-center gap-6">
@@ -707,7 +707,7 @@ export default function AdminPage() {
                     <div className="flex items-center gap-4">
                       <div className="text-right hidden md:block">
                         <p className="text-[9px] font-black text-white/20 uppercase mb-1 tracking-widest">Сумма</p>
-                        <p className="text-xl font-black italic">{order.total_amount.toLocaleString()} ₽</p>
+                        <p className="text-xl font-black italic">{(order.total_amount || 0).toLocaleString()} ₽</p>
                       </div>
                       <select
                         value={order.status}
@@ -734,6 +734,7 @@ export default function AdminPage() {
                         className="overflow-hidden border-t border-white/5 bg-black/20"
                       >
                         <div className="p-10 grid grid-cols-1 md:grid-cols-3 gap-12">
+                          {/* БЛОК КЛИЕНТА */}
                           <div className="space-y-6">
                             <h4 className="flex items-center gap-3 text-[10px] font-black text-[#71b3c9] uppercase tracking-[0.3em] italic">
                               <User size={14} /> Клиент
@@ -742,7 +743,8 @@ export default function AdminPage() {
                               <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                                 <p className="text-[9px] text-white/20 uppercase font-black mb-1">ФИО</p>
                                 <p className="font-black italic uppercase">
-                                  {order.first_name || order.firstName || '—'} {order.last_name || order.lastName || ''}
+                                  {/* Приоритет на полное имя, которое мы шлем в customer_name */}
+                                  {order.customer_name || `${order.first_name || ''} ${order.last_name || ''}`.trim() || 'НЕ УКАЗАНО'}
                                 </p>
                               </div>
                               <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
@@ -752,6 +754,7 @@ export default function AdminPage() {
                             </div>
                           </div>
 
+                          {/* БЛОК АДРЕСА */}
                           <div className="space-y-6">
                             <h4 className="flex items-center gap-3 text-[10px] font-black text-[#d67a9d] uppercase tracking-[0.3em] italic">
                               <MapPin size={14} /> Адрес доставки
@@ -762,6 +765,7 @@ export default function AdminPage() {
                             </div>
                           </div>
 
+                          {/* БЛОК СОСТАВА ЗАКАЗА */}
                           <div className="space-y-6">
                             <h4 className="flex items-center gap-3 text-[10px] font-black text-white uppercase tracking-[0.3em] italic">
                               <ShoppingBag size={14} /> Состав заказа
@@ -773,9 +777,10 @@ export default function AdminPage() {
                                     <p className="text-[10px] font-black uppercase leading-none">{item.name || 'Товар'}</p>
                                     <div className="flex gap-2 mt-1">
                                       <span className="text-[9px] font-black bg-black text-white px-2 py-0.5 rounded italic">
-                                        РАЗМЕР: {item.size || item.selectedSize || 'OS'}
+                                        {/* Берем размер, который мы упаковали в JSON в корзине */}
+                                        РАЗМЕР: {item.size || 'OS'}
                                       </span>
-                                      <span className="text-[9px] font-bold opacity-50">
+                                      <span className="text-[9px] font-bold opacity-50 uppercase">
                                         КОЛ-ВО: {item.quantity || 1}
                                       </span>
                                     </div>
