@@ -4,9 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/context/ToastContext'
-import { 
-  Package, MapPin, ChevronDown, ChevronUp, User, ShoppingBag, 
-  Phone, Contact2, X, Image as ImageIcon, Plus, Ticket, 
+import {
+  Package, MapPin, ChevronDown, ChevronUp, User, ShoppingBag,
+  Phone, Contact2, X, Image as ImageIcon, Plus, Ticket,
   Trash2, Zap, Target, EyeOff, LayoutGrid, RefreshCw, Search, Save,
   Newspaper, ShieldCheck, Globe, Barcode // Добавлены иконки для новых полей
 } from 'lucide-react'
@@ -14,22 +14,22 @@ import {
 export default function AdminPage() {
   const router = useRouter()
   const { showToast } = useToast()
-  
+
   // Добавили 'news' в активные вкладки
   const [activeTab, setActiveTab] = useState<'inventory' | 'logistics' | 'promocodes' | 'operations' | 'users' | 'news'>('inventory')
-  
+
   // Данные из БД
   const [products, setProducts] = useState<any[]>([])
   const [orders, setOrders] = useState<any[]>([])
   const [promocodes, setPromocodes] = useState<any[]>([])
   const [tasks, setTasks] = useState<any[]>([])
   const [news, setNews] = useState<any[]>([]) // Состояние для новостей
-  
+
   // Состояния для пользователей
   const [users, setUsers] = useState<any[]>([])
   const [userSearch, setUserSearch] = useState('')
   const [updatingUser, setUpdatingUser] = useState<string | null>(null)
-  
+
   // Состояния интерфейса
   const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({})
   const [uploading, setUploading] = useState(false)
@@ -37,7 +37,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState<string | null>(null)
 
-  const ADMIN_EMAIL = 'plutoset8@gmail.com' 
+  const ADMIN_EMAIL = 'plutoset8@gmail.com'
 
   // --- ФУНКЦИЯ TELEGRAM УВЕДОМЛЕНИЙ ---
   const sendTelegramNotify = async (text: string) => {
@@ -72,11 +72,11 @@ export default function AdminPage() {
   }))
 
   // Формы (ОБНОВЛЕНО: добавлены material, origin, article)
-  const [form, setForm] = useState({ 
-    name: '', 
-    price: '', 
-    category: 'apparel', 
-    image: '', 
+  const [form, setForm] = useState({
+    name: '',
+    price: '',
+    category: 'apparel',
+    image: '',
     images: [] as string[],
     description: '',
     sizes: CLOTHES_SIZES,
@@ -107,12 +107,12 @@ export default function AdminPage() {
   })
 
   const STATUSES = [
-    'Оформлен', 
-    'На сборке в другом городе', 
-    'Приехал на склад', 
-    'Отгружен на складе', 
-    'Отправлен в город получателя', 
-    'В пункте выдачи', 
+    'Оформлен',
+    'На сборке в другом городе',
+    'Приехал на склад',
+    'Отгружен на складе',
+    'Отправлен в город получателя',
+    'В пункте выдачи',
     'Получен'
   ]
 
@@ -202,7 +202,7 @@ export default function AdminPage() {
       const user = users.find(u => u.id === userId)
       setUsers(users.map(u => u.id === userId ? { ...u, progress: newProgress } : u))
       showToast('ПРОГРЕСС_ОБНОВЛЕН', 'success')
-      
+
       await sendTelegramNotify(
         `📈 <b>vsgiga shop: Прогресс</b>\n` +
         `Пользователь: <code>${user?.email}</code>\n` +
@@ -236,7 +236,7 @@ export default function AdminPage() {
         const { data } = supabase.storage
           .from('product-images')
           .getPublicUrl(filePath)
-        
+
         uploadedUrls.push(data.publicUrl)
       }
 
@@ -273,7 +273,7 @@ export default function AdminPage() {
       const { data } = supabase.storage
         .from('product-images')
         .getPublicUrl(filePath)
-      
+
       setNewsForm(prev => ({ ...prev, image_url: data.publicUrl }))
       showToast('КАРТИНКА_ЗАГРУЖЕНА', 'success')
     } catch (err) {
@@ -302,13 +302,13 @@ export default function AdminPage() {
 
   const handleCategoryChange = (cat: string) => {
     let newSizes: { size: string; inStock: boolean }[] = []
-    
+
     if (cat === 'apparel') {
       newSizes = CLOTHES_SIZES
     } else if (cat === 'footwear') {
       newSizes = FOOTWEAR_SIZES
     } else {
-      newSizes = [] 
+      newSizes = []
     }
 
     setForm({
@@ -320,10 +320,10 @@ export default function AdminPage() {
 
   const handleSubmitProduct = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     // ЛОГИКА АРТИКУЛА: Если пустой -> генерируем VSG-{рандом}
-    const finalArticle = form.article.trim() 
-      ? form.article.toUpperCase() 
+    const finalArticle = form.article.trim()
+      ? form.article.toUpperCase()
       : `VSG-${Math.floor(100000 + Math.random() * 900000)}`
 
     const payload = {
@@ -340,13 +340,13 @@ export default function AdminPage() {
       article: finalArticle
     }
 
-    const { error } = editingId 
+    const { error } = editingId
       ? await supabase.from('products').update(payload).eq('id', editingId)
       : await supabase.from('products').insert([payload])
 
     if (!error) {
       showToast(editingId ? 'ДАННЫЕ_ОБНОВЛЕНЫ' : 'ТОВАР_СОЗДАН', 'success')
-      
+
       await sendTelegramNotify(
         `✨ <b>vsgiga shop: Инвентарь</b>\n` +
         `Действие: <b>${editingId ? 'Обновление' : 'Создание'} товара</b>\n` +
@@ -410,7 +410,7 @@ export default function AdminPage() {
     if (!error) {
       setOrders(orders.map(o => o.id === orderId ? { ...o, status } : o))
       showToast('СТАТУС_ОБНОВЛЕН', 'success')
-      
+
       await sendTelegramNotify(
         `📦 <b>vsgiga shop: Логистика</b>\n` +
         `Заказ: <code>${orderId.slice(0, 8)}...</code>\n` +
@@ -507,14 +507,14 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-black text-white pt-32 pb-20 px-6 font-sans">
       <div className="max-w-6xl mx-auto">
-        
+
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
           <div className="flex items-center gap-4">
             <h1 className="text-5xl font-black italic uppercase tracking-tighter">
               vsgiga<span className="text-[#d67a9d]">_admin</span>
             </h1>
-            <button 
+            <button
               onClick={refreshData}
               className="p-2 bg-white/5 rounded-full hover:rotate-180 transition-all duration-500"
             >
@@ -527,15 +527,14 @@ export default function AdminPage() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                  activeTab === tab ? 'bg-white text-black' : 'text-white/40 hover:text-white'
-                }`}
+                className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-black' : 'text-white/40 hover:text-white'
+                  }`}
               >
-                {tab === 'inventory' ? 'ИНВЕНТАРЬ' : 
-                 tab === 'logistics' ? 'ЛОГИСТИКА' : 
-                 tab === 'promocodes' ? 'ПРОМОКОДЫ' : 
-                 tab === 'operations' ? 'КВЕСТЫ' : 
-                 tab === 'users' ? 'ПОЛЬЗОВАТЕЛИ' : 'НОВОСТИ'}
+                {tab === 'inventory' ? 'ИНВЕНТАРЬ' :
+                  tab === 'logistics' ? 'ЛОГИСТИКА' :
+                    tab === 'promocodes' ? 'ПРОМОКОДЫ' :
+                      tab === 'operations' ? 'КВЕСТЫ' :
+                        tab === 'users' ? 'ПОЛЬЗОВАТЕЛИ' : 'НОВОСТИ'}
               </button>
             ))}
           </div>
@@ -543,32 +542,32 @@ export default function AdminPage() {
 
         <AnimatePresence mode="wait">
           {activeTab === 'inventory' && (
-            <motion.div 
-              key="inv" 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
+            <motion.div
+              key="inv"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="grid grid-cols-1 lg:grid-cols-2 gap-16"
             >
               <section>
                 <form onSubmit={handleSubmitProduct} className="space-y-4 p-8 rounded-[2.5rem] border border-white/10 bg-white/5">
-                  <input 
-                    placeholder="НАЗВАНИЕ ТОВАРА" 
-                    className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl outline-none" 
-                    value={form.name} 
-                    onChange={e => setForm({...form, name: e.target.value})} 
+                  <input
+                    placeholder="НАЗВАНИЕ ТОВАРА"
+                    className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl outline-none"
+                    value={form.name}
+                    onChange={e => setForm({ ...form, name: e.target.value })}
                   />
                   <div className="grid grid-cols-2 gap-4">
-                    <input 
-                      placeholder="ЦЕНА (₽)" 
-                      type="number" 
-                      className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl outline-none" 
-                      value={form.price} 
-                      onChange={e => setForm({...form, price: e.target.value})} 
+                    <input
+                      placeholder="ЦЕНА (₽)"
+                      type="number"
+                      className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl outline-none"
+                      value={form.price}
+                      onChange={e => setForm({ ...form, price: e.target.value })}
                     />
-                    <select 
-                      className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl text-white outline-none" 
-                      value={form.category} 
+                    <select
+                      className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl text-white outline-none"
+                      value={form.category}
                       onChange={e => handleCategoryChange(e.target.value)}
                     >
                       <option className="bg-black" value="apparel">ОДЕЖДА</option>
@@ -580,46 +579,46 @@ export default function AdminPage() {
                   {/* НОВЫЙ БЛОК: ХАРАКТЕРИСТИКИ ТОВАРА */}
                   <div className="grid grid-cols-3 gap-4">
                     <div className="relative">
-                      <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={16}/>
-                      <input 
-                        placeholder="МАТЕРИАЛ" 
-                        className="w-full bg-black/50 border border-white/10 p-5 pl-12 rounded-2xl outline-none text-[10px] font-bold uppercase" 
-                        value={form.material} 
-                        onChange={e => setForm({...form, material: e.target.value})} 
+                      <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={16} />
+                      <input
+                        placeholder="МАТЕРИАЛ"
+                        className="w-full bg-black/50 border border-white/10 p-5 pl-12 rounded-2xl outline-none text-[10px] font-bold uppercase"
+                        value={form.material}
+                        onChange={e => setForm({ ...form, material: e.target.value })}
                       />
                     </div>
                     <div className="relative">
-                      <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={16}/>
-                      <input 
-                        placeholder="СТРАНА" 
-                        className="w-full bg-black/50 border border-white/10 p-5 pl-12 rounded-2xl outline-none text-[10px] font-bold uppercase" 
-                        value={form.origin} 
-                        onChange={e => setForm({...form, origin: e.target.value})} 
+                      <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={16} />
+                      <input
+                        placeholder="СТРАНА"
+                        className="w-full bg-black/50 border border-white/10 p-5 pl-12 rounded-2xl outline-none text-[10px] font-bold uppercase"
+                        value={form.origin}
+                        onChange={e => setForm({ ...form, origin: e.target.value })}
                       />
                     </div>
                     <div className="relative">
-                      <Barcode className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={16}/>
-                      <input 
-                        placeholder="АРТИКУЛ (AUTO)" 
-                        className="w-full bg-black/50 border border-white/10 p-5 pl-12 rounded-2xl outline-none text-[10px] font-bold uppercase" 
-                        value={form.article} 
-                        onChange={e => setForm({...form, article: e.target.value})} 
+                      <Barcode className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={16} />
+                      <input
+                        placeholder="АРТИКУЛ (AUTO)"
+                        className="w-full bg-black/50 border border-white/10 p-5 pl-12 rounded-2xl outline-none text-[10px] font-bold uppercase"
+                        value={form.article}
+                        onChange={e => setForm({ ...form, article: e.target.value })}
                       />
                     </div>
                   </div>
 
-                  <textarea 
-                    placeholder="ОПИСАНИЕ ТОВАРА" 
-                    className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl h-32 resize-none outline-none" 
-                    value={form.description} 
-                    onChange={e => setForm({...form, description: e.target.value})} 
+                  <textarea
+                    placeholder="ОПИСАНИЕ ТОВАРА"
+                    className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl h-32 resize-none outline-none"
+                    value={form.description}
+                    onChange={e => setForm({ ...form, description: e.target.value })}
                   />
-                  
+
                   <div className="grid grid-cols-4 gap-2">
                     {form.images.map((img, i) => (
                       <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-white/10">
                         <img src={img} className="w-full h-full object-cover" />
-                        <button 
+                        <button
                           onClick={(e) => removeImage(e, i)}
                           className="absolute top-1 right-1 p-1 bg-red-500 rounded-lg"
                         ><X size={12} /></button>
@@ -636,29 +635,28 @@ export default function AdminPage() {
                       <p className="text-[9px] font-black text-white/30 uppercase ml-2 tracking-widest">Доступные размеры:</p>
                       <div className="flex flex-wrap gap-2">
                         {form.sizes.map((s, i) => (
-                          <button 
-                            key={i} 
+                          <button
+                            key={i}
                             type="button"
                             onClick={(e) => toggleSizeStock(e, i)}
-                            className={`px-4 py-2 rounded-xl text-[10px] font-black border transition-all ${
-                              s.inStock ? 'bg-white text-black border-white' : 'bg-transparent text-white/20 border-white/5'
-                            }`}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black border transition-all ${s.inStock ? 'bg-white text-black border-white' : 'bg-transparent text-white/20 border-white/5'
+                              }`}
                           >{s.size}</button>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     className="w-full py-5 rounded-2xl font-black uppercase bg-[#d67a9d] text-white tracking-[0.2em] shadow-[0_10px_30px_rgba(214,122,157,0.3)]"
                   >
                     {editingId ? 'ОБНОВИТЬ КАРТОЧКУ' : 'СОЗДАТЬ ТОВАР'}
                   </button>
                   {editingId && (
-                    <button 
-                      type="button" 
-                      onClick={cancelEdit} 
+                    <button
+                      type="button"
+                      onClick={cancelEdit}
                       className="w-full py-3 text-[10px] font-black opacity-50 uppercase italic"
                     >ОТМЕНИТЬ РЕДАКТИРОВАНИЕ</button>
                   )}
@@ -711,14 +709,14 @@ export default function AdminPage() {
                         <p className="text-[9px] font-black text-white/20 uppercase mb-1 tracking-widest">Сумма</p>
                         <p className="text-xl font-black italic">{order.total_amount.toLocaleString()} ₽</p>
                       </div>
-                      <select 
-                        value={order.status} 
+                      <select
+                        value={order.status}
                         onChange={(e) => updateOrderStatus(e as any, order.id, e.target.value)}
                         className="bg-white text-black text-[10px] font-black uppercase px-6 py-4 rounded-2xl outline-none"
                       >
                         {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
-                      <button 
+                      <button
                         onClick={(e) => toggleOrder(e, order.id)}
                         className="p-4 bg-white/5 rounded-2xl"
                       >
@@ -729,9 +727,9 @@ export default function AdminPage() {
 
                   <AnimatePresence>
                     {expandedOrders[order.id] && (
-                      <motion.div 
-                        initial={{ height: 0 }} 
-                        animate={{ height: 'auto' }} 
+                      <motion.div
+                        initial={{ height: 0 }}
+                        animate={{ height: 'auto' }}
                         exit={{ height: 0 }}
                         className="overflow-hidden border-t border-white/5 bg-black/20"
                       >
@@ -803,36 +801,35 @@ export default function AdminPage() {
               <section>
                 <form onSubmit={handleCreatePromo} className="bg-white/5 border border-white/10 p-8 rounded-[3rem] space-y-4">
                   <h2 className="text-[10px] font-black uppercase tracking-[0.4em] mb-6 text-[#71b3c9]">Новый промокод</h2>
-                  <input 
-                    placeholder="КОД (НАПР. GIGA30)" 
-                    className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl font-black uppercase italic" 
-                    value={promoForm.code} 
-                    onChange={e => setPromoForm({...promoForm, code: e.target.value})} 
+                  <input
+                    placeholder="КОД (НАПР. GIGA30)"
+                    className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl font-black uppercase italic"
+                    value={promoForm.code}
+                    onChange={e => setPromoForm({ ...promoForm, code: e.target.value })}
                   />
                   <div className="grid grid-cols-2 gap-4">
-                    <input 
-                      type="number" 
-                      placeholder="СКИДКА (₽)" 
-                      className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl" 
-                      value={promoForm.discount} 
-                      onChange={e => setPromoForm({...promoForm, discount: e.target.value})} 
+                    <input
+                      type="number"
+                      placeholder="СКИДКА (₽)"
+                      className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl"
+                      value={promoForm.discount}
+                      onChange={e => setPromoForm({ ...promoForm, discount: e.target.value })}
                     />
-                    <input 
-                      type="number" 
-                      placeholder="ЛИМИТ" 
-                      className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl" 
-                      value={promoForm.usage_limit} 
-                      onChange={e => setPromoForm({...promoForm, usage_limit: e.target.value})} 
+                    <input
+                      type="number"
+                      placeholder="ЛИМИТ"
+                      className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl"
+                      value={promoForm.usage_limit}
+                      onChange={e => setPromoForm({ ...promoForm, usage_limit: e.target.value })}
                     />
                   </div>
-                  <button 
-                    type="button" 
-                    onClick={() => setPromoForm({...promoForm, is_hidden: !promoForm.is_hidden})}
-                    className={`w-full p-5 rounded-2xl border text-[10px] font-black uppercase transition-all flex items-center justify-center gap-3 ${
-                      promoForm.is_hidden ? 'bg-[#d67a9d]/20 border-[#d67a9d] text-[#d67a9d]' : 'bg-white/5 border-white/10 text-white/40'
-                    }`}
+                  <button
+                    type="button"
+                    onClick={() => setPromoForm({ ...promoForm, is_hidden: !promoForm.is_hidden })}
+                    className={`w-full p-5 rounded-2xl border text-[10px] font-black uppercase transition-all flex items-center justify-center gap-3 ${promoForm.is_hidden ? 'bg-[#d67a9d]/20 border-[#d67a9d] text-[#d67a9d]' : 'bg-white/5 border-white/10 text-white/40'
+                      }`}
                   >
-                    {promoForm.is_hidden ? <EyeOff size={16}/> : <Ticket size={16}/>}
+                    {promoForm.is_hidden ? <EyeOff size={16} /> : <Ticket size={16} />}
                     {promoForm.is_hidden ? 'СКРЫТЫЙ (ДЛЯ КВЕСТОВ)' : 'ПУБЛИЧНЫЙ (ОБЩИЙ)'}
                   </button>
                   <button type="submit" className="w-full py-5 bg-[#d67a9d] text-white rounded-2xl font-black uppercase tracking-[0.2em]">
@@ -857,7 +854,7 @@ export default function AdminPage() {
                           -{p.discount} ₽ / ОСТАЛОСЬ: {p.usage_limit - (p.used_count || 0)}
                         </p>
                       </div>
-                      <button 
+                      <button
                         onClick={(e) => deletePromo(e, p.id)}
                         className="p-4 text-red-500 hover:bg-red-500/10 rounded-2xl transition-all"
                       ><Trash2 size={20} /></button>
@@ -873,33 +870,33 @@ export default function AdminPage() {
               <section>
                 <form onSubmit={handleCreateTask} className="bg-white/5 border border-white/10 p-8 rounded-[3rem] space-y-4">
                   <h2 className="text-[10px] font-black uppercase tracking-[0.4em] mb-6 text-[#71b3c9]">Новая миссия</h2>
-                  <input 
-                    placeholder="НАЗВАНИЕ МИССИИ" 
-                    className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl font-black uppercase italic" 
-                    value={taskForm.title} 
-                    onChange={e => setTaskForm({...taskForm, title: e.target.value})} 
+                  <input
+                    placeholder="НАЗВАНИЕ МИССИИ"
+                    className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl font-black uppercase italic"
+                    value={taskForm.title}
+                    onChange={e => setTaskForm({ ...taskForm, title: e.target.value })}
                   />
-                  <textarea 
-                    placeholder="ОПИСАНИЕ (ЧТО НУЖНО СДЕЛАТЬ)" 
-                    className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl h-24 font-bold outline-none" 
-                    value={taskForm.description} 
-                    onChange={e => setTaskForm({...taskForm, description: e.target.value})} 
+                  <textarea
+                    placeholder="ОПИСАНИЕ (ЧТО НУЖНО СДЕЛАТЬ)"
+                    className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl h-24 font-bold outline-none"
+                    value={taskForm.description}
+                    onChange={e => setTaskForm({ ...taskForm, description: e.target.value })}
                   />
                   <div className="space-y-1">
                     <label className="text-[9px] font-black text-[#d67a9d] uppercase ml-2 tracking-widest">Секретное слово активации</label>
-                    <input 
-                      placeholder="НАПР. GIGALOVE" 
-                      className="w-full bg-black/50 border border-[#d67a9d]/30 p-5 rounded-2xl font-black uppercase text-[#d67a9d] outline-none" 
-                      value={taskForm.secret_word} 
-                      onChange={e => setTaskForm({...taskForm, secret_word: e.target.value})} 
+                    <input
+                      placeholder="НАПР. GIGALOVE"
+                      className="w-full bg-black/50 border border-[#d67a9d]/30 p-5 rounded-2xl font-black uppercase text-[#d67a9d] outline-none"
+                      value={taskForm.secret_word}
+                      onChange={e => setTaskForm({ ...taskForm, secret_word: e.target.value })}
                     />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[9px] font-black text-[#71b3c9] uppercase ml-2 tracking-widest">Награда (Промокод)</label>
-                    <select 
+                    <select
                       className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl font-black uppercase text-xs outline-none text-white"
                       value={taskForm.reward_code}
-                      onChange={e => setTaskForm({...taskForm, reward_code: e.target.value})}
+                      onChange={e => setTaskForm({ ...taskForm, reward_code: e.target.value })}
                     >
                       <option value="">ВЫБЕРИ_ПРОМОКОД</option>
                       {promocodes.filter(p => p.is_hidden).map(p => (
@@ -949,8 +946,8 @@ export default function AdminPage() {
             <motion.div key="users" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
               <div className="relative max-w-xl mx-auto">
                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20" size={20} />
-                <input 
-                  placeholder="ПОИСК ПО EMAIL..." 
+                <input
+                  placeholder="ПОИСК ПО EMAIL..."
                   className="w-full bg-white/5 border border-white/10 p-6 pl-16 rounded-3xl outline-none font-black italic uppercase tracking-widest focus:border-[#d67a9d]/50 transition-all"
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
@@ -974,7 +971,7 @@ export default function AdminPage() {
                     <div className="space-y-3">
                       <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-2">Обновить прогресс миссии</label>
                       <div className="flex gap-4">
-                        <input 
+                        <input
                           type="range"
                           min="0"
                           max="100"
@@ -985,7 +982,7 @@ export default function AdminPage() {
                           }}
                           className="flex-1 accent-[#d67a9d]"
                         />
-                        <button 
+                        <button
                           onClick={() => updateUserProgress(user.id, user.progress)}
                           disabled={updatingUser === user.id}
                           className="bg-[#d67a9d] text-white p-4 rounded-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
@@ -1006,19 +1003,19 @@ export default function AdminPage() {
               <section>
                 <form onSubmit={handleCreateNews} className="bg-white/5 border border-white/10 p-8 rounded-[3rem] space-y-4">
                   <h2 className="text-[10px] font-black uppercase tracking-[0.4em] mb-6 text-[#d67a9d]">Новое объявление</h2>
-                  <input 
-                    placeholder="ЗАГОЛОВОК НОВОСТИ" 
-                    className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl font-black uppercase italic" 
-                    value={newsForm.title} 
-                    onChange={e => setNewsForm({...newsForm, title: e.target.value})} 
+                  <input
+                    placeholder="ЗАГОЛОВОК НОВОСТИ"
+                    className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl font-black uppercase italic"
+                    value={newsForm.title}
+                    onChange={e => setNewsForm({ ...newsForm, title: e.target.value })}
                   />
-                  <textarea 
-                    placeholder="ТЕКСТ НОВОСТИ" 
-                    className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl h-32 font-bold outline-none" 
-                    value={newsForm.content} 
-                    onChange={e => setNewsForm({...newsForm, content: e.target.value})} 
+                  <textarea
+                    placeholder="ТЕКСТ НОВОСТИ"
+                    className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl h-32 font-bold outline-none"
+                    value={newsForm.content}
+                    onChange={e => setNewsForm({ ...newsForm, content: e.target.value })}
                   />
-                  
+
                   {/* ГРУППА ЗАГРУЗКИ ИЗОБРАЖЕНИЯ */}
                   <div className="space-y-3">
                     <label className="text-[9px] font-black text-white/30 uppercase ml-2 tracking-widest">Изображение новости</label>
@@ -1045,11 +1042,11 @@ export default function AdminPage() {
                         </div>
                       )}
                     </div>
-                    <input 
-                      placeholder="ИЛИ ВСТАВЬТЕ URL ССЫЛКУ" 
-                      className="w-full bg-black/50 border border-white/10 p-4 rounded-xl text-[10px] font-bold outline-none" 
-                      value={newsForm.image_url} 
-                      onChange={e => setNewsForm({...newsForm, image_url: e.target.value})} 
+                    <input
+                      placeholder="ИЛИ ВСТАВЬТЕ URL ССЫЛКУ"
+                      className="w-full bg-black/50 border border-white/10 p-4 rounded-xl text-[10px] font-bold outline-none"
+                      value={newsForm.image_url}
+                      onChange={e => setNewsForm({ ...newsForm, image_url: e.target.value })}
                     />
                   </div>
 
@@ -1066,9 +1063,9 @@ export default function AdminPage() {
                     <div className="flex justify-between items-start">
                       <div className="flex gap-4">
                         {item.image_url && (
-                           <div className="w-16 h-16 rounded-xl overflow-hidden border border-white/5 bg-black">
-                             <img src={item.image_url} className="w-full h-full object-cover" />
-                           </div>
+                          <div className="w-16 h-16 rounded-xl overflow-hidden border border-white/5 bg-black">
+                            <img src={item.image_url} className="w-full h-full object-cover" />
+                          </div>
                         )}
                         <div>
                           <h4 className="font-black italic uppercase text-lg text-[#d67a9d]">{item.title}</h4>
