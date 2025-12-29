@@ -820,24 +820,32 @@ export default function CartPage() {
                             type="text"
                             value={fullName}
                             onChange={(e) => setFullName(e.target.value)}
-                            placeholder="CLIENT_MANIFEST_NAME"
+                            placeholder="ФИО ПОЛУЧАТЕЛЯ"
                             className="w-full bg-white/5 border border-white/10 p-8 pl-18 rounded-[2.5rem] font-black text-xs uppercase outline-none focus:border-[#ff007a] shadow-lg transition-all"
                           />
                         </div>
                         <div className="relative group/input">
-                          {/* Иконка теперь не будет мешать тексту благодаря left-8 и pl-20 */}
                           <Phone className="absolute left-8 top-1/2 -translate-y-1/2 text-white/10 group-focus-within/input:text-[#ff007a] transition-all" size={20} />
                           <input
                             type="tel"
                             value={phone}
                             onChange={(e) => {
-                              // Очищаем от всего, кроме цифр, и ограничиваем до 11 символов
                               const val = e.target.value.replace(/\D/g, '').slice(0, 11);
-                              // Если начинается с 7, добавляем плюс для красоты
                               setPhone(val.length > 0 ? (val.startsWith('7') ? '+' + val : val) : '');
                             }}
                             placeholder="+7 (999) 000-00-00"
                             className="w-full bg-white/5 border border-white/10 p-8 pl-20 rounded-[2.5rem] font-black text-xs outline-none focus:border-[#ff007a] shadow-lg transition-all"
+                          />
+                        </div>
+                        {/* ВОТ ЭТОТ БЛОК Я ДОБАВИЛ ДЛЯ АДРЕСА */}
+                        <div className="relative group/input">
+                          <MapPin className="absolute left-8 top-1/2 -translate-y-1/2 text-white/10 group-focus-within/input:text-[#ff007a] transition-all" size={20} />
+                          <input
+                            type="text"
+                            value={address}
+                            onChange={(e) => setAddress(e.target.value)}
+                            placeholder="АДРЕС (ИНДЕКС, ГОРОД, УЛИЦА, ДОМ)"
+                            className="w-full bg-white/5 border border-white/10 p-8 pl-20 rounded-[2.5rem] font-black text-xs uppercase outline-none focus:border-[#ff007a] shadow-lg transition-all"
                           />
                         </div>
                       </div>
@@ -847,13 +855,13 @@ export default function CartPage() {
                           onClick={() => setDeliveryMethod('mail')}
                           className={`p-8 rounded-[2rem] border-2 font-black text-[11px] tracking-[0.3em] flex flex-col items-center gap-4 transition-all ${deliveryMethod === 'mail' ? 'border-[#ff007a] bg-[#ff007a]/10 text-white shadow-[0_0_40px_rgba(255,0,122,0.2)]' : 'border-white/5 bg-white/5 text-white/20 hover:bg-white/[0.08]'}`}
                         >
-                          <Truck size={24} /> COURIER_EXP
+                          <Truck size={24} /> ПОЧТА РФ
                         </button>
                         <button
                           onClick={() => setDeliveryMethod('pickup')}
                           className={`p-8 rounded-[2rem] border-2 font-black text-[11px] tracking-[0.3em] flex flex-col items-center gap-4 transition-all ${deliveryMethod === 'pickup' ? 'border-[#ff007a] bg-[#ff007a]/10 text-white shadow-[0_0_40px_rgba(255,0,122,0.2)]' : 'border-white/5 bg-white/5 text-white/20 hover:bg-white/[0.08]'}`}
                         >
-                          <Package size={24} /> PICKUP_POINT
+                          <Package size={24} /> САМОВЫВОЗ
                         </button>
                       </div>
                     </motion.div>
@@ -869,21 +877,21 @@ export default function CartPage() {
                   className="w-full py-12 bg-white text-black rounded-[3.5rem] font-black uppercase italic tracking-[0.8em] text-sm hover:bg-[#ff007a] hover:text-white transition-all shadow-[0_30px_60px_rgba(255,255,255,0.1)] hover:shadow-[#ff007a]/50 disabled:opacity-50 relative overflow-hidden group/btn"
                 >
                   <span className="relative z-10">
-                    {isOrdering ? 'ENCRYPTING...' : showCheckoutFields ? 'INIT_PAYMENT_v2' : 'PROCEED_TO_CHECKOUT'}
+                    {isOrdering ? 'ОБРАБОТКА...' : showCheckoutFields ? 'ОПЛАТИТЬ ЗАКАЗ' : 'ОФОРМИТЬ ЗАКАЗ'}
                   </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover/btn:animate-[shimmer_2s_infinite]" />
                 </motion.button>
-              </div>
 
-              {/* ДОПОЛНИТЕЛЬНЫЙ ДЕКОРАТИВНЫЙ ОБВЕС */}
-              <div className="mt-12 p-12 border border-white/5 rounded-[4rem] bg-gradient-to-br from-white/[0.03] to-transparent backdrop-blur-md">
-                <div className="flex items-center gap-6 mb-6">
-                  <ShieldCheck className="text-[#ff007a]" size={28} />
-                  <span className="text-xs font-black uppercase tracking-[0.5em] italic">Secure_Protocol_Active</span>
+                {/* ДОПОЛНИТЕЛЬНЫЙ ДЕКОРАТИВНЫЙ ОБВЕС */}
+                <div className="mt-12 p-12 border border-white/5 rounded-[4rem] bg-gradient-to-br from-white/[0.03] to-transparent backdrop-blur-md">
+                  <div className="flex items-center gap-6 mb-6">
+                    <ShieldCheck className="text-[#ff007a]" size={28} />
+                    <span className="text-xs font-black uppercase tracking-[0.5em] italic">Secure_Protocol_Active</span>
+                  </div>
+                  <p className="text-[10px] text-white/30 font-bold uppercase leading-relaxed tracking-widest italic">
+                    Все транзакции vsgiga shop проходят через многослойный шлюз шифрования. Ваши данные не сохраняются в открытом виде. Праздничный кэшбэк будет начислен в течение 0.001 сек после завершения.
+                  </p>
                 </div>
-                <p className="text-[10px] text-white/30 font-bold uppercase leading-relaxed tracking-widest italic">
-                  Все транзакции vsgiga shop проходят через многослойный шлюз шифрования. Ваши данные не сохраняются в открытом виде. Праздничный кэшбэк будет начислен в течение 0.001 сек после завершения.
-                </p>
               </div>
             </div>
           </div>
@@ -1073,11 +1081,10 @@ export default function CartPage() {
               <h2 className="text-6xl font-black uppercase italic tracking-tighter mb-8 leading-none">
                 ЗАКАЗ <br /> <span className="text-[#ff007a]">УСПЕШНО ПРИНЯТ</span>
               </h2>
-              <p className="text-sm font-bold text-white/40 uppercase tracking-widest leading-loose mb-12 max-w-md mx-auto">
-                Ваша транзакция была верифицирована нейронной сетью.
-                Мы уже готовим товары к отправке через защищенный гипер-канал.
-                Для завершения переведите <span className="text-white">{finalPrice} ₽</span> на номер:
-                <span className="text-[#ff007a] font-black ml-2">79278552324</span> (СБП/Перевод/Озон банк)
+              <p className="text-sm font-bold text-white/40 uppercase tracking-widest leading-loose mb-12 max-w-md mx-auto italic">
+                Мы уже готовим товары к отправке через защищенный гипер-канал.<br />
+                Для завершения переведите <span className="text-[#ff007a] font-black mx-2 text-xl">{finalPrice.toLocaleString()} ₽</span>
+                на номер: <span className="text-white font-black">79278552324</span> (СБП/Любой банк)
               </p>
               <div className="grid grid-cols-2 gap-6 mb-16">
                 <div className="p-8 bg-white/5 rounded-3xl border border-white/5">
