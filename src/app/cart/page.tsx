@@ -1,4 +1,4 @@
- 'use client'
+'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useCart } from '@/context/CartContext'
@@ -538,7 +538,7 @@ export default function CartPage() {
               <div className="h-[3px] w-20 bg-[#ff007a]" />
               <span className="text-[#ff007a] font-black uppercase tracking-[0.6em] text-[12px]">vsgiga shop / encrypted_cart</span>
             </motion.div>
-            <h1 className="text-[10rem] font-black italic uppercase tracking-tighter leading-[0.8] select-none">
+            <h1 className="text-[4rem] sm:text-[7rem] md:text-[9rem] lg:text-[10rem] font-black italic uppercase tracking-tighter leading-[0.8] select-none text-center lg:text-left">
               КОРЗИН<span className="text-[#ff007a] animate-pulse">А</span>
             </h1>
             <div className="mt-10 flex flex-wrap justify-center xl:justify-start gap-10 opacity-30 font-black text-[11px] uppercase tracking-[0.4em] italic">
@@ -564,7 +564,7 @@ export default function CartPage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-24">
             {/* --- [SECTION: PRIMARY_ASSET_FEED] --- */}
-            <div className="lg:col-span-7 space-y-12">
+            <div className="col-span-1 lg:col-span-7 space-y-6 md:space-y-12">
               <AnimatePresence mode="popLayout">
                 {dbCart.map((item, idx) => (
                   <motion.div
@@ -691,7 +691,7 @@ export default function CartPage() {
               </AnimatePresence>
             </div>
             {/* --- [SECTION: TRANSACTION_SIDEBAR] --- */}
-            <div className="lg:col-span-5">
+            <div className="col-span-1 lg:col-span-5">
               <div className="bg-[#080808] border-2 border-white/5 p-14 rounded-[5rem] sticky top-40 shadow-[0_60px_120px_rgba(0,0,0,0.9)] overflow-hidden group">
                 {/* Анимированный лазерный сканер сверху вниз */}
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#ff007a] to-transparent animate-scan z-20" />
