@@ -326,15 +326,15 @@ export default function CartPage() {
         const formattedCart = cartData
           .filter((item: any) => item.product !== null)
           .map((item: any) => ({
-            ...item.product,
+            ...item.product,      // Берем данные товара (имя, цена, фото)
             quantity: item.quantity,
-            cartItemId: item.id
+            cartItemId: item.id,
+            // ВОТ ЧТО ТЫ ЗАБЫЛ: вытаскиваем размер из строки таблицы cart
+            size: item.size || 'OS' 
           }))
+        
         setDbCart(formattedCart)
-        // Обновляем глобальный контекст, чтобы иконка в хедере увидела товары
-        formattedCart.forEach(item => {
-          // Если в контексте есть метод addItem или sync, используй его
-        });
+        console.log("CART_LOADED_WITH_SIZES:", formattedCart); // Проверь в консоли, теперь там будет "33"
       }
 
       // Подгрузка бонусного счета из профиля VSGIGA
@@ -465,29 +465,23 @@ export default function CartPage() {
         return;
       }
 
-      // Формируем товары (Забираем размер из таблицы cart)
+      // СОБИРАЕМ ТОВАРЫ (Максимально жесткая проверка размера)
       const itemsForDatabase = dbCart.map((item: any) => {
-        // Логируем для отладки, чтобы видеть, что пришло из БД cart
-        console.log("DEBUG: Данные из таблицы cart:", item); 
+        // Логируем каждый айтем в консоль, чтобы ты видел, что в нем реально лежит
+        console.log("ITEM_DEBUG:", item);
 
-        // 1. Ищем размер (size теперь приоритет, так как он в таблице cart)
-        const sizeFromDb = item.size || item.selectedSize;
-
-        // 2. Запасной поиск в массиве
-        const sizeFromList = Array.isArray(item.sizes)
-          ? item.sizes.find((s: any) => s.selected === true || s.active === true)?.name
-          : null;
-
-        // 3. Финальный результат (теперь точно не XL по дефолту)
-        const finalSize = sizeFromDb || sizeFromList || 'OS';
+        // Пытаемся достать размер из всех возможных полей, которые могли прилететь
+        // 1. Поле 'size' (из нашей новой логики)
+        // 2. Поле 'selectedSize' (могло остаться от старой логики)
+        // 3. Поле 'size' внутри вложенного объекта 'product'
+        const finalSize = item.size || item.selectedSize || item.product?.size || 'OS';
 
         return {
           id: item.product_id || item.id,
-          product_id: item.product_id || item.id,
           name: item.name || item.title || 'Товар',
           price: item.price,
           quantity: item.quantity || 1,
-          size: String(finalSize), 
+          size: String(finalSize), // Превращаем в строку, чтобы "33" не потерялось
           image: item.image || (item.images && item.images[0]) || ''
         };
       });
