@@ -423,12 +423,14 @@ export default function CartPage() {
   // [LOGIC_HANDLER_04]: FINAL_TRANSACTION_INIT
   // ======================================================================
   const handleCheckout = async () => {
+    // 1. Проверка первого шага (показ полей)
     if (!showCheckoutFields) {
       setShowCheckoutFields(true)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
 
+    // 2. Валидация данных
     if (fullName.length < 2 || phone.length < 10) {
       addToast('ОШИБКА ВАЛИДАЦИИ: ПРОВЕРЬТЕ ПОЛЯ', 'error')
       return
@@ -436,10 +438,18 @@ export default function CartPage() {
 
     setIsOrdering(true)
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('AUTH_LOST')
+      // Получаем текущую сессию
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-      // 1. Сохраняем заказ в БД (добавил метод оплаты и твой номер)
+      // Если пользователь не авторизован — не выкидываем ошибку транзакции, 
+      // а объясняем причину через Toast
+      if (!user || authError) {
+        addToast('ОШИБКА: ТРЕБУЕТСЯ АВТОРИЗАЦИЯ', 'error')
+        setIsOrdering(false)
+        return
+      }
+
+      // 3. Сохраняем заказ в БД
       const { error: orderError } = await supabase.from('orders').insert([{
         user_id: user.id,
         items: dbCart,
@@ -450,29 +460,37 @@ export default function CartPage() {
         phone,
         status: 'pending',
         payment_method: 'transfer_to_phone',
-        payment_target: '79278552324', // Номер сохранится в админке
+        payment_target: '79278552324', // Номер из твоего кода
         created_at: new Date().toISOString()
       }])
 
-      if (orderError) throw orderError
+      // Если проблема в БД (например, нет таблицы orders) — выведет детали в консоль
+      if (orderError) {
+        console.error('Database Insert Error:', orderError)
+        throw orderError
+      }
 
-      // 2. Очищаем корзину в БД
-      await supabase.from('cart').delete().eq('user_id', user.id)
+      // 4. Очищаем корзину в БД после успешного заказа
+      const { error: deleteError } = await supabase.from('cart').delete().eq('user_id', user.id)
+      if (deleteError) console.error('Cart cleanup error:', deleteError)
 
-      // 3. Синхронизируем локальное состояние
+      // 5. Синхронизируем локальное состояние
       contextClearCart()
-      setDbCart([]) // Очищаем список на экране
+      setDbCart([])
 
-      // 4. ПОКАЗЫВАЕМ ОКНО (Теперь оно не закроется само)
+      // 6. ПОКАЗЫВАЕМ ОКНО УСПЕХА
       setShowPaymentModal(true)
+      // Опционально: можно сменить step на success, если у тебя это предусмотрено
+      // setStep('success')
 
-    } catch (e) {
-      addToast('КРИТИЧЕСКИЙ СБОЙ ТРАНЗАКЦИИ', 'error')
+    } catch (e: any) {
+      console.error('Full Checkout Error:', e)
+      // Выводим конкретное сообщение об ошибке, если оно есть
+      addToast(e.message === 'AUTH_LOST' ? 'ОШИБКА: СЕССИЯ ИСТЕКЛА' : 'КРИТИЧЕСКИЙ СБОЙ ТРАНЗАКЦИИ', 'error')
     } finally {
       setIsOrdering(false)
     }
   }
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
