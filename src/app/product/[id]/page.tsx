@@ -321,7 +321,6 @@ export default function ProductPage() {
 
   // --- ОБНОВЛЕННАЯ ФУНКЦИЯ ДОБАВЛЕНИЯ В КОРЗИНУ (БАЗА ДАННЫХ) ---
   const handleAddToCart = async () => {
-    // Подключите ваш контекст корзины
     const { addToCart } = useCart();
     // Проверка наличия размеров
     const hasSizes = product.sizes && product.sizes.length > 0 && product.category !== 'accessories';
@@ -334,7 +333,7 @@ export default function ProductPage() {
     setAdding(true)
 
     try {
-      // 1. Проверка авторизации
+      // 1. Проверяем авторизацию
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
@@ -344,36 +343,39 @@ export default function ProductPage() {
         return
       }
 
+      // 2. Подготовка данных
       const sizeToSave = hasSizes ? selectedSize : 'OS'
 
-      // 2. Отправка в существующую таблицу cart
+      // 3. Отправка в Supabase (Таблица cart)
       const { error } = await supabase
         .from('cart')
         .upsert({
           user_id: user.id,
           product_id: product.id,
-          size: sizeToSave, // Твой "33" размер
+          size: sizeToSave,
           quantity: 1
         }, {
-          onConflict: 'user_id, product_id, size'
+          onConflict: 'user_id, product_id, size',
+          ignoreDuplicates: false
         })
 
       if (error) throw error;
 
-      // 3. Обновляем локальный стейт (контекст), чтобы корзина "ожила" сразу
+      // --- ВОТ ЭТОТ БЛОК Я ПРОПУСТИЛ, ИСПРАВЛЯЕМ: ---
+      // Обновляем локальный стейт корзины, чтобы кнопка и счетчик сработали
       if (typeof addToCart === 'function') {
         addToCart({
           ...product,
-          size: sizeToSave,
+          size: sizeToSave, // Твой "33" размер улетает в стейт
           quantity: 1
         });
       }
 
-      showToast('ОБЪЕКТ ИНТЕГРИРОВАН В БАЗУ', 'success')
+      showToast('ОБЪЕКТ ИНТЕГРИРОВАН В КОРЗИНУ', 'success')
 
     } catch (err: any) {
-      console.error('Ошибка корзины:', err)
-      showToast(`ОШИБКА: ${err.message || 'СБОЙ СИНХРОНИЗАЦИИ'}`, 'error')
+      console.error(err)
+      showToast('КРИТИЧЕСКИЙ СБОЙ СИНХРОНИЗАЦИИ', 'error')
     } finally {
       setAdding(false)
     }
