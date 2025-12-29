@@ -605,15 +605,14 @@ export default function CartPage() {
                       damping: 20,
                       delay: idx * 0.1
                     }}
-                    // Адаптивные отступы: p-5 на мобилках, p-12 на десктопе. 
-                    // flex-row теперь работает всегда, чтобы карточка была компактной.
+                    // Возвращаем твой оригинальный ряд
                     className="bg-[#080808] border border-white/5 p-5 md:p-12 rounded-[2.5rem] md:rounded-[5rem] flex flex-row items-center gap-4 md:gap-16 group hover:border-[#ff007a]/40 transition-all duration-700 relative overflow-hidden shadow-2xl"
                   >
-                    {/* ТЕКСТУРНЫЙ СЛОЙ КАРТОЧКИ - СОХРАНЕН */}
+                    {/* ТЕКСТУРНЫЙ СЛОЙ КАРТОЧКИ */}
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
                     <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-[#ff007a]/5 rounded-full blur-[100px] pointer-events-none group-hover:bg-[#ff007a]/10 transition-colors" />
 
-                    {/* ПРЕВЬЮ ОБЪЕКТА - СОХРАНЕНО (Адаптивный размер) */}
+                    {/* ПРЕВЬЮ ОБЪЕКТА */}
                     <div className="w-28 h-32 md:w-56 md:h-72 bg-black rounded-[1.8rem] md:rounded-[3.5rem] overflow-hidden border border-white/5 shrink-0 relative shadow-2xl">
                       <motion.img
                         whileHover={{ scale: 1.15, rotate: 2 }}
@@ -626,7 +625,7 @@ export default function CartPage() {
                       </div>
                     </div>
 
-                    {/* ИНФОРМАЦИОННЫЙ СТЕК - ВЕСЬ ТВОЙ КОД ТУТ */}
+                    {/* ИНФОРМАЦИОННЫЙ СТЕК */}
                     <div className="flex-1 w-full min-w-0">
                       <div className="flex justify-between items-start mb-4 md:mb-10">
                         <div className="min-w-0 flex-1">
@@ -639,7 +638,6 @@ export default function CartPage() {
                           </h3>
                         </div>
 
-                        {/* ИКОНКА УДАЛЕНИЯ - ТЕПЕРЬ ВЛЕЗАЕТ */}
                         <button
                           onClick={() => handleRemoveFromCart(item.id)}
                           className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-[1.5rem] border border-white/5 flex items-center justify-center text-white/10 hover:text-red-500 hover:border-red-500/40 hover:bg-red-500/5 transition-all duration-300 shrink-0 ml-2"
@@ -648,7 +646,7 @@ export default function CartPage() {
                         </button>
                       </div>
 
-                      {/* ТВОЯ ТАБЛИЦА СПЕЦИФИКАЦИЙ (Скрыта на совсем маленьких, видна на планшетах и ПК) */}
+                      {/* ТВОЯ ТАБЛИЦА СПЕЦИФИКАЦИЙ */}
                       <div className="hidden sm:grid grid-cols-4 gap-4 md:gap-6 p-4 md:p-6 bg-white/[0.02] rounded-[1.5rem] md:rounded-[2.5rem] border border-white/5 mb-6 md:mb-10">
                         <div className="space-y-1 text-center">
                           <p className="text-[7px] md:text-[8px] font-black text-white/20 uppercase">Protocol</p>
@@ -668,15 +666,14 @@ export default function CartPage() {
                         </div>
                       </div>
 
+                      {/* ВОТ ТУТ ИСПРАВЛЕНИЕ: МЫ УБРАЛИ TRUNCATE И ДОБАВИЛИ ГИБКОСТЬ */}
                       <div className="flex flex-row items-center justify-between gap-2 md:gap-6">
-                        {/* ЦЕНА - Теперь с flex-1 и min-w-0, чтобы не толкать кнопки */}
-                        <div className="flex-1 min-w-0">
-                          <span className="text-xl md:text-5xl font-black italic text-white tracking-tighter block truncate">
+                        <div className="min-w-fit">
+                          <span className="text-xl md:text-5xl font-black italic text-white tracking-tighter whitespace-nowrap">
                             {item.price.toLocaleString()} <span className="text-sm md:text-2xl text-[#ff007a]">₽</span>
                           </span>
                         </div>
 
-                        {/* УПРАВЛЕНИЕ КОЛИЧЕСТВОМ - shrink-0 (запрет сжатия) */}
                         <div className="flex items-center bg-black border border-white/5 p-1.5 md:p-4 rounded-xl md:rounded-[2.5rem] gap-2 md:gap-8 shadow-inner shrink-0">
                           <motion.button
                             whileTap={{ scale: 0.7 }}
@@ -686,11 +683,9 @@ export default function CartPage() {
                             <Minus size={14} className="md:w-[20px] md:h-[20px]" strokeWidth={3} />
                           </motion.button>
 
-                          <div className="w-5 md:w-12 flex justify-center items-center shrink-0">
-                            <span className="font-black text-sm md:text-4xl font-mono text-white leading-none">
-                              {item.quantity}
-                            </span>
-                          </div>
+                          <span className="font-black text-sm md:text-4xl w-4 md:w-12 text-center font-mono text-white">
+                            {item.quantity}
+                          </span>
 
                           <motion.button
                             whileTap={{ scale: 0.7 }}
@@ -702,7 +697,7 @@ export default function CartPage() {
                         </div>
                       </div>
 
-                      {/* ТВОЙ ВИЗУАЛЬНЫЙ СКАНЕР ВНИЗУ - СОХРАНЕН */}
+                      {/* ТВОЙ СКАНЕР */}
                       <div className="mt-4 md:mt-10 flex gap-0.5 md:gap-1.5 h-[2px] md:h-1 opacity-20">
                         {[...Array(20)].map((_, i) => (
                           <div key={i} className={`flex-1 h-full rounded-full ${i % 4 === 0 ? 'bg-[#ff007a]' : 'bg-white'}`} />
