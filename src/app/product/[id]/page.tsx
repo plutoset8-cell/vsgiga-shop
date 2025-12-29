@@ -321,6 +321,7 @@ export default function ProductPage() {
 
   // --- ОБНОВЛЕННАЯ ФУНКЦИЯ ДОБАВЛЕНИЯ В КОРЗИНУ (БАЗА ДАННЫХ) ---
   const handleAddToCart = async () => {
+    // Проверка наличия размеров (исключая аксессуары)
     const hasSizes = product.sizes && product.sizes.length > 0 && product.category !== 'accessories';
 
     if (hasSizes && !selectedSize) {
@@ -331,44 +332,44 @@ export default function ProductPage() {
     setAdding(true)
 
     try {
-      // 1. Проверяем авторизацию
+      // 1. Проверяем авторизацию (getUser — самый надежный метод)
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
         showToast('ТРЕБУЕТСЯ АВТОРИЗАЦИЯ В СЕТИ', 'error')
-        // Сохраняем путь для возврата
+        // Сохраняем путь для возврата после логина
         sessionStorage.setItem('redirect_after_login', `/product/${id}`)
         router.push('/login')
         return
       }
 
-      // 2. Отправляем в Supabase (Таблица cart)
+      // 2. Подготовка данных
       const sizeToSave = hasSizes ? selectedSize : 'OS'
 
+      // 3. Отправка в Supabase (Таблица cart)
+      // ВАЖНО: Мы используем upsert с onConflict по пользователю, товару И РАЗМЕРУ.
+      // Чтобы это работало, в таблице cart должен быть уникальный индекс на (user_id, product_id, size)
       const { error } = await supabase
         .from('cart')
         .upsert({
           user_id: user.id,
           product_id: product.id,
-          size: sizeToSave, // ТЕПЕРЬ ОТПРАВЛЯЕТСЯ
+          size: sizeToSave,
           quantity: 1
-        }, { onConflict: 'user_id, product_id, size' }) // Важно: добавить size в конфликт, если он часть ключа
-      // Важно: если unique constraint на [user_id, product_id], то эта запись обновит строку
-
-      // Если Supabase настроен просто на добавление (без уникальности), логика может отличаться
-      // Для простой корзины можно сделать так:
-      /* const { data: existing } = await supabase.from('cart').select().eq('user_id', user.id).eq('product_id', product.id).single()
-         if(existing) { update quantity... } else { insert... }
-      */
+        }, {
+          onConflict: 'user_id, product_id, size'
+        })
 
       if (error) throw error
 
       showToast(`${product.name.toUpperCase()} [${sizeToSave}] // ЗАГРУЖЕН В КОРЗИНУ`, 'success')
 
-    } catch (e) {
-      console.error(e)
-      showToast('СБОЙ СОЕДИНЕНИЯ С БАЗОЙ', 'error')
+    } catch (e: any) {
+      console.error('Cart Error:', e)
+      // Если база выдает ошибку, выводим её текст для отладки
+      showToast(e.message === 'Connection reset' ? 'СБОЙ СОЕДИНЕНИЯ С БАЗОЙ' : `ОШИБКА БД: ${e.message}`, 'error')
     } finally {
+      // Искусственная задержка для красоты анимации кнопки
       setTimeout(() => setAdding(false), 800)
     }
   }
@@ -401,56 +402,56 @@ export default function ProductPage() {
     : [product.image]
 
   return (
-    <main className="min-h-screen bg-black text-white pt-32 pb-20 px-6 overflow-x-hidden relative">
+    <main className="min-h-screen bg-black text-white pt-20 md:pt-32 pb-10 md:pb-20 px-4 md:px-6 overflow-x-hidden relative">
       <SizeGuideModal isOpen={showSizeGuide} onClose={() => setShowSizeGuide(false)} />
 
       {/* ФОНОВЫЕ ЭЛЕМЕНТЫ */}
-      <div className="fixed top-20 right-0 w-[500px] h-[500px] bg-[#71b3c9] opacity-5 blur-[150px] pointer-events-none" />
-      <div className="fixed bottom-0 left-0 w-[500px] h-[500px] bg-[#d67a9d] opacity-5 blur-[150px] pointer-events-none" />
+      <div className="fixed top-20 right-0 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-[#71b3c9] opacity-5 blur-[100px] md:blur-[150px] pointer-events-none" />
+      <div className="fixed bottom-0 left-0 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-[#d67a9d] opacity-5 blur-[100px] md:blur-[150px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto relative z-10">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-white/40 hover:text-white transition-colors mb-8 group uppercase text-[10px] font-black tracking-widest"
+          className="flex items-center gap-2 text-white/40 hover:text-white transition-colors mb-6 md:mb-8 group uppercase text-[9px] md:text-[10px] font-black tracking-widest"
         >
-          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+          <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
           ВЕРНУТЬСЯ_В_КАТАЛОГ
         </button>
 
-        {/* СТРОКА СТАТУСА (LIVE TICKER) */}
-        <div className="mb-10 flex items-center gap-4 bg-white/[0.03] border border-white/5 p-3 rounded-full w-fit px-6 backdrop-blur-md">
-          <span className="relative flex h-2 w-2">
+        {/* СТРОКА СТАТУСА (LIVE TICKER) - Адаптирована под мобилки */}
+        <div className="mb-6 md:mb-10 flex items-center gap-3 md:gap-4 bg-white/[0.03] border border-white/5 p-2 md:p-3 rounded-full w-fit px-4 md:px-6 backdrop-blur-md">
+          <span className="relative flex h-1.5 w-1.5 md:h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 md:h-2 w-2 bg-green-500"></span>
           </span>
-          <span className="text-[9px] font-black uppercase tracking-widest text-white/70">
-            ПРЯМО СЕЙЧАС СМОТРЯТ: <span className="text-white">{liveViewers} ПОЛЬЗОВАТЕЛЕЙ</span>
+          <span className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-white/70">
+            LIVE: <span className="text-white">{liveViewers} СМОТРЯТ</span>
           </span>
-          <div className="h-3 w-px bg-white/10 mx-2"></div>
-          <Eye size={12} className="text-[#d67a9d]" />
+          <div className="h-3 w-px bg-white/10 mx-1"></div>
+          <Eye size={10} className="text-[#d67a9d]" />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-24 items-start">
 
           {/* ЛЕВАЯ КОЛОНКА: ИЗОБРАЖЕНИЯ */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col gap-6 sticky top-32"
+            className="flex flex-col gap-4 md:gap-6 sticky top-24 md:top-32"
           >
             <div
-              className="relative aspect-[4/5] rounded-[3rem] overflow-hidden bg-[#080808] border border-white/10 group cursor-crosshair shadow-2xl"
+              className="relative aspect-[4/5] rounded-[2rem] md:rounded-[3rem] overflow-hidden bg-[#080808] border border-white/10 group cursor-crosshair shadow-2xl"
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
             >
               {/* Бейджи */}
-              <div className="absolute top-6 left-6 z-20 flex gap-2">
-                <div className="bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
-                  <span className="text-[8px] font-black text-[#d67a9d] uppercase tracking-widest">VSGIGA_OFFICIAL</span>
+              <div className="absolute top-4 left-4 md:top-6 left-6 z-20 flex flex-wrap gap-2">
+                <div className="bg-black/60 backdrop-blur-md px-2 md:px-3 py-1 rounded-full border border-white/10">
+                  <span className="text-[7px] md:text-[8px] font-black text-[#d67a9d] uppercase tracking-widest">VSGIGA_OFFICIAL</span>
                 </div>
                 {product.price > 10000 && (
-                  <div className="bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
-                    <span className="text-[8px] font-black text-[#71b3c9] uppercase tracking-widest">PREMIUM_GRADE</span>
+                  <div className="bg-black/60 backdrop-blur-md px-2 md:px-3 py-1 rounded-full border border-white/10">
+                    <span className="text-[7px] md:text-[8px] font-black text-[#71b3c9] uppercase tracking-widest">PREMIUM_GRADE</span>
                   </div>
                 )}
               </div>
@@ -461,8 +462,9 @@ export default function ProductPage() {
                 className="w-full h-full object-cover pointer-events-none transition-transform duration-700 group-hover:scale-105"
               />
 
+              {/* Лупа (только для десктопа) */}
               <div
-                className="absolute inset-0 bg-no-repeat pointer-events-none z-10 mix-blend-hard-light"
+                className="hidden md:block absolute inset-0 bg-no-repeat pointer-events-none z-10 mix-blend-hard-light"
                 style={{
                   backgroundImage: `url(${activeImage})`,
                   backgroundSize: '250%',
@@ -471,20 +473,17 @@ export default function ProductPage() {
               />
 
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-
-              <div className="absolute bottom-6 right-6 p-4 bg-white/10 backdrop-blur-md rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-white/20">
-                <Maximize2 size={20} />
-              </div>
             </div>
 
+            {/* Галлерея - Скролл на мобилках */}
             {galleryImages.length > 1 && (
-              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x">
+              <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x">
                 {galleryImages.map((img: string, idx: number) => (
                   <button
                     key={idx}
                     onClick={() => setActiveImage(img)}
                     className={`
-                      relative w-24 h-24 rounded-2xl overflow-hidden border transition-all shrink-0 snap-center
+                      relative w-16 h-16 md:w-24 md:h-24 rounded-xl md:rounded-2xl overflow-hidden border transition-all shrink-0 snap-center
                       ${activeImage === img ? 'border-[#d67a9d] shadow-[0_0_15px_rgba(214,122,157,0.3)] scale-100' : 'border-white/10 opacity-60 hover:opacity-100 scale-95'}
                     `}
                   >
