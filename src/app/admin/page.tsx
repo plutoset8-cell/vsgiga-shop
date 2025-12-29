@@ -777,8 +777,13 @@ export default function AdminPage() {
                                     <p className="text-[10px] font-black uppercase leading-none">{item.name || 'Товар'}</p>
                                     <div className="flex gap-2 mt-1">
                                       <span className="text-[9px] font-black bg-black text-white px-2 py-0.5 rounded italic">
-                                        {/* Берем размер, который мы упаковали в JSON в корзине */}
-                                        РАЗМЕР: {item.size || 'OS'}
+                                        {/* Проверяем все возможные варианты записи размера */}
+                                        РАЗМЕР: {
+                                          item.size ||
+                                          item.selectedSize ||
+                                          (item.sizes && Array.isArray(item.sizes) && item.sizes.find((s: any) => s.selected || s.active)?.name) ||
+                                          'OS'
+                                        }
                                       </span>
                                       <span className="text-[9px] font-bold opacity-50 uppercase">
                                         КОЛ-ВО: {item.quantity || 1}
