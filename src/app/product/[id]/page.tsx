@@ -6,9 +6,9 @@ import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import { useCart } from '@/context/CartContext' // Оставляем для совместимости, если нужно
 import { useToast } from '@/context/ToastContext'
-import { 
-  ArrowLeft, ShoppingBag, ShieldCheck, Truck, Star, Maximize2, 
-  Info, Package, MapPin, Activity, Zap, Ruler, X, Eye, Crosshair, Cpu 
+import {
+  ArrowLeft, ShoppingBag, ShieldCheck, Truck, Star, Maximize2,
+  Info, Package, MapPin, Activity, Zap, Ruler, X, Eye, Crosshair, Cpu
 } from 'lucide-react'
 
 // --- НОВЫЙ КОМПОНЕНТ: ТАБЛИЦА РАЗМЕРОВ (MODAL) ---
@@ -16,7 +16,7 @@ function SizeGuideModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
   if (!isOpen) return null
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-      <motion.div 
+      <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         className="bg-[#111] border border-white/10 p-8 rounded-[2rem] max-w-2xl w-full relative overflow-hidden"
@@ -73,7 +73,7 @@ function NeuralRecommendations({ currentId }: { currentId: string }) {
         .select('id, name, price, image, category')
         .neq('id', currentId)
         .limit(3)
-      
+
       if (data) setItems(data)
     }
     fetchRecs()
@@ -92,7 +92,7 @@ function NeuralRecommendations({ currentId }: { currentId: string }) {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {items.map((item, idx) => (
-          <motion.a 
+          <motion.a
             href={`/product/${item.id}`}
             key={item.id}
             initial={{ opacity: 0, y: 50 }}
@@ -168,14 +168,14 @@ function ProductReviews({ productId }: { productId: string }) {
         {/* ФОРМА ОТЗЫВА */}
         <form onSubmit={handleSubmitReview} className="bg-white/5 p-8 rounded-[2.5rem] border border-white/10 mb-16 backdrop-blur-xl relative overflow-hidden">
           <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#d67a9d] blur-[100px] opacity-20 pointer-events-none"></div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 relative z-10">
             <div className="space-y-2">
               <label className="text-[8px] font-black uppercase text-white/30 ml-4 flex items-center gap-2">
                 <UserIcon /> Идентификация_Пользователя
               </label>
-              <input 
-                placeholder="ВАШЕ ИМЯ / НИКНЕЙМ" 
+              <input
+                placeholder="ВАШЕ ИМЯ / НИКНЕЙМ"
                 className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl outline-none focus:border-[#d67a9d] text-[10px] font-bold uppercase tracking-widest placeholder:text-white/20 transition-all focus:bg-black/80"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -187,8 +187,8 @@ function ProductReviews({ productId }: { productId: string }) {
               </label>
               <div className="flex items-center justify-between bg-black/50 border border-white/10 p-4 rounded-2xl h-[62px] hover:border-white/20 transition-colors">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <button 
-                    key={star} 
+                  <button
+                    key={star}
                     type="button"
                     onClick={() => setRating(star)}
                     className={`transition-all duration-300 transform active:scale-90 ${rating >= star ? 'text-[#d67a9d] scale-110 drop-shadow-[0_0_10px_rgba(214,122,157,0.5)]' : 'text-white/10 hover:text-white/30'}`}
@@ -203,14 +203,14 @@ function ProductReviews({ productId }: { productId: string }) {
             <label className="text-[8px] font-black uppercase text-white/30 ml-4 flex items-center gap-2">
               <MessageIcon /> Текст_Трансмиссии
             </label>
-            <textarea 
-              placeholder="ОПИШИТЕ ВАШ ОПЫТ ИСПОЛЬЗОВАНИЯ ПРОДУКТА VSGIGA..." 
-              className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl outline-none focus:border-[#d67a9d] text-[10px] font-bold h-32 resize-none placeholder:text-white/20 transition-all focus:bg-black/80" 
+            <textarea
+              placeholder="ОПИШИТЕ ВАШ ОПЫТ ИСПОЛЬЗОВАНИЯ ПРОДУКТА VSGIGA..."
+              className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl outline-none focus:border-[#d67a9d] text-[10px] font-bold h-32 resize-none placeholder:text-white/20 transition-all focus:bg-black/80"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
             />
           </div>
-          <button 
+          <button
             disabled={sending}
             className="w-full py-5 bg-white text-black rounded-2xl font-black uppercase text-[10px] tracking-[0.3em] hover:bg-[#d67a9d] hover:text-white transition-all duration-500 disabled:opacity-50 relative overflow-hidden group"
           >
@@ -222,10 +222,10 @@ function ProductReviews({ productId }: { productId: string }) {
         {/* СПИСОК ОТЗЫВОВ */}
         <div className="space-y-6">
           {reviews.map((rev) => (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              key={rev.id} 
+              key={rev.id}
               className="bg-white/[0.02] border border-white/5 p-8 rounded-3xl backdrop-blur-sm group hover:border-white/20 transition-all hover:bg-white/[0.04]"
             >
               <div className="flex justify-between items-start mb-4">
@@ -254,18 +254,28 @@ function ProductReviews({ productId }: { productId: string }) {
 }
 
 // Вспомогательные иконки для формы
-const UserIcon = () => <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-const StarIcon = () => <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-const MessageIcon = () => <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-
-
+const UserIcon = () => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+  </svg>
+);
+const StarIcon = () => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+  </svg>
+);
+const MessageIcon = () => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+  </svg>
+);
 // --- ОСНОВНАЯ СТРАНИЦА ---
 export default function ProductPage() {
   const { id } = useParams()
   const router = useRouter()
   // Оставляем useCart если он нужен для header, но основная логика теперь через DB
   const { showToast } = useToast()
-  
+
   const [product, setProduct] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
@@ -312,7 +322,7 @@ export default function ProductPage() {
   // --- ОБНОВЛЕННАЯ ФУНКЦИЯ ДОБАВЛЕНИЯ В КОРЗИНУ (БАЗА ДАННЫХ) ---
   const handleAddToCart = async () => {
     const hasSizes = product.sizes && product.sizes.length > 0 && product.category !== 'accessories';
-    
+
     if (hasSizes && !selectedSize) {
       showToast('ОШИБКА: НЕ ВЫБРАН РАЗМЕР МОДУЛЯ', 'error')
       return
@@ -323,7 +333,7 @@ export default function ProductPage() {
     try {
       // 1. Проверяем авторизацию
       const { data: { user } } = await supabase.auth.getUser()
-      
+
       if (!user) {
         showToast('ТРЕБУЕТСЯ АВТОРИЗАЦИЯ В СЕТИ', 'error')
         // Сохраняем путь для возврата
@@ -334,17 +344,16 @@ export default function ProductPage() {
 
       // 2. Отправляем в Supabase (Таблица cart)
       const sizeToSave = hasSizes ? selectedSize : 'OS'
-      
+
       const { error } = await supabase
         .from('cart')
         .upsert({
           user_id: user.id,
-          product_id: product.id,
-          // Если у вас в таблице есть поле size, раскомментируйте:
-          // size: sizeToSave,
+          product_id: product.id, 
+          size: sizeToSave,
           quantity: 1 // Логика upsert сама должна обрабатывать инкремент, либо обработаем триггером
-        }, { onConflict: 'user_id, product_id' }) 
-        // Важно: если unique constraint на [user_id, product_id], то эта запись обновит строку
+        }, { onConflict: 'user_id, product_id' })
+      // Важно: если unique constraint на [user_id, product_id], то эта запись обновит строку
 
       // Если Supabase настроен просто на добавление (без уникальности), логика может отличаться
       // Для простой корзины можно сделать так:
@@ -387,20 +396,20 @@ export default function ProductPage() {
 
   if (!product) return null
 
-  const galleryImages = (product.images && product.images.length > 0) 
-    ? product.images 
+  const galleryImages = (product.images && product.images.length > 0)
+    ? product.images
     : [product.image]
 
   return (
     <main className="min-h-screen bg-black text-white pt-32 pb-20 px-6 overflow-x-hidden relative">
       <SizeGuideModal isOpen={showSizeGuide} onClose={() => setShowSizeGuide(false)} />
-      
+
       {/* ФОНОВЫЕ ЭЛЕМЕНТЫ */}
       <div className="fixed top-20 right-0 w-[500px] h-[500px] bg-[#71b3c9] opacity-5 blur-[150px] pointer-events-none" />
       <div className="fixed bottom-0 left-0 w-[500px] h-[500px] bg-[#d67a9d] opacity-5 blur-[150px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto relative z-10">
-        <button 
+        <button
           onClick={() => router.back()}
           className="flex items-center gap-2 text-white/40 hover:text-white transition-colors mb-8 group uppercase text-[10px] font-black tracking-widest"
         >
@@ -422,14 +431,14 @@ export default function ProductPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-start">
-          
+
           {/* ЛЕВАЯ КОЛОНКА: ИЗОБРАЖЕНИЯ */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex flex-col gap-6 sticky top-32"
           >
-            <div 
+            <div
               className="relative aspect-[4/5] rounded-[3rem] overflow-hidden bg-[#080808] border border-white/10 group cursor-crosshair shadow-2xl"
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
@@ -440,19 +449,19 @@ export default function ProductPage() {
                   <span className="text-[8px] font-black text-[#d67a9d] uppercase tracking-widest">VSGIGA_OFFICIAL</span>
                 </div>
                 {product.price > 10000 && (
-                   <div className="bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+                  <div className="bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
                     <span className="text-[8px] font-black text-[#71b3c9] uppercase tracking-widest">PREMIUM_GRADE</span>
                   </div>
                 )}
               </div>
 
-              <img 
-                src={activeImage} 
+              <img
+                src={activeImage}
                 alt={product.name}
                 className="w-full h-full object-cover pointer-events-none transition-transform duration-700 group-hover:scale-105"
               />
-              
-              <div 
+
+              <div
                 className="absolute inset-0 bg-no-repeat pointer-events-none z-10 mix-blend-hard-light"
                 style={{
                   backgroundImage: `url(${activeImage})`,
@@ -460,9 +469,9 @@ export default function ProductPage() {
                   ...zoomStyle
                 }}
               />
-              
+
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-              
+
               <div className="absolute bottom-6 right-6 p-4 bg-white/10 backdrop-blur-md rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-white/20">
                 <Maximize2 size={20} />
               </div>
@@ -487,7 +496,7 @@ export default function ProductPage() {
           </motion.div>
 
           {/* ПРАВАЯ КОЛОНКА: ИНФОРМАЦИЯ */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex flex-col pt-4"
@@ -498,7 +507,7 @@ export default function ProductPage() {
                 СЕКТОР: {product.category === 'apparel' ? 'ОДЕЖДА' : product.category === 'footwear' ? 'ОБУВЬ' : 'АКСЕССУАРЫ'}
               </span>
             </div>
-            
+
             <h1 className="text-5xl lg:text-7xl font-black italic uppercase tracking-tighter mb-8 leading-[0.9] text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-white/40">
               {product.name}
             </h1>
@@ -530,7 +539,7 @@ export default function ProductPage() {
                   {[
                     { label: 'ПРОИСХОЖДЕНИЕ', value: product.origin || 'РЕСПУБЛИКА_КОРЕЯ' },
                     { label: 'СОСТАВ', value: product.material || 'CYBER_FIBER_SYNTH / COTTON' },
-                    { label: 'АРТИКУЛ', value: product.article || product.id.slice(0,8).toUpperCase() },
+                    { label: 'АРТИКУЛ', value: product.article || product.id.slice(0, 8).toUpperCase() },
                     { label: 'СТАТУС', value: 'ГОТОВ К ОТПРАВКЕ' }
                   ].map((spec, i) => (
                     <div key={i} className="flex justify-between border-b border-white/5 pb-2 hover:pl-2 transition-all duration-300 cursor-default">
@@ -549,14 +558,14 @@ export default function ProductPage() {
                   <label className="text-[10px] font-black uppercase text-white/30 tracking-widest block flex items-center gap-2">
                     <Ruler size={14} /> ВЫБЕРИТЕ_РАЗМЕР_МОДУЛЯ
                   </label>
-                  <button 
+                  <button
                     onClick={() => setShowSizeGuide(true)}
                     className="text-[9px] text-[#71b3c9] uppercase font-bold hover:text-white transition-colors border-b border-[#71b3c9]/30 hover:border-white pb-0.5"
                   >
                     ТАБЛИЦА РАЗМЕРОВ
                   </button>
                 </div>
-                
+
                 <div className="flex flex-wrap gap-3">
                   {product.sizes.map((s: any) => (
                     <button
@@ -566,8 +575,8 @@ export default function ProductPage() {
                       className={`
                         relative w-16 h-16 rounded-2xl font-black text-sm uppercase italic transition-all duration-300 border-2 overflow-hidden group
                         ${!s.inStock ? 'opacity-20 cursor-not-allowed border-white/5 bg-white/5' : 'cursor-pointer'}
-                        ${selectedSize === s.size 
-                          ? 'border-[#d67a9d] text-white bg-[#d67a9d]/10 shadow-[0_0_20px_rgba(214,122,157,0.4)]' 
+                        ${selectedSize === s.size
+                          ? 'border-[#d67a9d] text-white bg-[#d67a9d]/10 shadow-[0_0_20px_rgba(214,122,157,0.4)]'
                           : 'border-white/10 bg-white/[0.02] text-white/60 hover:border-white/30 hover:bg-white/5'}
                       `}
                     >
@@ -581,24 +590,24 @@ export default function ProductPage() {
 
             {/* БЛОК ДОСТАВКИ */}
             <div className="mb-10 grid grid-cols-1 gap-4">
-               <div className="p-5 rounded-3xl bg-white/[0.02] border border-white/10 flex items-start gap-5 hover:bg-white/[0.04] transition-colors group">
-                  <div className="p-3 bg-[#71b3c9]/10 rounded-2xl group-hover:bg-[#71b3c9]/20 transition-colors">
-                    <Package className="text-[#71b3c9]" size={22} />
-                  </div>
-                  <div>
-                    <span className="text-[11px] font-black uppercase block mb-1">ЛОГИСТИЧЕСКИЙ ТЕРМИНАЛ</span>
-                    <span className="text-[9px] text-white/40 uppercase font-bold italic">РАСЧЕТНОЕ ВРЕМЯ: 2-4 ЦИКЛА (ДНЯ)</span>
-                  </div>
-               </div>
-               <div className="p-5 rounded-3xl bg-white/[0.02] border border-white/10 flex items-start gap-5 hover:bg-white/[0.04] transition-colors group">
-                  <div className="p-3 bg-[#d67a9d]/10 rounded-2xl group-hover:bg-[#d67a9d]/20 transition-colors">
-                    <MapPin className="text-[#d67a9d]" size={22} />
-                  </div>
-                  <div>
-                    <span className="text-[11px] font-black uppercase block mb-1">ТОЧКИ ДОСТУПА</span>
-                    <span className="text-[9px] text-white/40 uppercase font-bold italic">ДОСТУПНА ГЛОБАЛЬНАЯ ТЕЛЕПОРТАЦИЯ (ПОЧТА/СДЭК)</span>
-                  </div>
-               </div>
+              <div className="p-5 rounded-3xl bg-white/[0.02] border border-white/10 flex items-start gap-5 hover:bg-white/[0.04] transition-colors group">
+                <div className="p-3 bg-[#71b3c9]/10 rounded-2xl group-hover:bg-[#71b3c9]/20 transition-colors">
+                  <Package className="text-[#71b3c9]" size={22} />
+                </div>
+                <div>
+                  <span className="text-[11px] font-black uppercase block mb-1">ЛОГИСТИЧЕСКИЙ ТЕРМИНАЛ</span>
+                  <span className="text-[9px] text-white/40 uppercase font-bold italic">РАСЧЕТНОЕ ВРЕМЯ: 2-4 ЦИКЛА (ДНЯ)</span>
+                </div>
+              </div>
+              <div className="p-5 rounded-3xl bg-white/[0.02] border border-white/10 flex items-start gap-5 hover:bg-white/[0.04] transition-colors group">
+                <div className="p-3 bg-[#d67a9d]/10 rounded-2xl group-hover:bg-[#d67a9d]/20 transition-colors">
+                  <MapPin className="text-[#d67a9d]" size={22} />
+                </div>
+                <div>
+                  <span className="text-[11px] font-black uppercase block mb-1">ТОЧКИ ДОСТУПА</span>
+                  <span className="text-[9px] text-white/40 uppercase font-bold italic">ДОСТУПНА ГЛОБАЛЬНАЯ ТЕЛЕПОРТАЦИЯ (ПОЧТА/СДЭК)</span>
+                </div>
+              </div>
             </div>
 
             <p className="text-white/60 text-xs leading-loose mb-12 font-medium uppercase tracking-wide whitespace-pre-wrap border-l-2 border-[#d67a9d]/50 pl-6">
@@ -620,16 +629,16 @@ export default function ProductPage() {
                   {adding ? 'ПРОТОКОЛ_ЗАГРУЗКИ...' : 'ИНИЦИАЛИЗИРОВАТЬ ПОКУПКУ'}
                 </span>
               </button>
-              
+
               <div className="flex justify-center items-center gap-2 text-[8px] font-black text-white/20 uppercase tracking-[0.5em] mt-2">
-                 <ShieldCheck size={12} />
-                 <span>БЕЗОПАСНАЯ ТРАНЗАКЦИЯ</span>
+                <ShieldCheck size={12} />
+                <span>БЕЗОПАСНАЯ ТРАНЗАКЦИЯ</span>
               </div>
             </div>
 
             <div className="mt-12 pt-8 border-t border-white/5">
               <div className="flex justify-between text-[8px] font-black text-white/20 uppercase tracking-[0.5em] font-mono">
-                <span>ID: {product.id.slice(0,18)}...</span>
+                <span>ID: {product.id.slice(0, 18)}...</span>
                 <span>VSG_SYSTEM_v5.0</span>
               </div>
             </div>
