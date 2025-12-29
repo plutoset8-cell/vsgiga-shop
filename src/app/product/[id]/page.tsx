@@ -271,6 +271,7 @@ const MessageIcon = () => (
 );
 // --- ОСНОВНАЯ СТРАНИЦА ---
 export default function ProductPage() {
+  const { addToCart } = useCart();
   const { id } = useParams()
   const router = useRouter()
   // Оставляем useCart если он нужен для header, но основная логика теперь через DB
@@ -321,8 +322,7 @@ export default function ProductPage() {
 
   // --- ОБНОВЛЕННАЯ ФУНКЦИЯ ДОБАВЛЕНИЯ В КОРЗИНУ (БАЗА ДАННЫХ) ---
   const handleAddToCart = async () => {
-    const { addToCart } = useCart();
-    // Проверка наличия размеров
+    // Проверка наличия размеров (исключая аксессуары)
     const hasSizes = product.sizes && product.sizes.length > 0 && product.category !== 'accessories';
 
     if (hasSizes && !selectedSize) {
@@ -347,7 +347,8 @@ export default function ProductPage() {
       const sizeToSave = hasSizes ? selectedSize : 'OS'
 
       // 3. Отправка в Supabase (Таблица cart)
-      const { error } = await supabase
+      // Мы используем upsert, чтобы обновить размер, если товар уже в корзине
+      const { error: dbError } = await supabase
         .from('cart')
         .upsert({
           user_id: user.id,
@@ -359,14 +360,14 @@ export default function ProductPage() {
           ignoreDuplicates: false
         })
 
-      if (error) throw error;
+      if (dbError) throw dbError;
 
-      // --- ВОТ ЭТОТ БЛОК Я ПРОПУСТИЛ, ИСПРАВЛЯЕМ: ---
-      // Обновляем локальный стейт корзины, чтобы кнопка и счетчик сработали
+      // 4. СИНХРОНИЗАЦИЯ С ИНТЕРФЕЙСОМ
+      // Вызываем addToCart, который мы достали из useCart() на уровне компонента
       if (typeof addToCart === 'function') {
         addToCart({
           ...product,
-          size: sizeToSave, // Твой "33" размер улетает в стейт
+          size: sizeToSave, // Твой реальный размер (например, "33")
           quantity: 1
         });
       }
@@ -374,13 +375,12 @@ export default function ProductPage() {
       showToast('ОБЪЕКТ ИНТЕГРИРОВАН В КОРЗИНУ', 'success')
 
     } catch (err: any) {
-      console.error(err)
+      console.error('Ошибка при добавлении в корзину:', err)
       showToast('КРИТИЧЕСКИЙ СБОЙ СИНХРОНИЗАЦИИ', 'error')
     } finally {
       setAdding(false)
     }
   }
-
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect()
     const x = ((e.clientX - left) / width) * 100
