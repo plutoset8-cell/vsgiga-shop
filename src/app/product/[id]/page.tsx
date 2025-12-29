@@ -349,10 +349,10 @@ export default function ProductPage() {
         .from('cart')
         .upsert({
           user_id: user.id,
-          product_id: product.id, 
-          size: sizeToSave,
-          quantity: 1 // Логика upsert сама должна обрабатывать инкремент, либо обработаем триггером
-        }, { onConflict: 'user_id, product_id' })
+          product_id: product.id,
+          size: sizeToSave, // ТЕПЕРЬ ОТПРАВЛЯЕТСЯ
+          quantity: 1
+        }, { onConflict: 'user_id, product_id, size' }) // Важно: добавить size в конфликт, если он часть ключа
       // Важно: если unique constraint на [user_id, product_id], то эта запись обновит строку
 
       // Если Supabase настроен просто на добавление (без уникальности), логика может отличаться
