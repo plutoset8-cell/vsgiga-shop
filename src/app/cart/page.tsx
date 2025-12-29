@@ -429,12 +429,25 @@ export default function CartPage() {
       return
     }
 
-    if (fullName.length < 2 || phone.length < 10) {
-      addToast('ОШИБКА ВАЛИДАЦИИ: ПРОВЕРЬТЕ ПОЛЯ', 'error')
-      return
+    // Проверка телефона (убираем + и считаем цифры)
+    const purePhone = phone.replace(/\D/g, '');
+
+    if (fullName.length < 5) {
+      addToast('ВВЕДИТЕ ПОЛНОЕ ФИО', 'error');
+      return;
     }
 
-    setIsOrdering(true)
+    if (purePhone.length < 11) {
+      addToast('ВВЕДИТЕ КОРРЕКТНЫЙ НОМЕР (11 ЦИФР)', 'error');
+      return;
+    }
+
+    if (address.length < 10) {
+      addToast('УКАЖИТЕ ПОЛНЫЙ АДРЕС ДОСТАВКИ', 'error');
+      return;
+    }
+
+    setIsOrdering(true);
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser()
 
@@ -815,26 +828,31 @@ export default function CartPage() {
                     >
                       <div className="grid grid-cols-1 gap-5">
                         <div className="relative group/input">
-                          <User className="absolute left-7 top-1/2 -translate-y-1/2 text-white/10 group-focus-within/input:text-[#ff007a] transition-all" size={20} />
-                          <input
-                            type="text"
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            placeholder="ФИО ПОЛУЧАТЕЛЯ"
-                            className="w-full bg-white/5 border border-white/10 p-8 pl-18 rounded-[2.5rem] font-black text-xs uppercase outline-none focus:border-[#ff007a] shadow-lg transition-all"
-                          />
+                          <div className="relative group/input">
+                            <User className="absolute left-8 top-1/2 -translate-y-1/2 text-white/10 group-focus-within/input:text-[#ff007a] transition-all" size={20} />
+                            <input
+                              type="text"
+                              value={fullName}
+                              onChange={(e) => setFullName(e.target.value)}
+                              placeholder="ФИО ПОЛУЧАТЕЛЯ"
+                              className="w-full bg-white/5 border border-white/10 p-8 pl-24 rounded-[2.5rem] font-black text-xs uppercase outline-none focus:border-[#ff007a] shadow-lg transition-all"
+                            />
+                          </div>
                         </div>
+
+                        {/* ПОЛЕ: ТЕЛЕФОН */}
                         <div className="relative group/input">
                           <Phone className="absolute left-8 top-1/2 -translate-y-1/2 text-white/10 group-focus-within/input:text-[#ff007a] transition-all" size={20} />
                           <input
                             type="tel"
                             value={phone}
                             onChange={(e) => {
+                              // Оставляем только цифры и ограничиваем 11 знаками
                               const val = e.target.value.replace(/\D/g, '').slice(0, 11);
                               setPhone(val.length > 0 ? (val.startsWith('7') ? '+' + val : val) : '');
                             }}
                             placeholder="+7 (999) 000-00-00"
-                            className="w-full bg-white/5 border border-white/10 p-8 pl-20 rounded-[2.5rem] font-black text-xs outline-none focus:border-[#ff007a] shadow-lg transition-all"
+                            className="w-full bg-white/5 border border-white/10 p-8 pl-24 rounded-[2.5rem] font-black text-xs outline-none focus:border-[#ff007a] shadow-lg transition-all"
                           />
                         </div>
 
@@ -1084,10 +1102,10 @@ export default function CartPage() {
                 ЗАКАЗ <br /> <span className="text-[#ff007a]">УСПЕШНО ПРИНЯТ</span>
               </h2>
               <p className="text-sm font-bold text-white/40 uppercase tracking-widest leading-loose mb-12 max-w-md mx-auto italic">
-                Мы уже готовим товары к отправке через защищенный гипер-канал.<br />
+                Мы уже готовим товары к отправке <br />
                 Для завершения переведите <span className="text-[#ff007a] font-black mx-2 text-xl">
-                  {/* Считаем сумму "на лету", чтобы точно не было 0 */}
-                  {(totalPrice - spendAmount - (appliedPromo ? Number(appliedPromo.discount) : 0)).toLocaleString()} ₽
+                  {/* Math.max гарантирует, что сумма не будет отрицательной */}
+                  {Math.max(0, totalPrice - spendAmount - (appliedPromo ? Number(appliedPromo.discount) : 0)).toLocaleString()} ₽
                 </span>
                 на номер: <span className="text-white font-black">79278552324</span> (СБП/Любой банк)
               </p>
