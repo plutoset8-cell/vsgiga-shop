@@ -585,7 +585,7 @@ export default function CartPage() {
             </div>
 
             {/* Кнопка возврата в каталог — сделаем её поменьше для мобилок */}
-            <Link href="/shop" className="inline-block mt-4 md:mt-16 px-8 py-4 md:px-16 md:py-8 bg-white/5 border border-white/10 rounded-full hover:bg-[#ff007a] hover:text-white transition-all duration-500 uppercase font-black italic tracking-widest text-[10px] md:text-sm">
+            <Link href="/catalog" className="inline-block mt-4 md:mt-16 px-8 py-4 md:px-16 md:py-8 bg-white/5 border border-white/10 rounded-full hover:bg-[#ff007a] hover:text-white transition-all duration-500 uppercase font-black italic tracking-widest text-[10px] md:text-sm">
               Back to Catalog
             </Link>
           </motion.div>
@@ -837,14 +837,15 @@ export default function CartPage() {
                             className="w-full bg-white/5 border border-white/10 p-8 pl-20 rounded-[2.5rem] font-black text-xs outline-none focus:border-[#ff007a] shadow-lg transition-all"
                           />
                         </div>
-                        {/* ВОТ ЭТОТ БЛОК Я ДОБАВИЛ ДЛЯ АДРЕСА */}
+
+                        {/* ПРАВКА 1: Уточненный placeholder для адреса */}
                         <div className="relative group/input">
                           <MapPin className="absolute left-8 top-1/2 -translate-y-1/2 text-white/10 group-focus-within/input:text-[#ff007a] transition-all" size={20} />
                           <input
                             type="text"
                             value={address}
                             onChange={(e) => setAddress(e.target.value)}
-                            placeholder="АДРЕС (ИНДЕКС, ГОРОД, УЛИЦА, ДОМ)"
+                            placeholder="ВВЕДИТЕ ТОЧНЫЙ АДРЕС ПОЧТЫ РФ (ИНДЕКС, ГОРОД, УЛИЦА, ДОМ)"
                             className="w-full bg-white/5 border border-white/10 p-8 pl-20 rounded-[2.5rem] font-black text-xs uppercase outline-none focus:border-[#ff007a] shadow-lg transition-all"
                           />
                         </div>
@@ -857,9 +858,11 @@ export default function CartPage() {
                         >
                           <Truck size={24} /> ПОЧТА РФ
                         </button>
+
+                        {/* ПРАВКА 2: Самовывоз теперь выдает уведомление */}
                         <button
-                          onClick={() => setDeliveryMethod('pickup')}
-                          className={`p-8 rounded-[2rem] border-2 font-black text-[11px] tracking-[0.3em] flex flex-col items-center gap-4 transition-all ${deliveryMethod === 'pickup' ? 'border-[#ff007a] bg-[#ff007a]/10 text-white shadow-[0_0_40px_rgba(255,0,122,0.2)]' : 'border-white/5 bg-white/5 text-white/20 hover:bg-white/[0.08]'}`}
+                          onClick={() => addToast('ДАННЫЙ СПОСОБ ПОКА В РАЗРАБОТКЕ', 'error')}
+                          className={`p-8 rounded-[2rem] border-2 font-black text-[11px] tracking-[0.3em] flex flex-col items-center gap-4 transition-all border-white/5 bg-white/5 text-white/20 opacity-50 cursor-not-allowed`}
                         >
                           <Package size={24} /> САМОВЫВОЗ
                         </button>
@@ -867,7 +870,6 @@ export default function CartPage() {
                     </motion.div>
                   )}
                 </AnimatePresence>
-
                 {/* ГЛАВНАЯ КНОПКА ТРАНЗАКЦИИ */}
                 <motion.button
                   whileHover={{ scale: 1.02, y: -5 }}
@@ -1083,7 +1085,10 @@ export default function CartPage() {
               </h2>
               <p className="text-sm font-bold text-white/40 uppercase tracking-widest leading-loose mb-12 max-w-md mx-auto italic">
                 Мы уже готовим товары к отправке через защищенный гипер-канал.<br />
-                Для завершения переведите <span className="text-[#ff007a] font-black mx-2 text-xl">{finalPrice.toLocaleString()} ₽</span>
+                Для завершения переведите <span className="text-[#ff007a] font-black mx-2 text-xl">
+                  {/* Считаем сумму "на лету", чтобы точно не было 0 */}
+                  {(totalPrice - spendAmount - (appliedPromo ? Number(appliedPromo.discount) : 0)).toLocaleString()} ₽
+                </span>
                 на номер: <span className="text-white font-black">79278552324</span> (СБП/Любой банк)
               </p>
               <div className="grid grid-cols-2 gap-6 mb-16">
