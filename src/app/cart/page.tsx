@@ -460,40 +460,44 @@ export default function CartPage() {
 
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser()
-
-      // Расчет цены (твои оригинальные строки, перенесены чуть выше, чтобы сработать до return)
       const calculatedPrice = Math.max(0, totalPrice - spendAmount - (appliedPromo ? Number(appliedPromo.discount) : 0));
 
       if (userError || !user) {
         addToast('ОШИБКА: ВЫ НЕ АВТОРИЗОВАНЫ', 'error')
-        setOrderPrice(calculatedPrice); // Твоя строка
+        setOrderPrice(calculatedPrice);
         setIsOrdering(false)
         return;
       }
 
-      // СОХРАНЯЕМ ВСЕ ДАННЫЕ ТОВАРОВ, ВКЛЮЧАЯ РАЗМЕР
-      // Добавлена поддержка title/name и image для полной совместимости с логистикой админки
-      const itemsForOrder = dbCart.map(item => ({
-        id: item.product_id || item.id,
-        name: item.name || item.title || 'Товар', // Гарантируем имя для админки
-        price: item.price,
-        quantity: item.quantity,
-        size: item.size || item.selectedSize || 'OS', // Захватываем размер из любого возможного поля
-        image: item.image || item.image_url // Чтобы в админке была видна картинка
-      }));
+      // ФИНАЛЬНЫЙ ФИКС СБОРА ДАННЫХ
+      const itemsForOrder = dbCart.map(item => {
+        // Логируем в консоль, чтобы ты сам увидел, что лежит в item, если снова не сработает
+        console.log("Данные товара из корзины:", item); 
+
+        return {
+          id: item.product_id || item.id,
+          name: item.name || item.title || 'Товар',
+          price: item.price,
+          quantity: item.quantity,
+          // Проверяем все возможные варианты, где может прятаться размер
+          size: item.size || item.selectedSize || item.variant || 'OS', 
+          image: item.image || item.image_url
+        };
+      });
 
       const { error: orderError } = await supabase.from('orders').insert([{
         user_id: user.id,
-        items: itemsForOrder, // Используем подготовленный массив
+        items: itemsForOrder, 
         total_amount: finalPrice,
         address,
         delivery_type: deliveryMethod,
-        customer_name: fullName, // Твоё ФИО
+        customer_name: fullName,
         phone,
         status: 'pending',
         payment_method: 'transfer_to_phone',
         payment_target: '79278552324'
       }])
+// ... остальной твой код без изменений
 
       if (orderError) {
         // Это выведет реальную причину (например: "column items does not exist")
