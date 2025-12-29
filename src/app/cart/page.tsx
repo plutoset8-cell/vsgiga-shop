@@ -268,6 +268,7 @@ const Toast = ({ message, type, onClose }: { message: string, type: 'error' | 's
 
 export default function CartPage() {
   // --- [STATE_MANAGEMENT: MAXIMUM_PRECISION] ---
+  const [orderAmount, setOrderAmount] = useState(0);
   const [confirmedPrice, setConfirmedPrice] = useState(0);
   const [orderPrice, setOrderPrice] = useState(0); // Состояние для фиксации суммы заказа
   const [dbCart, setDbCart] = useState<any[]>([])
@@ -431,6 +432,8 @@ export default function CartPage() {
       return
     }
 
+    setOrderAmount(finalPrice);
+
     // Проверка телефона (убираем + и считаем цифры)
     const purePhone = phone.replace(/\D/g, '');
 
@@ -450,6 +453,7 @@ export default function CartPage() {
     }
 
     setIsOrdering(true);
+    
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser()
 
