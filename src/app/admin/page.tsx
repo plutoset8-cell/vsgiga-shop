@@ -12,11 +12,11 @@ import {
 } from 'lucide-react'
 
 export default function AdminPage() {
-  const [confirmModal, setConfirmModal] = useState<{
+  const [statusModal, setStatusModal] = useState<{
     show: boolean;
     orderId: string;
-    newStatus: string;
-  }>({ show: false, orderId: '', newStatus: '' });
+    currentStatus: string;
+  }>({ show: false, orderId: '', currentStatus: '' });
   const router = useRouter()
   const { showToast } = useToast()
 
@@ -716,30 +716,33 @@ export default function AdminPage() {
                         <p className="text-xl font-black italic">{(order.total_amount || 0).toLocaleString()} ₽</p>
                       </div>
 
-                      {/* ВЫБОР СТАТУСА */}
-                      <select
-                        value={order.status}
-                        onChange={(e) => {
+                      {/* ВМЕСТО SELECT — КРАСИВАЯ КНОПКА ТЕКУЩЕГО СТАТУСА */}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
                           e.stopPropagation();
-                          updateOrderStatus(e as any, order.id, e.target.value);
+                          setStatusModal({
+                            show: true,
+                            orderId: order.id,
+                            currentStatus: order.status
+                          });
                         }}
-                        className="bg-white text-black text-[10px] font-black uppercase px-6 py-4 rounded-2xl outline-none cursor-pointer hover:bg-gray-200 transition-colors"
+                        className="bg-white text-black text-[10px] font-black uppercase px-6 py-4 rounded-2xl hover:bg-[#71b3c9] hover:text-white transition-all duration-300 shadow-lg shadow-white/5 active:scale-95 flex items-center gap-2"
                       >
-                        {STATUSES.map(s => (
-                          <option key={s} value={s}>{s}</option>
-                        ))}
-                      </select>
+                        <RefreshCw size={12} className="animate-spin-slow" />
+                        {order.status}
+                      </button>
 
-                      {/* КНОПКА БЫСТРОЙ ОТМЕНЫ (ЧЕРЕЗ КРАСИВУЮ МОДАЛКУ) */}
+                      {/* КНОПКА БЫСТРОЙ ОТМЕНЫ (ТОЖЕ ЧЕРЕЗ ОБЩУЮ МОДАЛКУ) */}
                       {order.status !== 'ОТКЛОНЕН: НЕ ОПЛАЧЕН (48Ч)' && (
                         <button
                           onClick={(e) => {
                             e.preventDefault();
-                            e.stopPropagation(); // Чтобы не раскрывался список товаров
-                            setConfirmModal({
+                            e.stopPropagation();
+                            setStatusModal({
                               show: true,
                               orderId: order.id,
-                              newStatus: 'ОТКЛОНЕН: НЕ ОПЛАЧЕН (48Ч)'
+                              currentStatus: 'ОТКЛОНЕН: НЕ ОПЛАЧЕН (48Ч)'
                             });
                           }}
                           className="p-4 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all border border-red-500/20 group"
@@ -1162,44 +1165,58 @@ export default function AdminPage() {
 
       {/* ШАГ 4: ВСТАВЛЯЕМ СЮДА (ПЕРЕД ПОСЛЕДНИМ DIV) */}
       <AnimatePresence>
-        {confirmModal.show && (
+        {statusModal.show && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl"
+            onClick={() => setStatusModal({ show: false, orderId: '', currentStatus: '' })}
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="w-full max-w-sm bg-[#0a0a0a] border border-red-500/30 p-8 rounded-[2.5rem] text-center shadow-[0_0_50px_rgba(239,68,68,0.2)]"
+              initial={{ scale: 0.9, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 30 }}
+              className="w-full max-w-lg bg-[#0a0a0a] border border-white/10 p-8 rounded-[3rem] shadow-[0_0_100px_rgba(255,255,255,0.05)]"
+              onClick={(e) => e.stopPropagation()} // Чтобы не закрывалось при клике на саму модалку
             >
-              <div className="w-20 h-20 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/20">
-                <Zap size={40} className="animate-pulse" />
+              <div className="flex justify-between items-center mb-8">
+                <div>
+                  <h3 className="text-white font-black uppercase tracking-[0.3em] italic text-xl">Статус модуля</h3>
+                  <p className="text-white/30 text-[9px] uppercase font-bold tracking-widest mt-1">Выберите текущий этап логистики</p>
+                </div>
+                <button
+                  onClick={() => setStatusModal({ show: false, orderId: '', currentStatus: '' })}
+                  className="p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all text-white/50 hover:text-white"
+                >
+                  <X size={20} />
+                </button>
               </div>
-              <h3 className="text-white font-black uppercase tracking-[0.3em] mb-3 italic">ВНИМАНИЕ</h3>
-              <p className="text-white/40 text-[10px] uppercase font-bold mb-10 tracking-[0.1em] leading-relaxed">
-                ОТКЛОНИТЬ ЗАКАЗ МОДУЛЯ ЗА НЕУПЛАТУ В ТЕЧЕНИИ 48 ЧАСОВ?
-              </p>
 
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setConfirmModal({ show: false, orderId: '', newStatus: '' })}
-                  className="flex-1 py-5 bg-white/5 text-white/50 rounded-2xl font-black uppercase text-[10px] hover:bg-white/10 hover:text-white transition-all tracking-widest"
-                >
-                  ОТМЕНА
-                </button>
-                <button
-                  onClick={async (e) => {
-                    // Используем функцию обновления статуса, которая у тебя уже есть в коде
-                    await updateOrderStatus(e as any, confirmModal.orderId, confirmModal.newStatus);
-                    setConfirmModal({ show: false, orderId: '', newStatus: '' });
-                  }}
-                  className="flex-1 py-5 bg-red-600 text-white rounded-2xl font-black uppercase text-[10px] shadow-[0_10px_20px_rgba(220,38,38,0.3)] hover:bg-red-500 hover:scale-105 transition-all tracking-widest"
-                >
-                  ДА, УДАЛИТЬ
-                </button>
+              <div className="grid grid-cols-1 gap-2 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+                {STATUSES.map((status) => {
+                  const isActive = statusModal.currentStatus === status;
+                  const isCancel = status.includes('ОТКЛОНЕН');
+
+                  return (
+                    <button
+                      key={status}
+                      onClick={async (e) => {
+                        await updateOrderStatus(e as any, statusModal.orderId, status);
+                        setStatusModal({ show: false, orderId: '', currentStatus: '' });
+                      }}
+                      className={`
+                  w-full p-5 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all text-left flex justify-between items-center group
+                  ${isActive
+                          ? 'bg-white text-black scale-[1.02]'
+                          : isCancel
+                            ? 'bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white'
+                            : 'bg-white/5 text-white/60 border border-white/5 hover:bg-white/10 hover:text-white'
+                        }
+                `}
+                    >
+                      {status}
+                      {isActive && <ShieldCheck size={16} />}
+                      {!isActive && <ChevronDown size={14} className="opacity-0 group-hover:opacity-100 -rotate-90 transition-all" />}
+                    </button>
+                  );
+                })}
               </div>
             </motion.div>
           </motion.div>
