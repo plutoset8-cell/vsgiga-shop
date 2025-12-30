@@ -12,6 +12,11 @@ import {
 } from 'lucide-react'
 
 export default function AdminPage() {
+  const [confirmModal, setConfirmModal] = useState<{
+    show: boolean;
+    orderId: string;
+    newStatus: string;
+  }>({ show: false, orderId: '', newStatus: '' });
   const router = useRouter()
   const { showToast } = useToast()
 
@@ -705,36 +710,52 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 relative z-20">
                       <div className="text-right hidden md:block">
                         <p className="text-[9px] font-black text-white/20 uppercase mb-1 tracking-widest">Сумма</p>
                         <p className="text-xl font-black italic">{(order.total_amount || 0).toLocaleString()} ₽</p>
                       </div>
+
+                      {/* ВЫБОР СТАТУСА */}
                       <select
                         value={order.status}
-                        onChange={(e) => updateOrderStatus(e as any, order.id, e.target.value)}
-                        className="bg-white text-black text-[10px] font-black uppercase px-6 py-4 rounded-2xl outline-none"
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          updateOrderStatus(e as any, order.id, e.target.value);
+                        }}
+                        className="bg-white text-black text-[10px] font-black uppercase px-6 py-4 rounded-2xl outline-none cursor-pointer hover:bg-gray-200 transition-colors"
                       >
-                        {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                        {STATUSES.map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
                       </select>
-                      {/* КНОПКА БЫСТРОЙ ОТМЕНЫ (ТОЛЬКО ЕСЛИ ЗАКАЗ ЕЩЕ НЕ ОТКЛОНЕН) */}
+
+                      {/* КНОПКА БЫСТРОЙ ОТМЕНЫ (ЧЕРЕЗ КРАСИВУЮ МОДАЛКУ) */}
                       {order.status !== 'ОТКЛОНЕН: НЕ ОПЛАЧЕН (48Ч)' && (
                         <button
                           onClick={(e) => {
-                            e.stopPropagation(); // Чтобы не открывалась карточка заказа при клике
-                            if (confirm('ОТКЛОНИТЬ ЗАКАЗ ЗА НЕУПЛАТУ?')) {
-                              updateOrderStatus(e as any, order.id, 'ОТКЛОНЕН: НЕ ОПЛАЧЕН (48Ч)');
-                            }
+                            e.preventDefault();
+                            e.stopPropagation(); // Чтобы не раскрывался список товаров
+                            setConfirmModal({
+                              show: true,
+                              orderId: order.id,
+                              newStatus: 'ОТКЛОНЕН: НЕ ОПЛАЧЕН (48Ч)'
+                            });
                           }}
-                          className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all border border-red-500/20 group"
+                          className="p-4 bg-red-500/10 text-red-500 rounded-2xl hover:bg-red-500 hover:text-white transition-all border border-red-500/20 group"
                           title="Отклонить: не оплачен 48ч"
                         >
-                          <EyeOff size={18} className="group-hover:scale-110 transition-transform" />
+                          <EyeOff size={20} className="group-hover:scale-110 transition-transform" />
                         </button>
                       )}
+
+                      {/* КНОПКА РАСКРЫТИЯ ЗАКАЗА */}
                       <button
-                        onClick={(e) => toggleOrder(e, order.id)}
-                        className="p-4 bg-white/5 rounded-2xl"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleOrder(e, order.id);
+                        }}
+                        className="p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-colors"
                       >
                         {expandedOrders[order.id] ? <ChevronUp /> : <ChevronDown />}
                       </button>
@@ -1137,6 +1158,58 @@ export default function AdminPage() {
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #d67a9d; border-radius: 10px; }
       `}</style>
-    </div>
+      {/* ... тут заканчивается твой AnimatePresence вкладок ... */}
+
+      {/* ШАГ 4: ВСТАВЛЯЕМ СЮДА (ПЕРЕД ПОСЛЕДНИМ DIV) */}
+      <AnimatePresence>
+        {confirmModal.show && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="w-full max-w-sm bg-[#0a0a0a] border border-red-500/30 p-8 rounded-[2.5rem] text-center shadow-[0_0_50px_rgba(239,68,68,0.2)]"
+            >
+              <div className="w-20 h-20 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/20">
+                <Zap size={40} className="animate-pulse" />
+              </div>
+              <h3 className="text-white font-black uppercase tracking-[0.3em] mb-3 italic">ВНИМАНИЕ</h3>
+              <p className="text-white/40 text-[10px] uppercase font-bold mb-10 tracking-[0.1em] leading-relaxed">
+                ОТКЛОНИТЬ ЗАКАЗ МОДУЛЯ ЗА НЕУПЛАТУ В ТЕЧЕНИИ 48 ЧАСОВ?
+              </p>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setConfirmModal({ show: false, orderId: '', newStatus: '' })}
+                  className="flex-1 py-5 bg-white/5 text-white/50 rounded-2xl font-black uppercase text-[10px] hover:bg-white/10 hover:text-white transition-all tracking-widest"
+                >
+                  ОТМЕНА
+                </button>
+                <button
+                  onClick={async (e) => {
+                    // Используем функцию обновления статуса, которая у тебя уже есть в коде
+                    await updateOrderStatus(e as any, confirmModal.orderId, confirmModal.newStatus);
+                    setConfirmModal({ show: false, orderId: '', newStatus: '' });
+                  }}
+                  className="flex-1 py-5 bg-red-600 text-white rounded-2xl font-black uppercase text-[10px] shadow-[0_10px_20px_rgba(220,38,38,0.3)] hover:bg-red-500 hover:scale-105 transition-all tracking-widest"
+                >
+                  ДА, УДАЛИТЬ
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        /* ... твои стили ... */
+      `}</style>
+    </div> // ЭТО САМЫЙ ПОСЛЕДНИЙ ТЕГ В ФАЙЛЕ
   )
 }
