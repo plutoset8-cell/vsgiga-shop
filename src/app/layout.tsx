@@ -1,19 +1,24 @@
+// layout.tsx должен выглядеть примерно так:
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
 import './globals.css'
-import Navbar from '@/components/layout/Navbar'
-import { CartProvider } from '@/context/CartContext'
-import { ToastProvider } from '@/context/ToastContext' // Добавили импорт
-import 'react-hot-toast/dist/index.css';
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+const inter = Inter({ subsets: ['latin'] })
+
+export const metadata: Metadata = {
+  title: 'VSGiga Shop',
+  description: 'Premium Cyberpunk Dashboard',
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="ru">
-      <body className="bg-black">
-        <ToastProvider> {/* Оборачиваем всё в уведомления */}
-          <CartProvider>
-            <Navbar />
-            {children}
-          </CartProvider>
-        </ToastProvider>
+      <body className={inter.className}>
+        {children}
       </body>
     </html>
   )
