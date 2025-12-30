@@ -8,10 +8,11 @@ import {
   Package, MapPin, ChevronDown, ChevronUp, User, ShoppingBag,
   Phone, Contact2, X, Image as ImageIcon, Plus, Ticket,
   Trash2, Zap, Target, EyeOff, LayoutGrid, RefreshCw, Search, Save,
-  Newspaper, ShieldCheck, Globe, Barcode // Добавлены иконки для новых полей
+  Newspaper, ShieldCheck, Globe, Barcode, ArrowRight// Добавлены иконки для новых полей
 } from 'lucide-react'
 
 export default function AdminPage() {
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [statusModal, setStatusModal] = useState<{
     show: boolean;
     orderId: string;
@@ -1183,55 +1184,102 @@ export default function AdminPage() {
         {statusModal.show && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl"
-            onClick={() => setStatusModal({ show: false, orderId: '', currentStatus: '' })}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-2xl"
+            onClick={() => {
+              setStatusModal({ show: false, orderId: '', currentStatus: '' });
+              setPendingStatus(null);
+            }}
           >
             <motion.div
               initial={{ scale: 0.9, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 30 }}
-              className="w-full max-w-lg bg-[#0a0a0a] border border-white/10 p-8 rounded-[3rem] shadow-[0_0_100px_rgba(255,255,255,0.05)]"
-              onClick={(e) => e.stopPropagation()} // Чтобы не закрывалось при клике на саму модалку
+              className="w-full max-w-lg bg-[#0a0a0a] border border-white/10 p-8 rounded-[3rem] shadow-[0_0_100px_rgba(255,255,255,0.05)] relative overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center mb-8">
+              {/* Декоративный эффект градиента */}
+              <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#ff007a]/5 blur-[100px] rounded-full pointer-events-none" />
+
+              <div className="flex justify-between items-center mb-8 relative z-10">
                 <div>
                   <h3 className="text-white font-black uppercase tracking-[0.3em] italic text-xl">Статус модуля</h3>
-                  <p className="text-white/30 text-[9px] uppercase font-bold tracking-widest mt-1">Выберите текущий этап логистики</p>
+                  <p className="text-white/30 text-[9px] uppercase font-bold tracking-widest mt-1">управление логистическим узлом</p>
                 </div>
                 <button
-                  onClick={() => setStatusModal({ show: false, orderId: '', currentStatus: '' })}
-                  className="p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all text-white/50 hover:text-white"
+                  onClick={() => {
+                    setStatusModal({ show: false, orderId: '', currentStatus: '' });
+                    setPendingStatus(null);
+                  }}
+                  className="p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all text-white/50 hover:text-white border border-white/5"
                 >
                   <X size={20} />
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 gap-2 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+              <div className="grid grid-cols-1 gap-2 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2 relative z-10">
                 {STATUSES.map((status) => {
                   const isActive = statusModal.currentStatus === status;
+                  const isPending = pendingStatus === status;
                   const isCancel = status.includes('ОТКЛОНЕН');
 
                   return (
-                    <button
-                      key={status}
-                      onClick={async (e) => {
-                        await updateOrderStatus(e as any, statusModal.orderId, status);
-                        setStatusModal({ show: false, orderId: '', currentStatus: '' });
-                      }}
-                      className={`
-                  w-full p-5 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all text-left flex justify-between items-center group
-                  ${isActive
-                          ? 'bg-white text-black scale-[1.02]'
-                          : isCancel
-                            ? 'bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white'
-                            : 'bg-white/5 text-white/60 border border-white/5 hover:bg-white/10 hover:text-white'
-                        }
-                `}
-                    >
-                      {status}
-                      {isActive && <ShieldCheck size={16} />}
-                      {!isActive && <ChevronDown size={14} className="opacity-0 group-hover:opacity-100 -rotate-90 transition-all" />}
-                    </button>
+                    <div key={status} className="relative">
+                      <button
+                        onClick={() => setPendingStatus(isPending ? null : status)}
+                        className={`
+                    w-full p-5 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all duration-300 text-left flex justify-between items-center group
+                    ${isActive
+                            ? 'bg-white text-black scale-[1.02] shadow-xl'
+                            : isPending
+                              ? 'bg-[#ff007a] text-white shadow-[0_0_30px_rgba(255,0,122,0.3)]'
+                              : isCancel
+                                ? 'bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white'
+                                : 'bg-white/5 text-white/60 border border-white/5 hover:bg-white/10 hover:text-white'
+                          }
+                  `}
+                      >
+                        <span className="flex items-center gap-3">
+                          {isPending && <Zap size={14} className="animate-pulse" />}
+                          {status}
+                        </span>
+
+                        {isActive ? (
+                          <ShieldCheck size={18} />
+                        ) : isPending ? (
+                          <ArrowRight size={18} className="animate-bounce-x" />
+                        ) : (
+                          <ChevronDown size={14} className="opacity-0 group-hover:opacity-100 -rotate-90 transition-all" />
+                        )}
+                      </button>
+
+                      {/* КНОПКА ПОДТВЕРЖДЕНИЯ — ВЫЛЕТАЕТ ПРИ ВЫБОРЕ */}
+                      <AnimatePresence>
+                        {isPending && !isActive && (
+                          <motion.button
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            onClick={async (e) => {
+                              await updateOrderStatus(e as any, statusModal.orderId, status);
+                              setStatusModal({ show: false, orderId: '', currentStatus: '' });
+                              setPendingStatus(null);
+                            }}
+                            className="w-full mt-2 py-4 bg-green-500 text-white rounded-xl font-black uppercase text-[9px] tracking-[0.3em] shadow-[0_10px_20px_rgba(34,197,94,0.2)] hover:scale-[1.01] active:scale-[0.98] transition-all"
+                          >
+                            ПОДТВЕРДИТЬ ИЗМЕНЕНИЕ
+                          </motion.button>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   );
                 })}
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-white/5 flex justify-between items-center opacity-20 relative z-10">
+                <p className="text-[7px] font-black text-white uppercase tracking-[0.5em]">System Node: 0xGIGA</p>
+                <div className="flex gap-1">
+                  <div className="w-1 h-1 bg-white rounded-full animate-pulse" />
+                  <div className="w-1 h-1 bg-white rounded-full animate-pulse delay-75" />
+                  <div className="w-1 h-1 bg-white rounded-full animate-pulse delay-150" />
+                </div>
               </div>
             </motion.div>
           </motion.div>
