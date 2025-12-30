@@ -406,22 +406,37 @@ export default function AdminPage() {
     if (!error) fetchProducts()
   }
 
-  const updateOrderStatus = async (e: React.MouseEvent, orderId: string, status: string) => {
-    e.preventDefault()
+  const updateOrderStatus = async (e: any, orderId: string, status: string) => {
+    // Безопасная проверка: если событие есть, отменяем стандартное поведение
+    if (e && typeof e.preventDefault === 'function') {
+      e.preventDefault();
+    }
+    // Останавливаем всплытие, чтобы не срабатывал аккордеон заказа
+    if (e && typeof e.stopPropagation === 'function') {
+      e.stopPropagation();
+    }
+
     const { error } = await supabase
       .from('orders')
       .update({ status })
       .eq('id', orderId)
 
     if (!error) {
-      setOrders(orders.map(o => o.id === orderId ? { ...o, status } : o))
+      // Обновляем локальный список заказов
+      setOrders(prevOrders => prevOrders.map(o => o.id === orderId ? { ...o, status } : o))
       showToast('СТАТУС_ОБНОВЛЕН', 'success')
 
-      await sendTelegramNotify(
-        `📦 <b>vsgiga shop: Логистика</b>\n` +
-        `Заказ: <code>${orderId.slice(0, 8)}...</code>\n` +
-        `Новый статус: <b>${status}</b>`
-      )
+      // Твой Телеграм-бот
+      if (typeof sendTelegramNotify === 'function') {
+        await sendTelegramNotify(
+          `📦 <b>vsgiga shop: Логистика</b>\n` +
+          `Заказ: <code>${orderId.slice(0, 8)}...</code>\n` +
+          `Новый статус: <b>${status}</b>`
+        )
+      }
+    } else {
+      console.error('ОШИБКА_БАЗЫ:', error.message)
+      showToast('ОШИБКА_СОХРАНЕНИЯ', 'error')
     }
   }
 
