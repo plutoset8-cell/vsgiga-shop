@@ -173,80 +173,6 @@ function BioCoreStatus() {
 }
 
 // ======================================================================
-// [SYSTEM_COMPONENT_05]: CYBER_TERMINAL_v7.0 (MINIMIZABLE)
-// ======================================================================
-function CyberTerminalHUD({ isVisible, onHide }: { isVisible: boolean, onHide: () => void }) {
-    const [logs, setLogs] = useState<string[]>([
-        "BOOTING_VSGIGA_OS_v6.5...",
-        "HANDSHAKE_NODE_STABLE",
-        "ENCRYPTING_MANIFEST...",
-        "XMAS_PROTOCOL_LOADED",
-        "SYSTEM_CHECK: 100%_OK"
-    ]);
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            const messages = [
-                `DATA_SYNC: ${Math.random().toString(16).substring(2, 8).toUpperCase()}`,
-                `TEMP: ${36 + Math.random() * 8}°C`,
-                `NODE_${Math.floor(Math.random() * 99)}: ONLINE`,
-                `DB_LATENCY: ${Math.floor(Math.random() * 20 + 5)}ms`,
-                `OPIUM_SEC: ACTIVE`,
-                `PACKET_LOSS: 0.00%`
-            ];
-            setLogs(prev => [...prev.slice(-5), messages[Math.floor(Math.random() * messages.length)]]);
-        }, 2500);
-        return () => clearInterval(interval);
-    }, []);
-
-    if (!isVisible) return (
-        <motion.button
-            whileHover={{ scale: 1.1, boxShadow: "0 0 30px #ff007a" }}
-            onClick={onHide}
-            className="fixed left-12 bottom-12 z-[100] p-6 bg-black border border-[#ff007a] text-[#ff007a] rounded-[2rem] shadow-2xl backdrop-blur-xl"
-        >
-            <Terminal size={28} />
-        </motion.button>
-    );
-
-    return (
-        <div className="hidden xl:block fixed left-12 bottom-12 z-[100]">
-            <motion.div
-                initial={{ x: -300, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                className="w-96 bg-black/95 border border-white/10 border-l-4 border-l-[#ff007a] p-10 backdrop-blur-3xl relative shadow-[50px_0_100px_rgba(0,0,0,0.8)] rounded-r-[3rem]"
-            >
-                <button onClick={onHide} className="absolute top-6 right-6 text-white/10 hover:text-[#ff007a] transition-colors">
-                    <X size={20} />
-                </button>
-                <div className="flex items-center gap-5 mb-10 text-[#ff007a]">
-                    <div className="p-3 bg-[#ff007a]/10 rounded-2xl"><Terminal size={24} /></div>
-                    <div>
-                        <span className="text-[14px] font-black uppercase tracking-[0.4em] block italic">vsgiga_core</span>
-                        <span className="text-[9px] opacity-40 font-mono tracking-tighter">ID: {Math.random().toString(36).substr(2, 9).toUpperCase()}</span>
-                    </div>
-                </div>
-                <div className="space-y-4 font-mono">
-                    {logs.map((log, i) => (
-                        <div key={i} className="flex items-center gap-4 border-b border-white/[0.03] pb-2">
-                            <span className="text-[9px] text-[#ff007a] opacity-40 font-bold">[{i}]</span>
-                            <span className="text-[11px] text-white/50 uppercase tracking-tighter leading-none">{log}</span>
-                        </div>
-                    ))}
-                </div>
-                <div className="mt-10 pt-6 border-t border-white/5 flex justify-between items-center italic">
-                    <span className="text-[9px] text-white/20 font-black tracking-widest uppercase">Kernel_v6.5.0</span>
-                    <div className="flex gap-2">
-                        <motion.div animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 1.5 }} className="w-2 h-2 bg-green-500 rounded-full" />
-                        <div className="w-2 h-2 bg-white/10 rounded-full" />
-                    </div>
-                </div>
-            </motion.div>
-        </div>
-    )
-}
-
-// ======================================================================
 // [SYSTEM_COMPONENT_06]: TOAST_NOTIFICATION_SYSTEM
 // ======================================================================
 const Toast = ({ message, type, onClose }: { message: string, type: 'error' | 'success', onClose: () => void }) => (
@@ -295,7 +221,6 @@ export default function CartPage() {
     const [orderPrice, setOrderPrice] = useState(0);
     const [dbCart, setDbCart] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
-    const [isHudVisible, setIsHudVisible] = useState(true)
     const [explosion, setExplosion] = useState(false)
     const [fullName, setFullName] = useState('')
     const [phone, setPhone] = useState('')
@@ -350,6 +275,12 @@ export default function CartPage() {
                 return;
             }
 
+            // Расчет 5% кэшбека от общей суммы заказа
+            const pointsToAward = Math.floor(totalPrice * 0.05);
+            
+            // Расчет суммы списания бонусов (если использовались)
+            const spendAmount = useBonuses ? Math.min(userBonuses, Math.floor(totalPrice * 0.3)) : 0;
+            
             // Формируем delivery_info для БД
             const deliveryInfo = {
                 fullName,
@@ -367,9 +298,8 @@ export default function CartPage() {
                 quantity: item.quantity || 1,
                 size: item.size || 'OS',
                 image: item.image || (item.images && item.images[0]) || '',
-                // Добавляем поля из контекста корзины, если есть
                 discount: appliedPromo ? appliedPromo.discount : 0,
-                bonuses_used: useBonuses ? Math.min(userBonuses, Math.floor(item.price * item.quantity * 0.3)) : 0
+                bonuses_used: spendAmount
             }));
 
             // ВСТАВКА В ТАБЛИЦУ ORDERS (главное - payment_code передается)
@@ -382,6 +312,8 @@ export default function CartPage() {
                     status: 'pending',
                     payment_code: paymentCode, // КОД ПЕРЕДАЕТСЯ В БД
                     delivery_info: deliveryInfo,
+                    points_awarded: pointsToAward, // Сохраняем информацию о начисленных баллах
+                    bonuses_used: spendAmount, // Сохраняем информацию о списанных баллах
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                 }]);
@@ -391,23 +323,28 @@ export default function CartPage() {
                 throw new Error(`Ошибка создания заказа: ${orderError.message}`);
             }
 
-            // НАЧИСЛЕНИЕ КЭШБЕКА 5% ПОСЛЕ УСПЕШНОГО СОЗДАНИЯ ЗАКАЗА
-            const bonusAmount = Math.floor(totalPrice * 0.05);
-            
-            // Обновляем бонусный баланс пользователя (добавляем кэшбек)
-            const { error: bonusError } = await supabase
+            // ОБНОВЛЕНИЕ БАЛАНСА ПОЛЬЗОВАТЕЛЯ (5% КЭШБЕК + СПИСАНИЕ ИСПОЛЬЗОВАННЫХ БОНУСОВ)
+            const { error: profileError } = await supabase
                 .from('profiles')
                 .update({ 
-                    bonus_points: (userBonuses + bonusAmount) - (useBonuses ? spendAmount : 0)
+                    available_points: userBonuses + pointsToAward - spendAmount
                 })
                 .eq('id', user.id);
 
-            if (bonusError) {
-                console.error('Bonus update error:', bonusError);
-                // Не прерываем основной поток, но логируем
-                addToast('Заказ создан, но бонусы не начислены', 'error');
+            if (profileError) {
+                console.error('Profile update error:', profileError);
+                addToast('Заказ создан, но ошибка обновления бонусов', 'error');
             } else {
-                addToast(`НАЧИСЛЕНО ${bonusAmount} БОНУСНЫХ БАЛЛОВ (5%)`, 'success');
+                // Обновляем локальное состояние бонусов
+                setUserBonuses(prev => prev + pointsToAward - spendAmount);
+                
+                if (pointsToAward > 0) {
+                    addToast(`НАЧИСЛЕНО ${pointsToAward} БОНУСНЫХ БАЛЛОВ (5%)`, 'success');
+                }
+                
+                if (spendAmount > 0) {
+                    addToast(`СПИСАНО ${spendAmount} БОНУСНЫХ БАЛЛОВ`, 'success');
+                }
             }
 
             // УДАЛЕНИЕ ИЗ ТАБЛИЦЫ CART (после успешного оформления)
@@ -417,15 +354,8 @@ export default function CartPage() {
                 .eq('user_id', user.id);
 
             if (deleteError) {
-                console.error('Cart delete error:', deleteError)
-                // Не прерываем поток, но логируем
-                addToast('Заказ создан, но корзина не очищена', 'success')
-            }
-
-            // Обновляем бонусы пользователя, если использовались (временное состояние)
-            if (useBonuses && spendAmount > 0) {
-                const newBonuses = Math.max(0, userBonuses - spendAmount);
-                setUserBonuses(newBonuses);
+                console.error('Cart delete error:', deleteError);
+                addToast('Заказ создан, но корзина не очищена', 'success');
             }
 
             // Очищаем локальные состояния
@@ -454,8 +384,8 @@ export default function CartPage() {
     // ЛОГИКА ОТМЕНЫ ЗАКАЗА (КОММЕНТАРИЙ ДЛЯ АДМИНКИ)
     // ======================================================================
     // ПРИМЕЧАНИЕ: При изменении статуса заказа в таблице 'orders' на "ОТКЛОНЕН" в админке:
-    // 1. Начисленные за этот заказ бонусы (5%) должны быть вычтены из 'profiles.bonus_points'
-    // 2. Потраченные пользователем бонусы должны быть возвращены в 'profiles.bonus_points'
+    // 1. Начисленные за этот заказ бонусы (5%) должны быть вычтены из 'profiles.available_points'
+    // 2. Потраченные пользователем бонусы должны быть возвращены в 'profiles.available_points'
     // 3. Рекомендуется реализовать триггер или функцию в БД для автоматической отмены бонусов
 
     // ======================================================================
@@ -527,14 +457,14 @@ export default function CartPage() {
                 setDbCart(formattedCart)
             }
 
-            // Подгрузка бонусного счета из профиля VSGIGA
+            // Подгрузка бонусного счета из профиля - ИСПОЛЬЗУЕМ ПРАВИЛЬНОЕ ПОЛЕ available_points
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('bonuses')
+                .select('available_points')
                 .eq('id', session.user.id)
                 .single()
 
-            if (profile) setUserBonuses(profile.bonuses || 0)
+            if (profile) setUserBonuses(profile.available_points || 0)
 
             // Искусственная задержка для красоты анимации инициализации
             setTimeout(() => setIsLoading(false), 800)
@@ -898,8 +828,7 @@ export default function CartPage() {
                                             onClick={() => setUseBonuses(!useBonuses)}
                                             className={`relative z-10 px-8 py-4 rounded-2xl font-black text-[11px] tracking-widest transition-all ${useBonuses
                                                 ? 'bg-[#ff007a] text-white shadow-[0_0_30px_rgba(255,0,122,0.5)] scale-105'
-                                                : 'bg-white/5 text-white/40 hover:bg-white/10'
-                                                }`}
+                                                : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
                                         >
                                             {useBonuses ? 'ACTIVE' : 'REDEEM'}
                                         </button>
