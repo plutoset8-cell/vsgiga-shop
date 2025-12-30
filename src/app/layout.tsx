@@ -2,6 +2,7 @@ import './globals.css'
 import Navbar from '@/components/layout/Navbar'
 import { CartProvider } from '@/context/CartContext'
 import { ToastProvider } from '@/context/ToastContext' // Добавили импорт
+import 'react-hot-toast/dist/index.css';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

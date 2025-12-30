@@ -5,10 +5,11 @@ import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { 
-  Coins, 
-  ArrowRight, 
-  Package, 
+import toast, { Toaster } from 'react-hot-toast'
+import {
+  Coins,
+  ArrowRight,
+  Package,
   User,
   Gift,
   Snowflake,
@@ -28,10 +29,109 @@ import {
   Truck,
   CheckCircle,
   Activity,
-  Target
+  Target,
+  Edit3,
+  X,
+  Type,
+  CreditCard as CardIcon
 } from 'lucide-react'
 
 // ==================== КОМПОНЕНТЫ ЭФФЕКТОВ ФОНА ====================
+
+// 3D Звездное поле
+const Starfield3D = () => {
+  const [isClient, setIsClient] = useState(false)
+  
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+  
+  if (!isClient) return null
+  
+  return (
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+      {[...Array(200)].map((_, i) => {
+        const depth = Math.random() * 100 + 50
+        const size = Math.random() * 4 + 1
+        return (
+          <motion.div
+            key={i}
+            className="absolute bg-white rounded-full"
+            style={{
+              left: `${Math.random() * 100}vw`,
+              top: `${Math.random() * 100}vh`,
+              width: size,
+              height: size,
+              transform: `translateZ(${depth}px)`,
+              boxShadow: `0 0 ${size * 4}px ${size * 2}px rgba(255, 255, 255, 0.5)`
+            }}
+            animate={{
+              opacity: [0.1, 0.8, 0.1],
+              scale: [1, 1.5, 1],
+              x: [0, Math.random() * 20 - 10, 0],
+              y: [0, Math.random() * 20 - 10, 0]
+            }}
+            transition={{
+              duration: Math.random() * 5 + 3,
+              repeat: Infinity,
+              delay: Math.random() * 5,
+              ease: "easeInOut"
+            }}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
+// 3D Парящие подарки
+const FloatingGifts3D = () => {
+  const [isClient, setIsClient] = useState(false)
+  
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+  
+  if (!isClient) return null
+  
+  const gifts = ['🎁', '🎄', '⭐', '🔔', '🎅', '🦌', '❄️', '✨']
+  
+  return (
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+      {[...Array(30)].map((_, i) => {
+        const depth = Math.random() * 200 + 100
+        const size = Math.random() * 40 + 20
+        return (
+          <motion.div
+            key={i}
+            className="absolute text-3xl"
+            style={{
+              left: `${Math.random() * 100}vw`,
+              top: `${Math.random() * 100}vh`,
+              fontSize: `${size}px`,
+              transform: `translateZ(${depth}px)`,
+              filter: 'drop-shadow(0 0 20px rgba(255, 255, 255, 0.3))'
+            }}
+            animate={{
+              y: ['0vh', '100vh'],
+              rotateX: [0, 360],
+              rotateY: [0, 720],
+              rotateZ: [0, 360]
+            }}
+            transition={{
+              duration: Math.random() * 30 + 30,
+              repeat: Infinity,
+              delay: Math.random() * 20,
+              ease: "linear"
+            }}
+          >
+            {gifts[Math.floor(Math.random() * gifts.length)]}
+          </motion.div>
+        )
+      })}
+    </div>
+  )
+}
 
 // Матрица из падающих символов
 const MatrixRain = () => {
@@ -70,48 +170,6 @@ const MatrixRain = () => {
           {symbols[Math.floor(Math.random() * symbols.length)]}
         </motion.div>
       ))}
-    </div>
-  )
-}
-
-// Звездное небо с мерцанием
-const Starfield = () => {
-  const [isClient, setIsClient] = useState(false)
-  
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
-  
-  if (!isClient) return null
-  
-  return (
-    <div className="fixed inset-0 pointer-events-none z-0">
-      {[...Array(150)].map((_, i) => {
-        const size = Math.random() * 3 + 1
-        return (
-          <motion.div
-            key={i}
-            className="absolute bg-white rounded-full"
-            style={{
-              left: `${Math.random() * 100}vw`,
-              top: `${Math.random() * 100}vh`,
-              width: size,
-              height: size,
-              boxShadow: `0 0 ${size * 2}px ${size}px rgba(255, 255, 255, 0.3)`
-            }}
-            animate={{
-              opacity: [0.1, 0.8, 0.1],
-              scale: [1, 1.5, 1]
-            }}
-            transition={{
-              duration: Math.random() * 3 + 2,
-              repeat: Infinity,
-              delay: Math.random() * 3,
-              ease: "easeInOut"
-            }}
-          />
-        )
-      })}
     </div>
   )
 }
@@ -169,6 +227,160 @@ const LaserGrid = () => {
         />
       ))}
     </div>
+  )
+}
+
+// ==================== МАГИЧЕСКИЙ ПОДАРОК ====================
+const MagicGift = () => {
+  const [isOpen, setIsOpen] = useState(false)
+  const [showConfetti, setShowConfetti] = useState(false)
+  const [promoCode, setPromoCode] = useState('')
+
+  const handleClick = () => {
+    setShowConfetti(true)
+    setPromoCode('HAPPY2026')
+    setIsOpen(true)
+    
+    toast.success(
+      <div className="text-center">
+        <p className="font-bold text-lg">🎉 ВАШ ПРОМОКОД АКТИВИРОВАН!</p>
+        <p className="text-sm mt-1">HAPPY2026 на 1000 ₽</p>
+      </div>,
+      {
+        duration: 5000,
+        style: {
+          background: 'linear-gradient(90deg, #d67a9d, #71b3c9)',
+          color: 'white',
+          border: '2px solid rgba(255,255,255,0.2)'
+        }
+      }
+    )
+    
+    setTimeout(() => setShowConfetti(false), 3000)
+  }
+
+  return (
+    <>
+      {/* Конфетти эффект */}
+      <AnimatePresence>
+        {showConfetti && (
+          <div className="fixed inset-0 pointer-events-none z-50">
+            {[...Array(150)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute text-2xl"
+                initial={{
+                  x: '50vw',
+                  y: '100vh',
+                  rotate: 0
+                }}
+                animate={{
+                  x: Math.random() * 100 + 'vw',
+                  y: '-100vh',
+                  rotate: Math.random() * 720
+                }}
+                exit={{ opacity: 0 }}
+                transition={{
+                  duration: Math.random() * 3 + 2,
+                  ease: "linear"
+                }}
+              >
+                {['🎉', '✨', '⭐', '🎁', '🎊'][Math.floor(Math.random() * 5)]}
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Компонент подарка */}
+      <motion.div
+        className="fixed bottom-8 left-8 z-40 cursor-pointer"
+        animate={{
+          scale: [1, 1.1, 1],
+          rotate: [0, -5, 5, -5, 0],
+        }}
+        transition={{
+          duration: 2.5,
+          repeat: Infinity,
+          repeatDelay: 0.5
+        }}
+        onClick={handleClick}
+      >
+        {/* Аврора эффект */}
+        <motion.div
+          className="absolute inset-0 rounded-full"
+          animate={{
+            background: [
+              'linear-gradient(60deg, #d67a9d, transparent 40%)',
+              'linear-gradient(180deg, #71b3c9, transparent 40%)',
+              'linear-gradient(300deg, #ffd166, transparent 40%)',
+              'linear-gradient(60deg, #d67a9d, transparent 40%)',
+            ]
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+          style={{
+            filter: 'blur(20px)',
+            opacity: 0.7
+          }}
+        />
+        
+        <div className="relative bg-gradient-to-br from-[#d67a9d] via-[#71b3c9] to-[#ffd166] p-1 rounded-2xl">
+          <div className="bg-black rounded-xl p-6">
+            <div className="flex flex-col items-center">
+              <Gift size={48} className="text-yellow-400 mb-4" />
+              <p className="text-sm font-bold tracking-widest text-center">
+                МАГИЧЕСКИЙ<br/>ПОДАРОК
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Всплывающее окно с промокодом */}
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="absolute left-full ml-4 top-1/2 -translate-y-1/2 min-w-[300px]"
+            >
+              <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl border-2 border-yellow-500/50 p-6 shadow-2xl">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-bold tracking-widest flex items-center gap-2">
+                    <Sparkles className="text-yellow-400" />
+                    ВАШ ПРОМОКОД
+                  </h3>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setIsOpen(false)
+                    }}
+                    className="text-white/60 hover:text-white"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+                
+                <div className="bg-black/50 rounded-xl p-6 border border-yellow-500/30 text-center mb-4">
+                  <p className="text-3xl font-black tracking-wider text-yellow-400">
+                    {promoCode}
+                  </p>
+                  <p className="text-sm text-white/60 mt-2">1000 ₽ на первый заказ</p>
+                </div>
+                
+                <p className="text-xs text-white/40 text-center">
+                  Промокод действителен до 31.01.2026
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    </>
   )
 }
 
@@ -310,6 +522,174 @@ const BorderBeam = () => {
   )
 }
 
+// ==================== МОДАЛЬНОЕ ОКНО ПОПОЛНЕНИЯ ====================
+const TopUpModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
+  const [text, setText] = useState('')
+  const fullText = "ФУНКЦИЯ В РАЗРАБОТКЕ"
+  
+  useEffect(() => {
+    if (!isOpen) {
+      setText('')
+      return
+    }
+    
+    let i = 0
+    const timer = setInterval(() => {
+      if (i <= fullText.length) {
+        setText(fullText.slice(0, i))
+        i++
+      } else {
+        clearInterval(timer)
+      }
+    }, 100)
+    
+    return () => clearInterval(timer)
+  }, [isOpen])
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/70 backdrop-blur-2xl z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-md"
+            >
+              <div className="bg-gradient-to-br from-gray-900 via-black to-gray-900 rounded-3xl border-2 border-white/10 p-8 shadow-2xl">
+                <div className="text-center mb-8">
+                  <motion.div
+                    animate={{ 
+                      rotateY: [0, 360],
+                      scale: [1, 1.1, 1]
+                    }}
+                    transition={{ 
+                      rotateY: { duration: 3, repeat: Infinity, ease: "linear" },
+                      scale: { duration: 2, repeat: Infinity }
+                    }}
+                    className="w-20 h-20 mx-auto mb-6"
+                  >
+                    <CardIcon className="w-full h-full text-cyan-400" />
+                  </motion.div>
+                  
+                  <h2 className="text-2xl font-black tracking-widest mb-4 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+                    ПОПОЛНЕНИЕ БАЛАНСА
+                  </h2>
+                  
+                  <div className="h-12 flex items-center justify-center">
+                    <p className="text-xl font-mono tracking-widest">
+                      {text}
+                      <motion.span
+                        animate={{ opacity: [1, 0] }}
+                        transition={{ duration: 0.5, repeat: Infinity }}
+                        className="inline-block w-[2px] h-6 bg-cyan-400 ml-1"
+                      />
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4 mb-8">
+                  <div className="flex gap-4">
+                    <input 
+                      type="text" 
+                      placeholder="НОМЕР КАРТЫ" 
+                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm tracking-widest"
+                      disabled
+                    />
+                    <input 
+                      type="text" 
+                      placeholder="CVC" 
+                      className="w-24 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm tracking-widest"
+                      disabled
+                    />
+                  </div>
+                  <input 
+                    type="text" 
+                    placeholder="СУММА (₽)" 
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm tracking-widest"
+                    disabled
+                  />
+                </div>
+                
+                <div className="text-center">
+                  <button
+                    onClick={onClose}
+                    className="px-8 py-4 rounded-xl bg-gradient-to-r from-gray-700 to-gray-800 text-white/60 font-bold tracking-widest text-sm w-full hover:from-gray-600 hover:to-gray-700 transition-all"
+                  >
+                    ЗАКРЫТЬ
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  )
+}
+
+// ==================== КОМПОНЕНТ НОВОСТЕЙ ====================
+interface NewsItem {
+  id: string
+  title: string
+  content: string
+  image_url: string | null
+  created_at: string
+}
+
+const NewsFeed = ({ news }: { news: NewsItem[] }) => {
+  if (news.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="w-20 h-20 rounded-full bg-gradient-to-r from-[#d67a9d]/20 to-[#71b3c9]/20 flex items-center justify-center mx-auto mb-6">
+          <Type size={32} className="text-white/20" />
+        </div>
+        <p className="text-xl font-bold tracking-widest mb-3">НОВОСТЕЙ ПОКА НЕТ</p>
+        <p className="text-white/60">Следите за обновлениями!</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {news.map((item) => (
+        <ParallaxCard key={item.id}>
+          <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6">
+            <div className="flex gap-4">
+              {item.image_url && (
+                <div className="flex-shrink-0 w-32 h-32 rounded-xl overflow-hidden">
+                  <img 
+                    src={item.image_url} 
+                    alt={item.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              <div className="flex-1">
+                <div className="flex justify-between items-start mb-3">
+                  <h3 className="text-lg font-bold tracking-widest">{item.title}</h3>
+                  <span className="text-xs text-white/40">
+                    {new Date(item.created_at).toLocaleDateString('ru-RU')}
+                  </span>
+                </div>
+                <p className="text-white/60 text-sm leading-relaxed">{item.content}</p>
+              </div>
+            </div>
+          </div>
+        </ParallaxCard>
+      ))}
+    </div>
+  )
+}
+
 // ==================== ОСНОВНАЯ СТРАНИЦА ====================
 
 interface UserProfile {
@@ -326,6 +706,7 @@ export default function ProfilePage() {
   const router = useRouter()
   const [user, setUser] = useState<UserProfile | null>(null)
   const [orders, setOrders] = useState<any[]>([])
+  const [news, setNews] = useState<NewsItem[]>([])
   const [userBonuses, setUserBonuses] = useState(3450)
   const [cashbackPercent, setCashbackPercent] = useState(5)
   const [nextLevelPercent, setNextLevelPercent] = useState(7)
@@ -333,6 +714,9 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'orders'>('overview')
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [editingName, setEditingName] = useState(false)
+  const [usernameInput, setUsernameInput] = useState('')
+  const [topUpModalOpen, setTopUpModalOpen] = useState(false)
 
   useEffect(() => {
     const getData = async () => {
@@ -358,6 +742,7 @@ export default function ProfilePage() {
 
       if (profileData) {
         setUserBonuses(profileData.available_points || 3450)
+        setUsernameInput(profileData.username || '')
         setUser(prev => ({
           ...prev!,
           user_metadata: {
@@ -375,6 +760,15 @@ export default function ProfilePage() {
         .order('created_at', { ascending: false })
 
       if (ordersData) setOrders(ordersData)
+
+      // Загрузка новостей
+      const { data: newsData } = await supabase
+        .from('news')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10)
+
+      if (newsData) setNews(newsData)
 
       // Симуляция данных для прогресса кэшбэка
       setCashbackPercent(5)
@@ -419,17 +813,70 @@ export default function ProfilePage() {
         }
       }))
 
-      alert('Аватар успешно обновлен!')
+      toast.success('Аватар успешно обновлен!', {
+        style: {
+          background: 'linear-gradient(90deg, #71b3c9, #d67a9d)',
+          color: 'white',
+          border: '2px solid rgba(255,255,255,0.2)'
+        },
+        icon: '✅'
+      })
     } catch (error: any) {
-      alert('Ошибка: ' + error.message)
+      toast.error('Ошибка: ' + error.message, {
+        style: {
+          background: 'linear-gradient(90deg, #ff6b6b, #ffa726)',
+          color: 'white',
+          border: '2px solid rgba(255,255,255,0.2)'
+        }
+      })
     } finally {
       setUploading(false)
     }
   }
 
+  const handleUsernameSave = async () => {
+    if (!user || !usernameInput.trim()) return
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ username: usernameInput.trim() })
+        .eq('id', user.id)
+
+      if (error) throw error
+
+      setUser(prev => ({
+        ...prev!,
+        user_metadata: {
+          ...prev?.user_metadata,
+          username: usernameInput.trim()
+        }
+      }))
+
+      setEditingName(false)
+      
+      toast.success('Имя успешно обновлено!', {
+        style: {
+          background: 'linear-gradient(90deg, #71b3c9, #d67a9d)',
+          color: 'white',
+          border: '2px solid rgba(255,255,255,0.2)'
+        },
+        icon: '✅'
+      })
+    } catch (error: any) {
+      toast.error('Ошибка: ' + error.message, {
+        style: {
+          background: 'linear-gradient(90deg, #ff6b6b, #ffa726)',
+          color: 'white',
+          border: '2px solid rgba(255,255,255,0.2)'
+        }
+      })
+    }
+  }
+
   if (loading) return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center relative overflow-hidden">
-      <Starfield />
+      <Starfield3D />
       <div className="relative z-10 text-center">
         <motion.div
           animate={{ rotate: 360 }}
@@ -446,27 +893,39 @@ export default function ProfilePage() {
     </div>
   )
 
-  const userStats = [
-    { label: 'УРОВЕНЬ', value: 'PLATINUM', icon: Crown, color: 'from-[#ffd166] to-[#ffed99]', progress: 85 },
-    { label: 'СТРЕЙК', value: '47 ДНЕЙ', icon: Zap, color: 'from-[#d67a9d] to-[#ff9ec0]', progress: 90 },
-    { label: 'АКТИВНОСТЬ', value: '98.7%', icon: Activity, color: 'from-[#71b3c9] to-[#a3e0ff]', progress: 98 },
-    { label: 'РЕЙТИНГ', value: '⭐ 4.9', icon: Star, color: 'from-[#ff9ec0] to-[#ff6b9d]', progress: 98 },
-  ]
-
   const quickActions = [
     { label: 'НОВЫЙ ЗАКАЗ', icon: ShoppingCart, color: '#d67a9d', link: '/catalog' },
-    { label: 'ПОПОЛНИТЬ', icon: CreditCard, color: '#71b3c9', link: '/balance' },
-    { label: 'ПОДАРКИ', icon: Gift, color: '#ffd166', link: '/gifts' },
-    { label: 'ПОДПИСКА', icon: Crown, color: '#ff6b9d', link: '/premium' },
+    { label: 'ПОПОЛНИТЬ', icon: CreditCard, color: '#71b3c9', action: () => setTopUpModalOpen(true) },
+    { label: 'ПОДАРКИ', icon: Gift, color: '#ffd166', link: '/layout/BonusSystem' },
+    { label: 'ПОДПИСКА', icon: Crown, color: '#ff6b9d', link: '/contacts' },
   ]
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white overflow-hidden relative">
+      {/* Toast уведомления */}
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            backdropFilter: 'blur(10px)',
+            borderRadius: '16px',
+          },
+        }}
+      />
+
+      {/* Модальное окно пополнения */}
+      <TopUpModal isOpen={topUpModalOpen} onClose={() => setTopUpModalOpen(false)} />
+
       {/* Фоновые эффекты */}
       <div className="fixed inset-0 bg-gradient-to-br from-black via-gray-900/20 to-black" />
       <MatrixRain />
-      <Starfield />
+      <Starfield3D />
+      <FloatingGifts3D />
       <LaserGrid />
+      
+      {/* Магический подарок */}
+      <MagicGift />
       
       {/* Новогодний топ-баннер */}
       <motion.div
@@ -559,9 +1018,55 @@ export default function ProfilePage() {
                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                 </div>
 
-                <h1 className="text-5xl lg:text-6xl font-black mb-3 bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
-                  {user?.user_metadata?.username || user?.email?.split('@')[0]?.toUpperCase()}
-                </h1>
+                <div className="flex items-center justify-center lg:justify-start gap-4 mb-3">
+                  {editingName ? (
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="text"
+                        value={usernameInput}
+                        onChange={(e) => setUsernameInput(e.target.value)}
+                        className="bg-black/50 border-2 border-[#d67a9d] rounded-xl px-6 py-3 text-3xl font-bold tracking-widest text-center lg:text-left min-w-[300px]"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleUsernameSave()
+                          if (e.key === 'Escape') {
+                            setEditingName(false)
+                            setUsernameInput(user?.user_metadata?.username || '')
+                          }
+                        }}
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleUsernameSave}
+                          className="w-10 h-10 rounded-full bg-green-500/20 border border-green-500 flex items-center justify-center hover:bg-green-500/30 transition-colors"
+                        >
+                          <CheckCircle size={20} className="text-green-400" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingName(false)
+                            setUsernameInput(user?.user_metadata?.username || '')
+                          }}
+                          className="w-10 h-10 rounded-full bg-red-500/20 border border-red-500 flex items-center justify-center hover:bg-red-500/30 transition-colors"
+                        >
+                          <X size={20} className="text-red-400" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <h1 className="text-5xl lg:text-6xl font-black bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
+                        {user?.user_metadata?.username || user?.email?.split('@')[0]?.toUpperCase()}
+                      </h1>
+                      <button
+                        onClick={() => setEditingName(true)}
+                        className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:border-[#d67a9d] hover:bg-[#d67a9d]/10 transition-all group"
+                      >
+                        <Edit3 size={20} className="text-white/60 group-hover:text-[#d67a9d]" />
+                      </button>
+                    </>
+                  )}
+                </div>
                 
                 <div className="flex flex-wrap items-center gap-4 mb-6">
                   <div className="flex items-center gap-2 text-white/60">
@@ -614,8 +1119,25 @@ export default function ProfilePage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
           {quickActions.map((action, i) => (
             <ParallaxCard key={i} className="relative">
-              <Link href={action.link}>
-                <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 text-center group hover:border-white/30 transition-all duration-300">
+              {action.link ? (
+                <Link href={action.link}>
+                  <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 text-center group hover:border-white/30 transition-all duration-300">
+                    <div className="w-14 h-14 rounded-xl mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: `${action.color}20` }}>
+                      <action.icon size={24} style={{ color: action.color }} />
+                    </div>
+                    <p className="text-sm font-bold tracking-widest">{action.label}</p>
+                    <motion.div
+                      className="h-0.5 w-0 group-hover:w-full mx-auto mt-2"
+                      style={{ background: `linear-gradient(90deg, transparent, ${action.color}, transparent)` }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </div>
+                </Link>
+              ) : (
+                <button
+                  onClick={action.action}
+                  className="w-full bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 text-center group hover:border-white/30 transition-all duration-300"
+                >
                   <div className="w-14 h-14 rounded-xl mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: `${action.color}20` }}>
                     <action.icon size={24} style={{ color: action.color }} />
                   </div>
@@ -625,8 +1147,8 @@ export default function ProfilePage() {
                     style={{ background: `linear-gradient(90deg, transparent, ${action.color}, transparent)` }}
                     transition={{ duration: 0.3 }}
                   />
-                </div>
-              </Link>
+                </button>
+              )}
             </ParallaxCard>
           ))}
         </div>
@@ -673,29 +1195,49 @@ export default function ProfilePage() {
 
             {/* СТАТИСТИКА */}
             <div className="grid grid-cols-2 gap-4">
-              {userStats.map((stat, i) => (
-                <ParallaxCard key={i} className="relative">
-                  <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} bg-opacity-20 flex items-center justify-center`}>
-                        <stat.icon size={20} className={`bg-gradient-to-br ${stat.color} bg-clip-text text-transparent`} />
-                      </div>
-                      <div className="text-right">
-                        <span className="text-2xl font-black">{stat.value}</span>
-                      </div>
+              <ParallaxCard className="relative">
+                <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#ffd166] to-[#ffed99] bg-opacity-20 flex items-center justify-center">
+                      <Crown size={20} className="bg-gradient-to-br from-[#ffd166] to-[#ffed99] bg-clip-text text-transparent" />
                     </div>
-                    <p className="text-xs font-bold tracking-widest text-white/60 mb-2">{stat.label}</p>
-                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${stat.progress}%` }}
-                        transition={{ duration: 1, delay: i * 0.1 }}
-                        className={`h-full bg-gradient-to-r ${stat.color} rounded-full`}
-                      />
+                    <div className="text-right">
+                      <span className="text-2xl font-black">PLATINUM</span>
                     </div>
                   </div>
-                </ParallaxCard>
-              ))}
+                  <p className="text-xs font-bold tracking-widest text-white/60 mb-2">УРОВЕНЬ</p>
+                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: '85%' }}
+                      transition={{ duration: 1, delay: 0.1 }}
+                      className="h-full bg-gradient-to-r from-[#ffd166] to-[#ffed99] rounded-full"
+                    />
+                  </div>
+                </div>
+              </ParallaxCard>
+              
+              <ParallaxCard className="relative">
+                <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#d67a9d] to-[#ff9ec0] bg-opacity-20 flex items-center justify-center">
+                      <Zap size={20} className="bg-gradient-to-br from-[#d67a9d] to-[#ff9ec0] bg-clip-text text-transparent" />
+                    </div>
+                    <div className="text-right">
+                      <span className="text-2xl font-black">47 ДНЕЙ</span>
+                    </div>
+                  </div>
+                  <p className="text-xs font-bold tracking-widest text-white/60 mb-2">СТРЕЙК</p>
+                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: '90%' }}
+                      transition={{ duration: 1, delay: 0.2 }}
+                      className="h-full bg-gradient-to-r from-[#d67a9d] to-[#ff9ec0] rounded-full"
+                    />
+                  </div>
+                </div>
+              </ParallaxCard>
             </div>
           </div>
 
@@ -742,40 +1284,11 @@ export default function ProfilePage() {
                       <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-bold tracking-widest flex items-center gap-2">
                           <TrendingUp size={20} className="text-green-400" />
-                          АКТИВНОСТЬ
+                          ЛЕНТА НОВОСТЕЙ
                         </h3>
-                        <span className="text-xs font-bold text-white/40">ЗА 30 ДНЕЙ</span>
+                        <span className="text-xs font-bold text-white/40">АКТУАЛЬНО</span>
                       </div>
-                      <div className="h-40 flex items-end gap-1">
-                        {[...Array(30)].map((_, i) => (
-                          <motion.div
-                            key={i}
-                            initial={{ height: 0 }}
-                            animate={{ height: `${Math.random() * 80 + 20}%` }}
-                            transition={{ duration: 1, delay: i * 0.02 }}
-                            className="flex-1 bg-gradient-to-t from-[#d67a9d] to-[#71b3c9] rounded-t"
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </ParallaxCard>
-                  
-                  <ParallaxCard>
-                    <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6">
-                      <h3 className="text-lg font-bold tracking-widest mb-6 flex items-center gap-2">
-                        <Trophy size={20} className="text-yellow-400" />
-                        ДОСТИЖЕНИЯ
-                      </h3>
-                      <div className="grid grid-cols-3 gap-4">
-                        {['🎯 СТРЕЛОК', '🚀 СТАРТЕР', '💎 ПРЕМИУМ', '🏆 ЧЕМПИОН', '⭐ ЗВЕЗДА', '🛡️ ЗАЩИТНИК'].map((badge, i) => (
-                          <div key={i} className="text-center">
-                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-white/10 to-transparent border border-white/10 flex items-center justify-center mx-auto mb-2">
-                              <span className="text-2xl">{badge.split(' ')[0]}</span>
-                            </div>
-                            <p className="text-xs font-bold tracking-widest">{badge.split(' ')[1]}</p>
-                          </div>
-                        ))}
-                      </div>
+                      <NewsFeed news={news} />
                     </div>
                   </ParallaxCard>
                 </motion.div>
