@@ -5,7 +5,7 @@ import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast' // Убрали импорт Toaster
 import {
   Coins,
   ArrowRight,
@@ -717,8 +717,17 @@ export default function ProfilePage() {
   const [editingName, setEditingName] = useState(false)
   const [usernameInput, setUsernameInput] = useState('')
   const [topUpModalOpen, setTopUpModalOpen] = useState(false)
+  
+  // Добавляем состояние для проверки клиента
+  const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  useEffect(() => {
+    if (!isClient) return
+
     const getData = async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser()
       if (!authUser) {
@@ -778,7 +787,7 @@ export default function ProfilePage() {
       setLoading(false)
     }
     getData()
-  }, [router])
+  }, [router, isClient])
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -874,9 +883,19 @@ export default function ProfilePage() {
     }
   }
 
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-24 h-24 mx-auto mb-6 border-4 border-transparent border-t-[#d67a9d] border-r-[#71b3c9] border-b-[#ffd166] border-l-[#ff6b9d] rounded-full animate-spin" />
+          <p className="text-xl font-bold tracking-widest text-white">Загрузка...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (loading) return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center relative overflow-hidden">
-      <Starfield3D />
       <div className="relative z-10 text-center">
         <motion.div
           animate={{ rotate: 360 }}
@@ -902,18 +921,6 @@ export default function ProfilePage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white overflow-hidden relative">
-      {/* Toast уведомления */}
-      <Toaster 
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            backdropFilter: 'blur(10px)',
-            borderRadius: '16px',
-          },
-        }}
-      />
-
       {/* Модальное окно пополнения */}
       <TopUpModal isOpen={topUpModalOpen} onClose={() => setTopUpModalOpen(false)} />
 
