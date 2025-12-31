@@ -33,13 +33,15 @@ import {
   Edit3,
   X,
   Type,
-  CreditCard as CardIcon
+  CreditCard as CardIcon,
+  LifeBuoy,
+  HelpCircle
 } from 'lucide-react'
 
-// ==================== КОМПОНЕНТЫ ЭФФЕКТОВ ФОНА ====================
+// ==================== УЛУЧШЕННЫЕ КОМПОНЕНТЫ 3D ФОНА ====================
 
-// 3D Звездное поле
-const Starfield3D = () => {
+// 1. ПРЕМИУМ ЗВЕЗДНОЕ ПОЛЕ С ЭФФЕКТОМ ГЛУБИНЫ
+const PremiumStarfield3D = () => {
   const [isClient, setIsClient] = useState(false)
   
   useEffect(() => {
@@ -50,31 +52,44 @@ const Starfield3D = () => {
   
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {[...Array(200)].map((_, i) => {
-        const depth = Math.random() * 100 + 50
-        const size = Math.random() * 4 + 1
+      {[...Array(300)].map((_, i) => {
+        const depth = Math.random() * 300 + 100 // Увеличили глубину
+        const size = Math.random() * 6 + 2
+        const colorIntensity = Math.random() * 0.8 + 0.2
+        
+        // Разные цвета звезд
+        const colors = [
+          `rgba(214, 122, 157, ${colorIntensity})`,
+          `rgba(113, 179, 201, ${colorIntensity})`,
+          `rgba(255, 209, 102, ${colorIntensity})`,
+          `rgba(255, 255, 255, ${colorIntensity})`
+        ]
+        const color = colors[Math.floor(Math.random() * colors.length)]
+        
         return (
           <motion.div
             key={i}
-            className="absolute bg-white rounded-full"
+            className="absolute rounded-full"
             style={{
               left: `${Math.random() * 100}vw`,
               top: `${Math.random() * 100}vh`,
               width: size,
               height: size,
               transform: `translateZ(${depth}px)`,
-              boxShadow: `0 0 ${size * 4}px ${size * 2}px rgba(255, 255, 255, 0.5)`
+              background: color,
+              boxShadow: `0 0 ${size * 6}px ${size * 3}px ${color}`,
+              filter: 'blur(1px)'
             }}
             animate={{
-              opacity: [0.1, 0.8, 0.1],
-              scale: [1, 1.5, 1],
-              x: [0, Math.random() * 20 - 10, 0],
-              y: [0, Math.random() * 20 - 10, 0]
+              opacity: [0.1, 0.9, 0.1],
+              scale: [1, 1.8, 1],
+              x: [0, Math.random() * 40 - 20, 0],
+              y: [0, Math.random() * 40 - 20, 0]
             }}
             transition={{
-              duration: Math.random() * 5 + 3,
+              duration: Math.random() * 8 + 4,
               repeat: Infinity,
-              delay: Math.random() * 5,
+              delay: Math.random() * 10,
               ease: "easeInOut"
             }}
           />
@@ -84,8 +99,8 @@ const Starfield3D = () => {
   )
 }
 
-// 3D Парящие подарки
-const FloatingGifts3D = () => {
+// 2. ПАДАЮЩИЕ ПОДАРКИ ПРЕМИУМ КАЧЕСТВА
+const PremiumFloatingGifts3D = () => {
   const [isClient, setIsClient] = useState(false)
   
   useEffect(() => {
@@ -94,38 +109,61 @@ const FloatingGifts3D = () => {
   
   if (!isClient) return null
   
-  const gifts = ['🎁', '🎄', '⭐', '🔔', '🎅', '🦌', '❄️', '✨']
+  const gifts = [
+    { emoji: '🎁', color: '#d67a9d' },
+    { emoji: '🎄', color: '#71b3c9' },
+    { emoji: '⭐', color: '#ffd166' },
+    { emoji: '🔔', color: '#ff6b9d' },
+    { emoji: '🎅', color: '#4da6cc' },
+    { emoji: '🦌', color: '#ffed99' },
+    { emoji: '❄️', color: '#ffffff' },
+    { emoji: '✨', color: '#ffd700' }
+  ]
   
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {[...Array(30)].map((_, i) => {
-        const depth = Math.random() * 200 + 100
-        const size = Math.random() * 40 + 20
+      {[...Array(25)].map((_, i) => {
+        const depth = Math.random() * 300 + 150 // Больше глубины
+        const size = Math.random() * 50 + 30 // Крупнее подарки
+        const gift = gifts[Math.floor(Math.random() * gifts.length)]
+        const rotationSpeed = Math.random() * 5 + 3
+        
         return (
           <motion.div
             key={i}
-            className="absolute text-3xl"
+            className="absolute drop-shadow-2xl"
             style={{
               left: `${Math.random() * 100}vw`,
-              top: `${Math.random() * 100}vh`,
+              top: `${Math.random() * -50}vh`,
               fontSize: `${size}px`,
               transform: `translateZ(${depth}px)`,
-              filter: 'drop-shadow(0 0 20px rgba(255, 255, 255, 0.3))'
+              filter: `drop-shadow(0 0 30px ${gift.color}80)`
             }}
             animate={{
-              y: ['0vh', '100vh'],
-              rotateX: [0, 360],
-              rotateY: [0, 720],
-              rotateZ: [0, 360]
+              y: ['0vh', '150vh'],
+              rotateX: [0, 360 * rotationSpeed],
+              rotateY: [0, 720 * rotationSpeed],
+              rotateZ: [0, 180 * rotationSpeed],
+              x: [0, Math.sin(i) * 100]
             }}
             transition={{
-              duration: Math.random() * 30 + 30,
+              duration: Math.random() * 40 + 40, // Медленнее падение
               repeat: Infinity,
-              delay: Math.random() * 20,
+              delay: Math.random() * 30,
               ease: "linear"
             }}
           >
-            {gifts[Math.floor(Math.random() * gifts.length)]}
+            <div className="relative">
+              <div 
+                className="absolute inset-0 blur-md"
+                style={{ color: gift.color }}
+              >
+                {gift.emoji}
+              </div>
+              <div style={{ position: 'relative' }}>
+                {gift.emoji}
+              </div>
+            </div>
           </motion.div>
         )
       })}
@@ -133,8 +171,8 @@ const FloatingGifts3D = () => {
   )
 }
 
-// Матрица из падающих символов
-const MatrixRain = () => {
+// 3. ДЕТАЛИЗИРОВАННЫЕ СНЕЖИНКИ С ЭФФЕКТОМ ГЛУБИНЫ
+const PremiumSnowflakes3D = () => {
   const [isClient, setIsClient] = useState(false)
   
   useEffect(() => {
@@ -143,39 +181,79 @@ const MatrixRain = () => {
   
   if (!isClient) return null
   
-  const symbols = ['❄️', '🎁', '⭐', '🎄', '🔔', '🦌', '🎅', '✨', '🌟', '💫']
+  const snowflakeTypes = ['❄️', '❅', '❆', '✦', '✶', '✴︎', '✵']
   
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {[...Array(80)].map((_, i) => (
+      {[...Array(150)].map((_, i) => {
+        const depth = Math.random() * 400 + 100 // Максимальная глубина
+        const size = Math.random() * 8 + 3
+        const opacity = Math.random() * 0.7 + 0.3
+        const speed = Math.random() * 20 + 20
+        
+        return (
+          <motion.div
+            key={i}
+            className="absolute text-white"
+            style={{
+              left: `${Math.random() * 100}vw`,
+              top: `${Math.random() * -20}vh`,
+              fontSize: `${size}px`,
+              transform: `translateZ(${depth}px)`,
+              opacity: opacity,
+              filter: 'blur(0.5px)'
+            }}
+            animate={{
+              y: ['0vh', '120vh'],
+              rotate: [0, 720],
+              x: [0, Math.sin(i * 0.1) * 100]
+            }}
+            transition={{
+              duration: speed,
+              repeat: Infinity,
+              delay: Math.random() * 10,
+              ease: "linear"
+            }}
+          >
+            {snowflakeTypes[Math.floor(Math.random() * snowflakeTypes.length)]}
+          </motion.div>
+        )
+      })}
+      
+      {/* Крупные снежинки на переднем плане */}
+      {[...Array(30)].map((_, i) => (
         <motion.div
-          key={i}
-          className="absolute text-white/5 text-xl"
-          initial={{ 
-            x: Math.random() * 100 + 'vw',
-            y: -50,
-            rotate: Math.random() * 360
+          key={`large-${i}`}
+          className="absolute text-white"
+          style={{
+            left: `${Math.random() * 100}vw`,
+            top: `${Math.random() * -20}vh`,
+            fontSize: `${Math.random() * 20 + 15}px`,
+            transform: `translateZ(${Math.random() * 100 + 50}px)`,
+            opacity: 0.9,
+            filter: 'blur(1px) drop-shadow(0 0 10px rgba(255, 255, 255, 0.3))'
           }}
           animate={{
-            y: '120vh',
-            rotate: Math.random() * 720
+            y: ['0vh', '120vh'],
+            rotate: [0, 1080],
+            x: [0, Math.cos(i * 0.2) * 150]
           }}
           transition={{
-            duration: Math.random() * 10 + 15,
+            duration: Math.random() * 30 + 30,
             repeat: Infinity,
-            delay: Math.random() * 10,
+            delay: Math.random() * 20,
             ease: "linear"
           }}
         >
-          {symbols[Math.floor(Math.random() * symbols.length)]}
+          {snowflakeTypes[Math.floor(Math.random() * snowflakeTypes.length)]}
         </motion.div>
       ))}
     </div>
   )
 }
 
-// Лазерные линии (киберпанк эффект)
-const LaserGrid = () => {
+// 4. КОСМИЧЕСКИЕ ЛУЧИ И ЭФФЕКТЫ
+const SpaceBeams3D = () => {
   const [isClient, setIsClient] = useState(false)
   
   useEffect(() => {
@@ -186,42 +264,72 @@ const LaserGrid = () => {
   
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {/* Горизонтальные линии */}
-      {[...Array(20)].map((_, i) => (
+      {/* Вертикальные лучи */}
+      {[...Array(15)].map((_, i) => (
         <motion.div
-          key={`h-${i}`}
-          className="absolute h-[1px] bg-gradient-to-r from-transparent via-[#d67a9d] to-transparent"
+          key={`v-beam-${i}`}
+          className="absolute top-0 w-[1px]"
           style={{
-            top: `${(i + 1) * 5}%`,
-            width: '100%',
+            left: `${(i + 1) * 6.66}%`,
+            height: '100%',
+            background: 'linear-gradient(to bottom, transparent, rgba(214, 122, 157, 0.3), transparent)'
           }}
           animate={{
-            opacity: [0, 0.5, 0],
+            opacity: [0, 0.5, 0]
           }}
           transition={{
-            duration: 2,
+            duration: 4,
             repeat: Infinity,
-            delay: i * 0.2,
+            delay: i * 0.3,
             ease: "easeInOut"
           }}
         />
       ))}
-      {/* Вертикальные линии */}
-      {[...Array(20)].map((_, i) => (
+      
+      {/* Горизонтальные лучи */}
+      {[...Array(10)].map((_, i) => (
         <motion.div
-          key={`v-${i}`}
-          className="absolute w-[1px] bg-gradient-to-b from-transparent via-[#71b3c9] to-transparent"
+          key={`h-beam-${i}`}
+          className="absolute left-0 h-[1px]"
           style={{
-            left: `${(i + 1) * 5}%`,
-            height: '100%',
+            top: `${(i + 1) * 10}%`,
+            width: '100%',
+            background: 'linear-gradient(to right, transparent, rgba(113, 179, 201, 0.3), transparent)'
           }}
           animate={{
-            opacity: [0, 0.3, 0],
+            opacity: [0, 0.3, 0]
           }}
           transition={{
-            duration: 2.5,
+            duration: 5,
             repeat: Infinity,
-            delay: i * 0.3,
+            delay: i * 0.4,
+            ease: "easeInOut"
+          }}
+        />
+      ))}
+      
+      {/* Плавающие частицы */}
+      {[...Array(50)].map((_, i) => (
+        <motion.div
+          key={`particle-${i}`}
+          className="absolute rounded-full"
+          style={{
+            left: `${Math.random() * 100}vw`,
+            top: `${Math.random() * 100}vh`,
+            width: Math.random() * 3 + 1,
+            height: Math.random() * 3 + 1,
+            background: Math.random() > 0.5 ? '#d67a9d' : '#71b3c9',
+            transform: `translateZ(${Math.random() * 200 + 100}px)`
+          }}
+          animate={{
+            y: [0, Math.random() * 100 - 50],
+            x: [0, Math.random() * 100 - 50],
+            opacity: [0.1, 0.8, 0.1]
+          }}
+          transition={{
+            duration: Math.random() * 10 + 5,
+            repeat: Infinity,
+            delay: Math.random() * 5,
             ease: "easeInOut"
           }}
         />
@@ -230,7 +338,7 @@ const LaserGrid = () => {
   )
 }
 
-// ==================== МАГИЧЕСКИЙ ПОДАРОК ====================
+// ==================== УЛУЧШЕННЫЙ МАГИЧЕСКИЙ ПОДАРОК ====================
 const MagicGift = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
@@ -261,96 +369,126 @@ const MagicGift = () => {
 
   return (
     <>
-      {/* Конфетти эффект */}
+      {/* УЛУЧШЕННЫЙ КОНФЕТТИ ЭФФЕКТ */}
       <AnimatePresence>
         {showConfetti && (
           <div className="fixed inset-0 pointer-events-none z-50">
-            {[...Array(150)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute text-2xl"
-                initial={{
-                  x: '50vw',
-                  y: '100vh',
-                  rotate: 0
-                }}
-                animate={{
-                  x: Math.random() * 100 + 'vw',
-                  y: '-100vh',
-                  rotate: Math.random() * 720
-                }}
-                exit={{ opacity: 0 }}
-                transition={{
-                  duration: Math.random() * 3 + 2,
-                  ease: "linear"
-                }}
-              >
-                {['🎉', '✨', '⭐', '🎁', '🎊'][Math.floor(Math.random() * 5)]}
-              </motion.div>
-            ))}
+            {[...Array(200)].map((_, i) => {
+              const colors = ['#d67a9d', '#71b3c9', '#ffd166', '#ff6b9d', '#4da6cc']
+              const color = colors[Math.floor(Math.random() * colors.length)]
+              
+              return (
+                <motion.div
+                  key={i}
+                  className="absolute text-2xl"
+                  style={{
+                    color: color,
+                    filter: `drop-shadow(0 0 10px ${color})`
+                  }}
+                  initial={{
+                    x: '50vw',
+                    y: '100vh',
+                    rotate: 0,
+                    scale: 0
+                  }}
+                  animate={{
+                    x: Math.random() * 100 + 'vw',
+                    y: '-100vh',
+                    rotate: Math.random() * 1080,
+                    scale: [0, 1, 0.5]
+                  }}
+                  exit={{ opacity: 0 }}
+                  transition={{
+                    duration: Math.random() * 4 + 3,
+                    ease: "linear"
+                  }}
+                >
+                  {['🎉', '✨', '⭐', '🎁', '🎊'][Math.floor(Math.random() * 5)]}
+                </motion.div>
+              )
+            })}
           </div>
         )}
       </AnimatePresence>
 
-      {/* Компонент подарка */}
+      {/* КОМПОНЕНТ ПОДАРКА - ПЕРЕМЕЩЕН ВЫШЕ */}
       <motion.div
-        className="fixed bottom-8 left-8 z-40 cursor-pointer"
+        className="fixed bottom-32 left-8 z-40 cursor-pointer" // Изменил bottom-8 на bottom-32
         animate={{
-          scale: [1, 1.1, 1],
-          rotate: [0, -5, 5, -5, 0],
+          scale: [1, 1.15, 1],
+          rotate: [0, -8, 8, -8, 0],
+          y: [0, -10, 0]
         }}
         transition={{
-          duration: 2.5,
+          duration: 3,
           repeat: Infinity,
-          repeatDelay: 0.5
+          repeatDelay: 1
         }}
         onClick={handleClick}
       >
-        {/* Аврора эффект */}
+        {/* АВРОРА ЭФФЕКТ */}
         <motion.div
           className="absolute inset-0 rounded-full"
           animate={{
             background: [
-              'linear-gradient(60deg, #d67a9d, transparent 40%)',
-              'linear-gradient(180deg, #71b3c9, transparent 40%)',
-              'linear-gradient(300deg, #ffd166, transparent 40%)',
-              'linear-gradient(60deg, #d67a9d, transparent 40%)',
+              'linear-gradient(45deg, #d67a9d, #ff6b9d, transparent 60%)',
+              'linear-gradient(135deg, #71b3c9, #4da6cc, transparent 60%)',
+              'linear-gradient(225deg, #ffd166, #ffed99, transparent 60%)',
+              'linear-gradient(315deg, #d67a9d, #ff6b9d, transparent 60%)',
             ]
           }}
           transition={{
-            duration: 4,
+            duration: 6,
             repeat: Infinity,
             ease: "linear"
           }}
           style={{
-            filter: 'blur(20px)',
-            opacity: 0.7
+            filter: 'blur(25px)',
+            opacity: 0.8
           }}
         />
         
-        <div className="relative bg-gradient-to-br from-[#d67a9d] via-[#71b3c9] to-[#ffd166] p-1 rounded-2xl">
+        <div className="relative bg-gradient-to-br from-[#d67a9d] via-[#71b3c9] to-[#ffd166] p-1.5 rounded-2xl shadow-2xl">
           <div className="bg-black rounded-xl p-6">
             <div className="flex flex-col items-center">
-              <Gift size={48} className="text-yellow-400 mb-4" />
-              <p className="text-sm font-bold tracking-widest text-center">
+              <div className="relative mb-4">
+                <motion.div
+                  animate={{
+                    rotateY: [0, 360],
+                    scale: [1, 1.2, 1]
+                  }}
+                  transition={{
+                    rotateY: { duration: 3, repeat: Infinity, ease: "linear" },
+                    scale: { duration: 2, repeat: Infinity }
+                  }}
+                  className="w-12 h-12"
+                >
+                  <Gift className="w-full h-full text-yellow-400" />
+                </motion.div>
+                <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 border-2 border-black flex items-center justify-center">
+                  <span className="text-[10px] font-black">!</span>
+                </div>
+              </div>
+              <p className="text-sm font-black tracking-widest text-center leading-tight">
                 МАГИЧЕСКИЙ<br/>ПОДАРОК
               </p>
+              <div className="mt-2 w-full h-1 bg-gradient-to-r from-transparent via-yellow-400 to-transparent rounded-full" />
             </div>
           </div>
         </div>
 
-        {/* Всплывающее окно с промокодом */}
+        {/* ВСПЛЫВАЮЩЕЕ ОКНО С ПРОМОКОДОМ - УЛУЧШЕННАЯ ПОЗИЦИЯ */}
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.8, y: 20 }}
+              initial={{ opacity: 0, scale: 0.8, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              className="absolute left-full ml-4 top-1/2 -translate-y-1/2 min-w-[300px]"
+              className="absolute left-full ml-4 bottom-0 min-w-[320px] z-50" // Изменил top-1/2 на bottom-0
             >
               <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl border-2 border-yellow-500/50 p-6 shadow-2xl">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-bold tracking-widest flex items-center gap-2">
+                  <h3 className="text-lg font-black tracking-widest flex items-center gap-2">
                     <Sparkles className="text-yellow-400" />
                     ВАШ ПРОМОКОД
                   </h3>
@@ -359,17 +497,28 @@ const MagicGift = () => {
                       e.stopPropagation()
                       setIsOpen(false)
                     }}
-                    className="text-white/60 hover:text-white"
+                    className="text-white/60 hover:text-white transition-colors"
                   >
                     <X size={20} />
                   </button>
                 </div>
                 
                 <div className="bg-black/50 rounded-xl p-6 border border-yellow-500/30 text-center mb-4">
-                  <p className="text-3xl font-black tracking-wider text-yellow-400">
+                  <p className="text-4xl font-black tracking-wider text-yellow-400 font-mono">
                     {promoCode}
                   </p>
                   <p className="text-sm text-white/60 mt-2">1000 ₽ на первый заказ</p>
+                  <div className="mt-4 flex justify-center">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(promoCode)
+                        toast.success('Промокод скопирован!')
+                      }}
+                      className="px-4 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-400 text-sm font-bold hover:bg-yellow-500/20 transition-colors"
+                    >
+                      КОПИРОВАТЬ
+                    </button>
+                  </div>
                 </div>
                 
                 <p className="text-xs text-white/40 text-center">
@@ -386,24 +535,35 @@ const MagicGift = () => {
 
 // ==================== АНИМИРОВАННЫЕ КОМПОНЕНТЫ ====================
 
-// Анимированная сфера для бонусов
+// АНИМИРОВАННАЯ СФЕРА ДЛЯ БОНУСОВ
 const AnimatedSphere = ({ value }: { value: number }) => {
   return (
     <div className="relative flex items-center justify-center">
       <motion.div
         animate={{
-          scale: [1, 1.1, 1],
+          scale: [1, 1.15, 1],
           rotateY: [0, 180, 360],
         }}
         transition={{
-          duration: 5,
+          duration: 8,
           repeat: Infinity,
           ease: "linear"
         }}
-        className="relative w-48 h-48"
+        className="relative w-56 h-56" // Увеличил размер
       >
-        {/* Внешняя сфера */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#d67a9d]/20 via-[#71b3c9]/20 to-[#ffd166]/20 blur-xl" />
+        {/* Внешняя аура */}
+        <motion.div
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [0.3, 0.6, 0.3]
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          className="absolute -inset-10 rounded-full bg-gradient-to-r from-[#d67a9d]/20 via-[#71b3c9]/20 to-[#ffd166]/20 blur-3xl"
+        />
         
         {/* Средняя сфера */}
         <motion.div
@@ -412,40 +572,42 @@ const AnimatedSphere = ({ value }: { value: number }) => {
             rotateY: [0, 360],
           }}
           transition={{
-            duration: 8,
+            duration: 15,
             repeat: Infinity,
             ease: "linear"
           }}
-          className="absolute inset-4 rounded-full bg-gradient-to-r from-[#d67a9d]/30 via-[#71b3c9]/30 to-transparent blur-md"
+          className="absolute inset-4 rounded-full bg-gradient-to-r from-[#d67a9d]/40 via-[#71b3c9]/40 to-transparent blur-lg"
         />
         
         {/* Внутренняя сфера */}
-        <div className="absolute inset-8 rounded-full bg-gradient-to-br from-black to-gray-900 border border-white/10 flex items-center justify-center">
+        <div className="absolute inset-10 rounded-full bg-gradient-to-br from-black to-gray-900 border-2 border-white/10 flex items-center justify-center shadow-2xl">
           <div className="text-center">
-            <p className="text-4xl font-black bg-gradient-to-r from-[#d67a9d] via-[#71b3c9] to-[#ffd166] bg-clip-text text-transparent">
+            <p className="text-5xl font-black bg-gradient-to-r from-[#d67a9d] via-[#71b3c9] to-[#ffd166] bg-clip-text text-transparent">
               {value}
             </p>
-            <p className="text-xs font-bold tracking-widest text-white/60 mt-2">G-COINS</p>
+            <p className="text-xs font-black tracking-widest text-white/60 mt-3">GIGA COINS</p>
           </div>
         </div>
         
         {/* Сияющие частицы */}
-        {[...Array(12)].map((_, i) => (
+        {[...Array(16)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-2 h-2 rounded-full bg-gradient-to-r from-[#d67a9d] to-[#71b3c9]"
+            className="absolute w-3 h-3 rounded-full"
             style={{
-              left: `${50 + 40 * Math.cos((i * 30 * Math.PI) / 180)}%`,
-              top: `${50 + 40 * Math.sin((i * 30 * Math.PI) / 180)}%`,
+              left: `${50 + 45 * Math.cos((i * 22.5 * Math.PI) / 180)}%`,
+              top: `${50 + 45 * Math.sin((i * 22.5 * Math.PI) / 180)}%`,
+              background: `linear-gradient(45deg, ${i % 3 === 0 ? '#d67a9d' : i % 3 === 1 ? '#71b3c9' : '#ffd166'}, transparent)`
             }}
             animate={{
-              scale: [1, 1.5, 1],
+              scale: [1, 2, 1],
               opacity: [0.3, 1, 0.3],
+              rotate: [0, 180, 360]
             }}
             transition={{
-              duration: 2,
+              duration: 3,
               repeat: Infinity,
-              delay: i * 0.2,
+              delay: i * 0.1,
             }}
           />
         ))}
@@ -454,14 +616,14 @@ const AnimatedSphere = ({ value }: { value: number }) => {
   )
 }
 
-// Параллакс карточка
+// ПАРАЛЛАКС КАРТОЧКА
 const ParallaxCard = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => {
   const ref = useRef<HTMLDivElement>(null)
   const x = useMotionValue(0)
   const y = useMotionValue(0)
   
-  const rotateX = useSpring(useTransform(y, [-100, 100], [10, -10]), { stiffness: 300, damping: 30 })
-  const rotateY = useSpring(useTransform(x, [-100, 100], [-10, 10]), { stiffness: 300, damping: 30 })
+  const rotateX = useSpring(useTransform(y, [-100, 100], [15, -15]), { stiffness: 300, damping: 30 })
+  const rotateY = useSpring(useTransform(x, [-100, 100], [-15, 15]), { stiffness: 300, damping: 30 })
   
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!ref.current) return
@@ -484,7 +646,7 @@ const ParallaxCard = ({ children, className = '' }: { children: React.ReactNode,
       style={{ rotateX, rotateY }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      whileHover={{ scale: 1.02 }}
+      whileHover={{ scale: 1.03 }}
       transition={{ type: "spring", stiffness: 300, damping: 25 }}
     >
       {children}
@@ -492,17 +654,17 @@ const ParallaxCard = ({ children, className = '' }: { children: React.ReactNode,
   )
 }
 
-// Анимированный градиентный бордер
+// АНИМИРОВАННЫЙ ГРАДИЕНТНЫЙ БОРДЕР
 const BorderBeam = () => {
   return (
     <div className="absolute inset-0 rounded-3xl overflow-hidden">
       <motion.div
         className="absolute inset-0"
         animate={{
-          backgroundPosition: ['0% 0%', '200% 200%'],
+          backgroundPosition: ['0% 0%', '300% 300%'],
         }}
         transition={{
-          duration: 3,
+          duration: 4,
           repeat: Infinity,
           ease: "linear"
         }}
@@ -514,8 +676,8 @@ const BorderBeam = () => {
             #ffd166 75%, 
             transparent 100%
           )`,
-          backgroundSize: '200% 200%',
-          filter: 'blur(8px)',
+          backgroundSize: '300% 300%',
+          filter: 'blur(12px)',
         }}
       />
     </div>
@@ -555,7 +717,7 @@ const TopUpModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void 
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/70 backdrop-blur-2xl z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/80 backdrop-blur-3xl z-50 flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
@@ -569,13 +731,13 @@ const TopUpModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void 
                   <motion.div
                     animate={{ 
                       rotateY: [0, 360],
-                      scale: [1, 1.1, 1]
+                      scale: [1, 1.2, 1]
                     }}
                     transition={{ 
-                      rotateY: { duration: 3, repeat: Infinity, ease: "linear" },
-                      scale: { duration: 2, repeat: Infinity }
+                      rotateY: { duration: 4, repeat: Infinity, ease: "linear" },
+                      scale: { duration: 3, repeat: Infinity }
                     }}
-                    className="w-20 h-20 mx-auto mb-6"
+                    className="w-24 h-24 mx-auto mb-6"
                   >
                     <CardIcon className="w-full h-full text-cyan-400" />
                   </motion.div>
@@ -708,9 +870,6 @@ export default function ProfilePage() {
   const [orders, setOrders] = useState<any[]>([])
   const [news, setNews] = useState<NewsItem[]>([])
   const [userBonuses, setUserBonuses] = useState(3450)
-  const [cashbackPercent, setCashbackPercent] = useState(5)
-  const [nextLevelPercent, setNextLevelPercent] = useState(7)
-  const [ordersToNextLevel, setOrdersToNextLevel] = useState(3)
   const [activeTab, setActiveTab] = useState<'overview' | 'orders'>('overview')
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
@@ -778,11 +937,6 @@ export default function ProfilePage() {
         .limit(10)
 
       if (newsData) setNews(newsData)
-
-      // Симуляция данных для прогресса кэшбэка
-      setCashbackPercent(5)
-      setNextLevelPercent(7)
-      setOrdersToNextLevel(3)
 
       setLoading(false)
     }
@@ -912,11 +1066,12 @@ export default function ProfilePage() {
     </div>
   )
 
+  // ОБНОВЛЕННЫЙ МАССИВ БЫСТРЫХ ДЕЙСТВИЙ - ЗАМЕНА ПОДПИСКИ НА ПОМОЩЬ
   const quickActions = [
     { label: 'НОВЫЙ ЗАКАЗ', icon: ShoppingCart, color: '#d67a9d', link: '/catalog' },
     { label: 'ПОПОЛНИТЬ', icon: CreditCard, color: '#71b3c9', action: () => setTopUpModalOpen(true) },
     { label: 'ПОДАРКИ', icon: Gift, color: '#ffd166', link: '/layout/BonusSystem' },
-    { label: 'ПОДПИСКА', icon: Crown, color: '#ff6b9d', link: '/contacts' },
+    { label: 'ПОМОЩЬ', icon: LifeBuoy, color: '#ff6b9d', link: '/contacts' }, // ИЗМЕНЕНО С Crown НА LifeBuoy
   ]
 
   return (
@@ -924,14 +1079,14 @@ export default function ProfilePage() {
       {/* Модальное окно пополнения */}
       <TopUpModal isOpen={topUpModalOpen} onClose={() => setTopUpModalOpen(false)} />
 
-      {/* Фоновые эффекты */}
-      <div className="fixed inset-0 bg-gradient-to-br from-black via-gray-900/20 to-black" />
-      <MatrixRain />
-      <Starfield3D />
-      <FloatingGifts3D />
-      <LaserGrid />
+      {/* УЛУЧШЕННЫЕ ФОНОВЫЕ ЭФФЕКТЫ */}
+      <div className="fixed inset-0 bg-gradient-to-br from-black via-gray-900/30 to-black" />
+      <PremiumStarfield3D />
+      <PremiumFloatingGifts3D />
+      <PremiumSnowflakes3D />
+      <SpaceBeams3D />
       
-      {/* Магический подарок */}
+      {/* Магический подарок - ПЕРЕМЕЩЕН ВЫШЕ */}
       <MagicGift />
       
       {/* Новогодний топ-баннер */}
@@ -994,7 +1149,7 @@ export default function ProfilePage() {
                     
                     <div className="absolute -bottom-2 -right-2">
                       <motion.div
-                        animate={{ scale: [1, 1.2, 1] }}
+                        animate={{ scale: [1, 1.3, 1] }}
                         transition={{ duration: 2, repeat: Infinity }}
                         className="w-10 h-10 rounded-full bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] flex items-center justify-center border-4 border-black"
                       >
@@ -1016,10 +1171,11 @@ export default function ProfilePage() {
               {/* Информация пользователя */}
               <div className="flex-1 text-center lg:text-left">
                 <div className="inline-flex items-center gap-3 mb-4">
+                  {/* ИЗМЕНЕНО: CYBER-AGENT НА ПОЛЬЗОВАТЕЛЬ */}
                   <div className="px-4 py-2 rounded-full bg-gradient-to-r from-[#d67a9d]/20 to-[#71b3c9]/20 border border-white/10">
                     <span className="text-xs font-bold tracking-widest flex items-center gap-2">
-                      <Crown size={12} className="text-yellow-400" />
-                      {user?.user_metadata?.rank || 'CYBER-AGENT'}
+                      <User size={12} className="text-yellow-400" />
+                      ПОЛЬЗОВАТЕЛЬ
                     </span>
                   </div>
                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
@@ -1086,26 +1242,27 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* Кэшбэк прогресс бар */}
+                {/* НОВЫЙ БЛОК: ЗАКАЗЫ ВМЕСТО КЭШБЭКА */}
                 <div className="bg-white/5 rounded-2xl p-6 border border-white/10 backdrop-blur-xl">
                   <div className="flex justify-between items-center mb-4">
                     <div>
-                      <p className="text-xs font-bold tracking-widest text-white/60 mb-1">ТЕКУЩИЙ КЭШБЭК</p>
+                      <p className="text-xs font-bold tracking-widest text-white/60 mb-1">ЗАКАЗЫ</p>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-black text-yellow-400">{cashbackPercent}%</span>
-                        <span className="text-sm text-white/40">→ {nextLevelPercent}%</span>
+                        <span className="text-3xl font-black text-yellow-400">{orders.length}</span>
+                        <span className="text-sm text-white/40">завершено</span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs font-bold tracking-widest text-white/60 mb-1">ДО СЛЕДУЮЩЕГО УРОВНЯ</p>
-                      <span className="text-xl font-black">{ordersToNextLevel} ЗАКАЗА</span>
+                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#d67a9d] to-[#71b3c9] bg-opacity-20 flex items-center justify-center">
+                        <Package size={28} className="bg-gradient-to-br from-[#d67a9d] to-[#71b3c9] bg-clip-text text-transparent" />
+                      </div>
                     </div>
                   </div>
                   
                   <div className="h-3 bg-white/10 rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
-                      animate={{ width: `${(orders.length / (orders.length + ordersToNextLevel)) * 100}%` }}
+                      animate={{ width: `${Math.min(orders.length * 10, 100)}%` }}
                       transition={{ duration: 1.5 }}
                       className="h-full bg-gradient-to-r from-[#d67a9d] via-[#71b3c9] to-[#ffd166] rounded-full relative"
                     >
@@ -1122,19 +1279,19 @@ export default function ProfilePage() {
           </div>
         </ParallaxCard>
 
-        {/* БЫСТРЫЕ ДЕЙСТВИЯ */}
+        {/* БЫСТРЫЕ ДЕЙСТВИЯ С ОБНОВЛЕННОЙ КНОПКОЙ ПОМОЩИ */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
           {quickActions.map((action, i) => (
             <ParallaxCard key={i} className="relative">
               {action.link ? (
                 <Link href={action.link}>
                   <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 text-center group hover:border-white/30 transition-all duration-300">
-                    <div className="w-14 h-14 rounded-xl mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: `${action.color}20` }}>
-                      <action.icon size={24} style={{ color: action.color }} />
+                    <div className="w-16 h-16 rounded-xl mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: `${action.color}20` }}>
+                      <action.icon size={28} style={{ color: action.color }} />
                     </div>
                     <p className="text-sm font-bold tracking-widest">{action.label}</p>
                     <motion.div
-                      className="h-0.5 w-0 group-hover:w-full mx-auto mt-2"
+                      className="h-0.5 w-0 group-hover:w-full mx-auto mt-3"
                       style={{ background: `linear-gradient(90deg, transparent, ${action.color}, transparent)` }}
                       transition={{ duration: 0.3 }}
                     />
@@ -1145,12 +1302,12 @@ export default function ProfilePage() {
                   onClick={action.action}
                   className="w-full bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 text-center group hover:border-white/30 transition-all duration-300"
                 >
-                  <div className="w-14 h-14 rounded-xl mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: `${action.color}20` }}>
-                    <action.icon size={24} style={{ color: action.color }} />
+                  <div className="w-16 h-16 rounded-xl mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: `${action.color}20` }}>
+                    <action.icon size={28} style={{ color: action.color }} />
                   </div>
                   <p className="text-sm font-bold tracking-widest">{action.label}</p>
                   <motion.div
-                    className="h-0.5 w-0 group-hover:w-full mx-auto mt-2"
+                    className="h-0.5 w-0 group-hover:w-full mx-auto mt-3"
                     style={{ background: `linear-gradient(90deg, transparent, ${action.color}, transparent)` }}
                     transition={{ duration: 0.3 }}
                   />
@@ -1162,7 +1319,7 @@ export default function ProfilePage() {
 
         {/* ОСНОВНОЙ КОНТЕНТ */}
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* ЛЕВАЯ КОЛОНКА - СТАТИСТИКА И БОНУСЫ */}
+          {/* ЛЕВАЯ КОЛОНКА - ТОЛЬКО СФЕРА С БОНУСАМИ (БЛОКИ СТАТИСТИКИ УДАЛЕНЫ) */}
           <div className="lg:w-2/5 space-y-8">
             {/* БАЛАНС В СФЕРЕ */}
             <ParallaxCard className="relative">
@@ -1200,52 +1357,7 @@ export default function ProfilePage() {
               </div>
             </ParallaxCard>
 
-            {/* СТАТИСТИКА */}
-            <div className="grid grid-cols-2 gap-4">
-              <ParallaxCard className="relative">
-                <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#ffd166] to-[#ffed99] bg-opacity-20 flex items-center justify-center">
-                      <Crown size={20} className="bg-gradient-to-br from-[#ffd166] to-[#ffed99] bg-clip-text text-transparent" />
-                    </div>
-                    <div className="text-right">
-                      <span className="text-2xl font-black">PLATINUM</span>
-                    </div>
-                  </div>
-                  <p className="text-xs font-bold tracking-widest text-white/60 mb-2">УРОВЕНЬ</p>
-                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: '85%' }}
-                      transition={{ duration: 1, delay: 0.1 }}
-                      className="h-full bg-gradient-to-r from-[#ffd166] to-[#ffed99] rounded-full"
-                    />
-                  </div>
-                </div>
-              </ParallaxCard>
-              
-              <ParallaxCard className="relative">
-                <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#d67a9d] to-[#ff9ec0] bg-opacity-20 flex items-center justify-center">
-                      <Zap size={20} className="bg-gradient-to-br from-[#d67a9d] to-[#ff9ec0] bg-clip-text text-transparent" />
-                    </div>
-                    <div className="text-right">
-                      <span className="text-2xl font-black">47 ДНЕЙ</span>
-                    </div>
-                  </div>
-                  <p className="text-xs font-bold tracking-widest text-white/60 mb-2">СТРЕЙК</p>
-                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: '90%' }}
-                      transition={{ duration: 1, delay: 0.2 }}
-                      className="h-full bg-gradient-to-r from-[#d67a9d] to-[#ff9ec0] rounded-full"
-                    />
-                  </div>
-                </div>
-              </ParallaxCard>
-            </div>
+            {/* БЛОКИ СТАТИСТИКИ (УРОВЕНЬ PLATINUM И СТРЕЙК 47 ДНЕЙ) УДАЛЕНЫ ПО ТРЕБОВАНИЮ */}
           </div>
 
           {/* ПРАВАЯ КОЛОНКА - ЗАКАЗЫ И ИСТОРИЯ */}
