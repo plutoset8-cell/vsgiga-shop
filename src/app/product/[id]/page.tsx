@@ -4,8 +4,8 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
-import { useCart } from '@/context/CartContext' // Оставляем для совместимости, если нужно
-import { useToast } from '@/context/ToastContext'
+import { useCart } from '@/context/CartContext'
+import toast from 'react-hot-toast' // ИЗМЕНЕНО: импорт напрямую из react-hot-toast
 import {
   ArrowLeft, ShoppingBag, ShieldCheck, Truck, Star, Maximize2,
   Info, Package, MapPin, Activity, Zap, Ruler, X, Eye, Crosshair, Cpu
@@ -67,7 +67,6 @@ function NeuralRecommendations({ currentId }: { currentId: string }) {
 
   useEffect(() => {
     const fetchRecs = async () => {
-      // Берем случайные товары, исключая текущий
       const { data } = await supabase
         .from('products')
         .select('id, name, price, image, category')
@@ -122,7 +121,6 @@ function ProductReviews({ productId }: { productId: string }) {
   const [comment, setComment] = useState('')
   const [rating, setRating] = useState(5)
   const [sending, setSending] = useState(false)
-  const { showToast } = useToast()
 
   useEffect(() => {
     if (productId) fetchReviews()
@@ -151,9 +149,9 @@ function ProductReviews({ productId }: { productId: string }) {
       setComment('')
       setRating(5)
       fetchReviews()
-      showToast('ДАННЫЕ ОТПРАВЛЕНЫ В БЛОКЧЕЙН', 'success')
+      toast.success('ДАННЫЕ ОТПРАВЛЕНЫ В БЛОКЧЕЙН') // ИЗМЕНЕНО: используем toast напрямую
     } else {
-      showToast('ОШИБКА ЗАПИСИ ДАННЫХ', 'error')
+      toast.error('ОШИБКА ЗАПИСИ ДАННЫХ') // ИЗМЕНЕНО: используем toast напрямую
     }
     setSending(false)
   }
@@ -165,14 +163,15 @@ function ProductReviews({ productId }: { productId: string }) {
           Обратная_Связь <span className="text-[#d67a9d] text-2xl font-mono">[{reviews.length}]</span>
         </h3>
 
-        {/* ФОРМА ОТЗЫВА */}
         <form onSubmit={handleSubmitReview} className="bg-white/5 p-8 rounded-[2.5rem] border border-white/10 mb-16 backdrop-blur-xl relative overflow-hidden">
           <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#d67a9d] blur-[100px] opacity-20 pointer-events-none"></div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 relative z-10">
             <div className="space-y-2">
               <label className="text-[8px] font-black uppercase text-white/30 ml-4 flex items-center gap-2">
-                <UserIcon /> Идентификация_Пользователя
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+                </svg> Идентификация_Пользователя
               </label>
               <input
                 placeholder="ВАШЕ ИМЯ / НИКНЕЙМ"
@@ -183,7 +182,9 @@ function ProductReviews({ productId }: { productId: string }) {
             </div>
             <div className="space-y-2">
               <label className="text-[8px] font-black uppercase text-white/30 ml-4 flex items-center gap-2">
-                <StarIcon /> Система_Рейтинга
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg> Система_Рейтинга
               </label>
               <div className="flex items-center justify-between bg-black/50 border border-white/10 p-4 rounded-2xl h-[62px] hover:border-white/20 transition-colors">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -201,7 +202,9 @@ function ProductReviews({ productId }: { productId: string }) {
           </div>
           <div className="space-y-2 mb-6 relative z-10">
             <label className="text-[8px] font-black uppercase text-white/30 ml-4 flex items-center gap-2">
-              <MessageIcon /> Текст_Трансмиссии
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+              </svg> Текст_Трансмиссии
             </label>
             <textarea
               placeholder="ОПИШИТЕ ВАШ ОПЫТ ИСПОЛЬЗОВАНИЯ ПРОДУКТА VSGIGA..."
@@ -219,7 +222,6 @@ function ProductReviews({ productId }: { productId: string }) {
           </button>
         </form>
 
-        {/* СПИСОК ОТЗЫВОВ */}
         <div className="space-y-6">
           {reviews.map((rev) => (
             <motion.div
@@ -253,29 +255,11 @@ function ProductReviews({ productId }: { productId: string }) {
   )
 }
 
-// Вспомогательные иконки для формы
-const UserIcon = () => (
-  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
-  </svg>
-);
-const StarIcon = () => (
-  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-  </svg>
-);
-const MessageIcon = () => (
-  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-  </svg>
-);
 // --- ОСНОВНАЯ СТРАНИЦА ---
 export default function ProductPage() {
   const { addToCart } = useCart();
   const { id } = useParams()
   const router = useRouter()
-  // Оставляем useCart если он нужен для header, но основная логика теперь через DB
-  const { showToast } = useToast()
 
   const [product, setProduct] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -283,14 +267,11 @@ export default function ProductPage() {
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [showSizeGuide, setShowSizeGuide] = useState(false)
 
-  // Новые состояния для визуала
   const [activeImage, setActiveImage] = useState<string>('')
   const [zoomStyle, setZoomStyle] = useState({ display: 'none', backgroundPosition: '0% 0%' })
   const [liveViewers, setLiveViewers] = useState(0)
 
-  // Эффект "Живого просмотра"
   useEffect(() => {
-    // Симуляция живых просмотров
     setLiveViewers(Math.floor(Math.random() * 15) + 3)
     const interval = setInterval(() => {
       setLiveViewers(prev => Math.max(2, prev + Math.floor(Math.random() * 5) - 2))
@@ -311,43 +292,37 @@ export default function ProductPage() {
         const initialImage = (data.images && data.images.length > 0) ? data.images[0] : data.image
         setActiveImage(initialImage)
       } else {
-        showToast('ТОВАР НЕ НАЙДЕН В РЕЕСТРЕ', 'error')
+        toast.error('ТОВАР НЕ НАЙДЕН В РЕЕСТРЕ') // ИЗМЕНЕНО: используем toast напрямую
         router.push('/')
       }
       setLoading(false)
     }
 
     if (id) fetchProduct()
-  }, [id, router, showToast])
+  }, [id, router])
 
-  // --- ОБНОВЛЕННАЯ ФУНКЦИЯ ДОБАВЛЕНИЯ В КОРЗИНУ (БАЗА ДАННЫХ) ---
   const handleAddToCart = async () => {
-    // Проверка наличия размеров (исключая аксессуары)
     const hasSizes = product.sizes && product.sizes.length > 0 && product.category !== 'accessories';
 
     if (hasSizes && !selectedSize) {
-      showToast('ОШИБКА: НЕ ВЫБРАН РАЗМЕР МОДУЛЯ', 'error')
+      toast.error('ОШИБКА: НЕ ВЫБРАН РАЗМЕР МОДУЛЯ') // ИЗМЕНЕНО: используем toast напрямую
       return
     }
 
     setAdding(true)
 
     try {
-      // 1. Проверяем авторизацию
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        showToast('ТРЕБУЕТСЯ АВТОРИЗАЦИЯ В СЕТИ', 'error')
+        toast.error('ТРЕБУЕТСЯ АВТОРИЗАЦИЯ В СЕТИ') // ИЗМЕНЕНО: используем toast напрямую
         sessionStorage.setItem('redirect_after_login', `/product/${id}`)
         router.push('/login')
         return
       }
 
-      // 2. Подготовка данных
       const sizeToSave = hasSizes ? selectedSize : 'OS'
 
-      // 3. Отправка в Supabase (Таблица cart)
-      // Мы используем upsert, чтобы обновить размер, если товар уже в корзине
       const { error: dbError } = await supabase
         .from('cart')
         .upsert({
@@ -362,21 +337,19 @@ export default function ProductPage() {
 
       if (dbError) throw dbError;
 
-      // 4. СИНХРОНИЗАЦИЯ С ИНТЕРФЕЙСОМ
-      // Вызываем addToCart, который мы достали из useCart() на уровне компонента
       if (typeof addToCart === 'function') {
         addToCart({
           ...product,
-          size: sizeToSave, // Твой реальный размер (например, "33")
+          size: sizeToSave,
           quantity: 1
         });
       }
 
-      showToast('ОБЪЕКТ ИНТЕГРИРОВАН В КОРЗИНУ', 'success')
+      toast.success('ОБЪЕКТ ИНТЕГРИРОВАН В КОРЗИНУ') // ИЗМЕНЕНО: используем toast напрямую
 
     } catch (err: any) {
       console.error('Ошибка при добавлении в корзину:', err)
-      showToast('КРИТИЧЕСКИЙ СБОЙ СИНХРОНИЗАЦИИ', 'error')
+      toast.error('КРИТИЧЕСКИЙ СБОЙ СИНХРОНИЗАЦИИ') // ИЗМЕНЕНО: используем toast напрямую
     } finally {
       setAdding(false)
     }
@@ -412,7 +385,6 @@ export default function ProductPage() {
     <main className="min-h-screen bg-black text-white pt-20 md:pt-32 pb-10 md:pb-20 px-4 md:px-6 overflow-x-hidden relative">
       <SizeGuideModal isOpen={showSizeGuide} onClose={() => setShowSizeGuide(false)} />
 
-      {/* ФОНОВЫЕ ЭЛЕМЕНТЫ */}
       <div className="fixed top-20 right-0 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-[#71b3c9] opacity-5 blur-[100px] md:blur-[150px] pointer-events-none" />
       <div className="fixed bottom-0 left-0 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-[#d67a9d] opacity-5 blur-[100px] md:blur-[150px] pointer-events-none" />
 
@@ -425,7 +397,6 @@ export default function ProductPage() {
           ВЕРНУТЬСЯ_В_КАТАЛОГ
         </button>
 
-        {/* СТРОКА СТАТУСА (LIVE TICKER) - Адаптирована под мобилки */}
         <div className="mb-6 md:mb-10 flex items-center gap-3 md:gap-4 bg-white/[0.03] border border-white/5 p-2 md:p-3 rounded-full w-fit px-4 md:px-6 backdrop-blur-md">
           <span className="relative flex h-1.5 w-1.5 md:h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -440,7 +411,6 @@ export default function ProductPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-24 items-start">
 
-          {/* ЛЕВАЯ КОЛОНКА: ИЗОБРАЖЕНИЯ */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
@@ -451,7 +421,6 @@ export default function ProductPage() {
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
             >
-              {/* Бейджи */}
               <div className="absolute top-4 left-4 md:top-6 left-6 z-20 flex flex-wrap gap-2">
                 <div className="bg-black/60 backdrop-blur-md px-2 md:px-3 py-1 rounded-full border border-white/10">
                   <span className="text-[7px] md:text-[8px] font-black text-[#d67a9d] uppercase tracking-widest">VSGIGA_OFFICIAL</span>
@@ -469,7 +438,6 @@ export default function ProductPage() {
                 className="w-full h-full object-cover pointer-events-none transition-transform duration-700 group-hover:scale-105"
               />
 
-              {/* Лупа (только для десктопа) */}
               <div
                 className="hidden md:block absolute inset-0 bg-no-repeat pointer-events-none z-10 mix-blend-hard-light"
                 style={{
@@ -482,7 +450,6 @@ export default function ProductPage() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
             </div>
 
-            {/* Галлерея - Скролл на мобилках */}
             {galleryImages.length > 1 && (
               <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x">
                 {galleryImages.map((img: string, idx: number) => (
@@ -501,7 +468,6 @@ export default function ProductPage() {
             )}
           </motion.div>
 
-          {/* ПРАВАЯ КОЛОНКА: ИНФОРМАЦИЯ */}
           <motion.div
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
@@ -530,7 +496,6 @@ export default function ProductPage() {
               </div>
             </div>
 
-            {/* БЛОК ХАРАКТЕРИСТИК (СПЕЦИФИКАЦИИ) */}
             <div className="mb-12 bg-[#0a0a0a] rounded-[2rem] border border-white/10 overflow-hidden relative group">
               <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               <div className="p-8 relative z-10">
@@ -557,7 +522,6 @@ export default function ProductPage() {
               </div>
             </div>
 
-            {/* БЛОК РАЗМЕРОВ */}
             {product.category !== 'accessories' && product.sizes && product.sizes.length > 0 && (
               <div className="mb-12">
                 <div className="flex justify-between items-center mb-6">
@@ -594,7 +558,6 @@ export default function ProductPage() {
               </div>
             )}
 
-            {/* БЛОК ДОСТАВКИ */}
             <div className="mb-10 grid grid-cols-1 gap-4">
               <div className="p-5 rounded-3xl bg-white/[0.02] border border-white/10 flex items-start gap-5 hover:bg-white/[0.04] transition-colors group">
                 <div className="p-3 bg-[#71b3c9]/10 rounded-2xl group-hover:bg-[#71b3c9]/20 transition-colors">
@@ -651,10 +614,8 @@ export default function ProductPage() {
           </motion.div>
         </div>
 
-        {/* НОВЫЙ БЛОК: РЕКОМЕНДАЦИИ */}
         <NeuralRecommendations currentId={product.id} />
 
-        {/* БЛОК ОТЗЫВОВ */}
         <ProductReviews productId={product.id} />
       </div>
     </main>

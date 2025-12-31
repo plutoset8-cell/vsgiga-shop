@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { useCart } from '@/context/CartContext'
 import { supabase } from '@/lib/supabase'
-import { useToast } from '@/context/ToastContext'
+import toast from 'react-hot-toast' // ИЗМЕНЕНО: импорт напрямую из react-hot-toast
 import Link from 'next/link'
 import { X, Cpu, Database, Terminal, Activity, Zap, ShieldCheck, Globe, Server, Radio, Layers, Snowflake, Gift, Star, Sparkles } from 'lucide-react'
 
@@ -30,7 +30,7 @@ function CyberBackground() {
 // --- [ОБНОВЛЕННЫЙ МОДУЛЬ: OPIUM STATUS INTERFACE С ФУНКЦИЕЙ СКРЫТИЯ] ---
 function OpiumStatusHUD() {
   const [sysTime, setSysTime] = useState('')
-  const [isVisible, setIsVisible] = useState(true) // Состояние видимости
+  const [isVisible, setIsVisible] = useState(true)
 
   useEffect(() => {
     const t = setInterval(() => setSysTime(new Date().toLocaleTimeString()), 1000)
@@ -48,7 +48,6 @@ function OpiumStatusHUD() {
             exit={{ x: -100, opacity: 0, transition: { duration: 0.3 } }}
             className="bg-black/95 border-l-2 border-[#ff007a] backdrop-blur-3xl p-6 w-80 shadow-[20px_0_60px_rgba(255,0,122,0.15)] relative overflow-hidden pointer-events-auto"
           >
-            {/* Кнопка закрытия */}
             <button
               onClick={() => setIsVisible(false)}
               className="absolute top-2 right-2 p-1 text-white/20 hover:text-[#ff007a] transition-colors z-20"
@@ -93,7 +92,6 @@ function OpiumStatusHUD() {
             </div>
           </motion.div>
         ) : (
-          /* Маленькая кнопка для возврата панели, если она скрыта */
           <motion.button
             key="hud-restore"
             initial={{ opacity: 0, scale: 0.5 }}
@@ -181,7 +179,6 @@ const CATEGORIES = [
 
 function CatalogContent() {
   const { addToCart } = useCart()
-  const { showToast } = useToast()
   const router = useRouter()
 
   const searchParams = useSearchParams()
@@ -204,11 +201,11 @@ function CatalogContent() {
       if (searchQuery) query = query.ilike('name', `%${searchQuery}%`)
       const { data, error } = await query
       if (data) setDbProducts(data)
-      if (error) showToast('DATABASE_OFFLINE', 'error')
+      if (error) toast.error('DATABASE_OFFLINE') // ИЗМЕНЕНО: используем toast напрямую
       setLoading(false)
     }
     fetchProducts()
-  }, [searchQuery, showToast])
+  }, [searchQuery])
 
   const handleCategoryChange = (catId: string) => {
     setActiveCategory(catId)
@@ -224,7 +221,7 @@ function CatalogContent() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        showToast('ТРЕБУЕТСЯ АВТОРИЗАЦИЯ', 'error')
+        toast.error('ТРЕБУЕТСЯ АВТОРИЗАЦИЯ') // ИЗМЕНЕНО: используем toast напрямую
         router.push('/login')
         return
       }
@@ -239,17 +236,17 @@ function CatalogContent() {
 
       if (error) {
         if (error.code === '23505') {
-          showToast('УЖЕ В КОРЗИНЕ', 'success')
+          toast.success('УЖЕ В КОРЗИНЕ') // ИЗМЕНЕНО: используем toast напрямую
         } else {
           throw error
         }
       } else {
-        showToast(`${product.name.toUpperCase()} // SECURED`, 'success')
+        toast.success(`${product.name.toUpperCase()} // SECURED`) // ИЗМЕНЕНО: используем toast напрямую
       }
       addToCart(product)
     } catch (err: any) {
       console.error('Add Error:', err.message)
-      showToast('SYNC_FAILED', 'error')
+      toast.error('SYNC_FAILED') // ИЗМЕНЕНО: используем toast напрямую
     } finally {
       setTimeout(() => setAddingId(null), 800)
     }
@@ -347,7 +344,6 @@ function CatalogContent() {
           </div>
         )}
 
-        {/* --- [НИЖНЯЯ ИНФРАСТРУКТУРА: VSGIGA CLUSTER] --- */}
         <div className="mt-40 pt-20 border-t border-white/5 grid grid-cols-2 md:grid-cols-4 gap-12 opacity-20 transition-opacity hover:opacity-100 duration-1000">
           <div className="space-y-4">
             <div className="flex items-center gap-3 text-[#ff007a]"><Database size={16} /><span className="text-[11px] font-black uppercase tracking-[0.3em]">Data_Nexus</span></div>

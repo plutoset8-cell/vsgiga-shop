@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, useMemo, useContext } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { useToast } from '@/context/ToastContext'
+import toast from 'react-hot-toast'
 import {
     Package, MapPin, ChevronDown, ChevronUp, User, ShoppingBag,
     Phone, X, ImageIcon, Plus, Ticket, Trash2, Zap, Target,
@@ -99,7 +99,6 @@ export default function AdminPage() {
     }>({ show: false, orderId: '', currentStatus: '' })
 
     const router = useRouter()
-    const { showToast } = useToast()
 
     const [activeTab, setActiveTab] = useState<'inventory' | 'logistics' | 'promocodes' | 'operations' | 'users' | 'news'>('inventory')
 
@@ -233,10 +232,10 @@ export default function AdminPage() {
                 images: [...prev.images, ...uploadedUrls],
                 image: prev.image || uploadedUrls[0]
             }))
-            showToast('МЕДИА_ЗАГРУЖЕНО', 'success')
+            toast.success('МЕДИА_ЗАГРУЖЕНО')
         } catch (err) {
             console.error('Upload error:', err)
-            showToast('ОШИБКА_ЗАГРУЗКИ', 'error')
+            toast.error('ОШИБКА_ЗАГРУЗКИ')
         } finally {
             setUploading(false)
         }
@@ -248,7 +247,7 @@ export default function AdminPage() {
 
         // Валидация
         if (!form.name.trim() || !form.price || Number(form.price) <= 0) {
-            showToast('ЗАПОЛНИТЕ_ОБЯЗАТЕЛЬНЫЕ_ПОЛЯ', 'error')
+            toast.error('ЗАПОЛНИТЕ_ОБЯЗАТЕЛЬНЫЕ_ПОЛЯ')
             return
         }
 
@@ -291,7 +290,7 @@ export default function AdminPage() {
         }
 
         if (!error) {
-            showToast(message, 'success')
+            toast.success(message)
 
             // Telegram уведомление
             await sendTelegramNotify(
@@ -307,7 +306,7 @@ export default function AdminPage() {
             await fetchProducts()
         } else {
             console.error('Database error:', error)
-            showToast('ОШИБКА_СОХРАНЕНИЯ', 'error')
+            toast.error('ОШИБКА_СОХРАНЕНИЯ')
         }
     }
 
@@ -321,10 +320,10 @@ export default function AdminPage() {
             .eq('id', id)
 
         if (!error) {
-            showToast('ТОВАР_УДАЛЕН', 'success')
+            toast.success('ТОВАР_УДАЛЕН')
             await fetchProducts()
         } else {
-            showToast('ОШИБКА_УДАЛЕНИЯ', 'error')
+            toast.error('ОШИБКА_УДАЛЕНИЯ')
         }
     }
 
@@ -410,7 +409,7 @@ export default function AdminPage() {
 
         if (error) {
             console.error('Ошибка загрузки заказов:', error)
-            showToast('ОШИБКА_ЗАГРУЗКИ_ЗАКАЗОВ', 'error')
+            toast.error('ОШИБКА_ЗАГРУЗКИ_ЗАКАЗОВ')
             return
         }
 
@@ -428,7 +427,7 @@ export default function AdminPage() {
             }))
             setOrders(transformedOrders)
         }
-    }, [showToast])
+    }, [])
 
     const fetchProducts = useCallback(async () => {
         const { data, error } = await supabase
@@ -438,12 +437,12 @@ export default function AdminPage() {
 
         if (error) {
             console.error('Ошибка загрузки товаров:', error)
-            showToast('ОШИБКА_ЗАГРУЗКИ_ТОВАРОВ', 'error')
+            toast.error('ОШИБКА_ЗАГРУЗКИ_ТОВАРОВ')
             return
         }
 
         if (data) setProducts(data)
-    }, [showToast])
+    }, [])
 
     const fetchPromocodes = useCallback(async () => {
         const { data } = await supabase
@@ -488,7 +487,8 @@ export default function AdminPage() {
             setOrders(prevOrders => prevOrders.map(o =>
                 o.id === orderId ? { ...o, status } : o
             ))
-            showToast('СТАТУС_ОБНОВЛЕН', 'success')
+            toast.success('СТАТУС_ОБНОВЛЕН')
+
 
             await sendTelegramNotify(
                 `📦 <b>vsgiga LOGISTICS</b>\n` +
@@ -497,9 +497,9 @@ export default function AdminPage() {
             )
         } else {
             console.error('ОШИБКА_БАЗЫ:', error.message)
-            showToast('ОШИБКА_СОХРАНЕНИЯ', 'error')
+            toast.error('ОШИБКА_СОХРАНЕНИЯ')
         }
-    }, [showToast, sendTelegramNotify])
+    }, [sendTelegramNotify])
 
     // Инициализация админа
     useEffect(() => {
@@ -542,7 +542,7 @@ export default function AdminPage() {
         if (!error) {
             const user = users.find(u => u.id === userId)
             setUsers(users.map(u => u.id === userId ? { ...u, progress: newProgress } : u))
-            showToast('ПРОГРЕСС_ОБНОВЛЕН', 'success')
+            toast.success('ПРОГРЕСС_ОБНОВЛЕН')
 
             await sendTelegramNotify(
                 `📈 <b>vsgiga shop: Прогресс</b>\n` +
@@ -550,7 +550,7 @@ export default function AdminPage() {
                 `Установлен прогресс: <b>${newProgress}%</b>`
             )
         } else {
-            showToast('ОШИБКА_ОБНОВЛЕНИЯ', 'error')
+            toast.error('ОШИБКА_ОБНОВЛЕНИЯ')
         }
         setUpdatingUser(null)
     }
@@ -576,9 +576,9 @@ export default function AdminPage() {
                 .getPublicUrl(filePath)
 
             setNewsForm(prev => ({ ...prev, image_url: data.publicUrl }))
-            showToast('КАРТИНКА_ЗАГРУЖЕНА', 'success')
+            toast.success('КАРТИНКА_ЗАГРУЖЕНА')
         } catch (err) {
-            showToast('ОШИБКА_ЗАГРУЗКИ', 'error')
+            toast.error('ОШИБКА_ЗАГРУЗКИ')
         } finally {
             setUploading(false)
         }
@@ -597,7 +597,7 @@ export default function AdminPage() {
         if (!error) {
             setPromoForm({ code: '', discount: '', usage_limit: '100', is_hidden: false })
             await fetchPromocodes()
-            showToast('ПРОМОКОД_СОЗДАН', 'success')
+            toast.success('ПРОМОКОД_СОЗДАН')
         }
     }
 
@@ -610,7 +610,7 @@ export default function AdminPage() {
     const handleCreateTask = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!taskForm.title || !taskForm.secret_word || !taskForm.reward_code) {
-            return showToast('ЗАПОЛНИТЕ_ВСЕ_ПОЛЯ', 'error')
+            return toast.error('ЗАПОЛНИТЕ_ВСЕ_ПОЛЯ')
         }
 
         const { error } = await supabase.from('tasks').insert([{
@@ -624,10 +624,10 @@ export default function AdminPage() {
         if (!error) {
             setTaskForm({ title: '', description: '', secret_word: '', reward_code: '' })
             await fetchTasks()
-            showToast('МИССИЯ_АКТИВИРОВАНА', 'success')
+            toast.success('МИССИЯ_АКТИВИРОВАНА')
             router.refresh()
         } else {
-            showToast(`ОШИБКА: ${error.message}`, 'error')
+            toast.error(`ОШИБКА: ${error.message}`)
         }
     }
 
@@ -647,7 +647,7 @@ export default function AdminPage() {
         if (!error) {
             setNewsForm({ title: '', content: '', image_url: '' })
             fetchNews()
-            showToast('НОВОСТЬ_ОПУБЛИКОВАНА', 'success')
+            toast.success('НОВОСТЬ_ОПУБЛИКОВАНА')
         }
     }
 
