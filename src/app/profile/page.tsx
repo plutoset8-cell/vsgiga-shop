@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
@@ -37,318 +37,329 @@ import {
   LifeBuoy,
   HelpCircle
 } from 'lucide-react'
+import * as THREE from 'three'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { InstancedMesh, Object3D, Color, MathUtils } from 'three'
 
-// ==================== УЛУЧШЕННЫЕ КОМПОНЕНТЫ 3D ФОНА ====================
+// ==================== ОПТИМИЗИРОВАННЫЕ 3D КОМПОНЕНТЫ ====================
 
-// 1. ПРЕМИУМ ЗВЕЗДНОЕ ПОЛЕ С ЭФФЕКТОМ ГЛУБИНЫ
-const PremiumStarfield3D = () => {
-  const [isClient, setIsClient] = useState(false)
-  
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
-  
-  if (!isClient) return null
-  
+// 1. INSTANCEDMESH ДЛЯ СНЕЖИНОК
+const SnowflakesInstanced = () => {
+  const meshRef = useRef<InstancedMesh>(null!)
+  const count = 120 // Оптимальное количество
+  const dummy = useMemo(() => new Object3D(), [])
+  const { clock } = useThree()
+
+  // Типы снежинок
+  const types = useMemo(() =>
+    Array.from({ length: count }, (_, i) => ({
+      size: 0.05 + Math.random() * 0.1,
+      speed: 0.2 + Math.random() * 0.3,
+      rotationSpeed: Math.random() * 0.02,
+      xOffset: (Math.random() - 0.5) * 2,
+      zDepth: -Math.random() * 100 - 10,
+      yStart: Math.random() * 20 - 10,
+      xRotation: Math.random() * Math.PI * 2,
+      yRotation: Math.random() * Math.PI * 2
+    })), [count]
+  )
+
+  useFrame((state) => {
+    const time = state.clock.elapsedTime
+
+    for (let i = 0; i < count; i++) {
+      const snowflake = types[i]
+      const progress = (time * snowflake.speed) % 1
+
+      // Позиция с эффектом параллакса
+      const y = snowflake.yStart - progress * 25
+      const x = Math.sin(time * 0.5 + i) * snowflake.xOffset
+
+      dummy.position.set(x, y, snowflake.zDepth)
+      dummy.rotation.x = snowflake.xRotation + time * snowflake.rotationSpeed
+      dummy.rotation.y = snowflake.yRotation + time * snowflake.rotationSpeed * 0.7
+      dummy.scale.setScalar(snowflake.size * (1 + Math.abs(snowflake.zDepth) / 200))
+      dummy.updateMatrix()
+
+      meshRef.current.setMatrixAt(i, dummy.matrix)
+
+      // Сброс позиции когда снежинка упала
+      if (y < -15) {
+        dummy.position.y = snowflake.yStart
+        dummy.updateMatrix()
+        meshRef.current.setMatrixAt(i, dummy.matrix)
+      }
+    }
+
+    meshRef.current.instanceMatrix.needsUpdate = true
+  })
+
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {[...Array(300)].map((_, i) => {
-        const depth = Math.random() * 300 + 100 // Увеличили глубину
-        const size = Math.random() * 6 + 2
-        const colorIntensity = Math.random() * 0.8 + 0.2
-        
-        // Разные цвета звезд
-        const colors = [
-          `rgba(214, 122, 157, ${colorIntensity})`,
-          `rgba(113, 179, 201, ${colorIntensity})`,
-          `rgba(255, 209, 102, ${colorIntensity})`,
-          `rgba(255, 255, 255, ${colorIntensity})`
-        ]
-        const color = colors[Math.floor(Math.random() * colors.length)]
-        
-        return (
-          <motion.div
-            key={i}
-            className="absolute rounded-full"
-            style={{
-              left: `${Math.random() * 100}vw`,
-              top: `${Math.random() * 100}vh`,
-              width: size,
-              height: size,
-              transform: `translateZ(${depth}px)`,
-              background: color,
-              boxShadow: `0 0 ${size * 6}px ${size * 3}px ${color}`,
-              filter: 'blur(1px)'
-            }}
-            animate={{
-              opacity: [0.1, 0.9, 0.1],
-              scale: [1, 1.8, 1],
-              x: [0, Math.random() * 40 - 20, 0],
-              y: [0, Math.random() * 40 - 20, 0]
-            }}
-            transition={{
-              duration: Math.random() * 8 + 4,
-              repeat: Infinity,
-              delay: Math.random() * 10,
-              ease: "easeInOut"
-            }}
-          />
-        )
-      })}
-    </div>
+    <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
+      <dodecahedronGeometry args={[0.1, 0]} />
+      <meshStandardMaterial
+        color="#ffffff"
+        emissive="#4da6cc"
+        emissiveIntensity={0.3}
+        transparent
+        opacity={0.8}
+        roughness={0.1}
+        metalness={0.8}
+      />
+    </instancedMesh>
   )
 }
 
-// 2. ПАДАЮЩИЕ ПОДАРКИ ПРЕМИУМ КАЧЕСТВА
-const PremiumFloatingGifts3D = () => {
-  const [isClient, setIsClient] = useState(false)
-  
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
-  
-  if (!isClient) return null
-  
-  const gifts = [
-    { emoji: '🎁', color: '#d67a9d' },
-    { emoji: '🎄', color: '#71b3c9' },
-    { emoji: '⭐', color: '#ffd166' },
-    { emoji: '🔔', color: '#ff6b9d' },
-    { emoji: '🎅', color: '#4da6cc' },
-    { emoji: '🦌', color: '#ffed99' },
-    { emoji: '❄️', color: '#ffffff' },
-    { emoji: '✨', color: '#ffd700' }
-  ]
-  
+// 2. INSTANCEDMESH ДЛЯ ПОДАРКОВ
+const GiftsInstanced = () => {
+  const meshRef = useRef<InstancedMesh>(null!)
+  const count = 25 // Оптимальное количество подарков
+  const dummy = useMemo(() => new Object3D(), [])
+
+  // Типы подарков
+  const types = useMemo(() =>
+    Array.from({ length: count }, (_, i) => ({
+      size: 0.3 + Math.random() * 0.5,
+      speed: 0.1 + Math.random() * 0.2,
+      rotationSpeed: Math.random() * 0.01 + 0.005,
+      xOffset: (Math.random() - 0.5) * 15,
+      zDepth: -Math.random() * 80 - 20,
+      yStart: Math.random() * 10 + 5,
+      color: new Color(
+        i % 3 === 0 ? 0xd67a9d : // розовый
+          i % 3 === 1 ? 0x71b3c9 : // голубой
+            0xffd166 // желтый
+      ),
+      wobbleSpeed: Math.random() * 0.5 + 0.5,
+      wobbleAmount: Math.random() * 0.5
+    })), [count]
+  )
+
+  useFrame((state) => {
+    const time = state.clock.elapsedTime
+
+    for (let i = 0; i < count; i++) {
+      const gift = types[i]
+      const progress = (time * gift.speed) % 1
+
+      // Позиция с параллаксом и wobble эффектом
+      const y = gift.yStart - progress * 30
+      const x = gift.xOffset + Math.sin(time * gift.wobbleSpeed + i) * gift.wobbleAmount
+      const z = gift.zDepth + Math.cos(time * gift.wobbleSpeed * 0.7 + i) * 0.5
+
+      dummy.position.set(x, y, z)
+      dummy.rotation.x = time * gift.rotationSpeed
+      dummy.rotation.y = time * gift.rotationSpeed * 1.3
+      dummy.rotation.z = time * gift.rotationSpeed * 0.7
+      dummy.scale.setScalar(gift.size * (1 + Math.abs(gift.zDepth) / 100))
+      dummy.updateMatrix()
+
+      meshRef.current.setMatrixAt(i, dummy.matrix)
+      meshRef.current.setColorAt(i, gift.color)
+
+      // Сброс позиции
+      if (y < -15) {
+        dummy.position.y = gift.yStart
+        dummy.updateMatrix()
+        meshRef.current.setMatrixAt(i, dummy.matrix)
+      }
+    }
+
+    meshRef.current.instanceMatrix.needsUpdate = true
+    if (meshRef.current.instanceColor) {
+      meshRef.current.instanceColor.needsUpdate = true
+    }
+  })
+
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {[...Array(25)].map((_, i) => {
-        const depth = Math.random() * 300 + 150 // Больше глубины
-        const size = Math.random() * 50 + 30 // Крупнее подарки
-        const gift = gifts[Math.floor(Math.random() * gifts.length)]
-        const rotationSpeed = Math.random() * 5 + 3
-        
-        return (
-          <motion.div
-            key={i}
-            className="absolute drop-shadow-2xl"
-            style={{
-              left: `${Math.random() * 100}vw`,
-              top: `${Math.random() * -50}vh`,
-              fontSize: `${size}px`,
-              transform: `translateZ(${depth}px)`,
-              filter: `drop-shadow(0 0 30px ${gift.color}80)`
-            }}
-            animate={{
-              y: ['0vh', '150vh'],
-              rotateX: [0, 360 * rotationSpeed],
-              rotateY: [0, 720 * rotationSpeed],
-              rotateZ: [0, 180 * rotationSpeed],
-              x: [0, Math.sin(i) * 100]
-            }}
-            transition={{
-              duration: Math.random() * 40 + 40, // Медленнее падение
-              repeat: Infinity,
-              delay: Math.random() * 30,
-              ease: "linear"
-            }}
-          >
-            <div className="relative">
-              <div 
-                className="absolute inset-0 blur-md"
-                style={{ color: gift.color }}
-              >
-                {gift.emoji}
-              </div>
-              <div style={{ position: 'relative' }}>
-                {gift.emoji}
-              </div>
-            </div>
-          </motion.div>
-        )
-      })}
-    </div>
+    <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial
+        color="#ffffff"
+        emissiveIntensity={0.5}
+        roughness={0.2}
+        metalness={0.8}
+        transparent
+        opacity={0.9}
+      />
+    </instancedMesh>
   )
 }
 
-// 3. ДЕТАЛИЗИРОВАННЫЕ СНЕЖИНКИ С ЭФФЕКТОМ ГЛУБИНЫ
-const PremiumSnowflakes3D = () => {
-  const [isClient, setIsClient] = useState(false)
-  
-  useEffect(() => {
-    setIsClient(true)
+// 3. INSTANCEDMESH ДЛЯ ЗВЕЗД
+const StarsInstanced = () => {
+  const meshRef = useRef<InstancedMesh>(null!)
+  const count = 200 // Оптимальное количество звезд
+  const dummy = useMemo(() => new Object3D(), [])
+
+  const types = useMemo(() =>
+    Array.from({ length: count }, (_, i) => ({
+      size: 0.02 + Math.random() * 0.03,
+      x: (Math.random() - 0.5) * 50,
+      y: (Math.random() - 0.5) * 50,
+      z: -Math.random() * 200 - 50,
+      color: new Color(
+        Math.random() > 0.7 ? 0xd67a9d :
+          Math.random() > 0.5 ? 0x71b3c9 :
+            Math.random() > 0.3 ? 0xffd166 :
+              0xffffff
+      ),
+      pulseSpeed: Math.random() * 0.5 + 0.2,
+      pulseOffset: Math.random() * Math.PI * 2
+    })), [count]
+  )
+
+  useFrame((state) => {
+    const time = state.clock.elapsedTime
+
+    for (let i = 0; i < count; i++) {
+      const star = types[i]
+
+      // Пульсация
+      const pulse = 0.7 + Math.sin(time * star.pulseSpeed + star.pulseOffset) * 0.3
+
+      dummy.position.set(star.x, star.y, star.z)
+      dummy.scale.setScalar(star.size * pulse)
+      dummy.updateMatrix()
+
+      meshRef.current.setMatrixAt(i, dummy.matrix)
+    }
+
+    meshRef.current.instanceMatrix.needsUpdate = true
+  })
+
+  return (
+    <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
+      <sphereGeometry args={[0.1, 8, 8]} />
+      <meshBasicMaterial
+        color="#ffffff"
+        transparent
+        opacity={0.8}
+      />
+    </instancedMesh>
+  )
+}
+
+// 4. КОСМИЧЕСКИЕ ЛУЧИ (оптимизированные)
+const SpaceBeamsOptimized = () => {
+  const linesRef = useRef<THREE.LineSegments>(null!)
+
+  useFrame((state) => {
+    if (linesRef.current) {
+      linesRef.current.rotation.y = state.clock.elapsedTime * 0.01
+    }
+  })
+
+  // Создаем геометрию для лучей
+  const geometry = useMemo(() => {
+    const geometry = new THREE.BufferGeometry()
+    const vertices = []
+    const colors = []
+
+    // Горизонтальные лучи
+    for (let i = 0; i < 20; i++) {
+      const y = (i - 10) * 1.5
+      vertices.push(-25, y, -50, 25, y, -50)
+
+      const color = new THREE.Color(0xd67a9d)
+      colors.push(color.r, color.g, color.b)
+      colors.push(color.r, color.g, color.b)
+    }
+
+    // Вертикальные лучи
+    for (let i = 0; i < 20; i++) {
+      const x = (i - 10) * 1.5
+      vertices.push(x, -15, -50, x, 15, -50)
+
+      const color = new THREE.Color(0x71b3c9)
+      colors.push(color.r, color.g, color.b)
+      colors.push(color.r, color.g, color.b)
+    }
+
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
+
+    return geometry
   }, [])
-  
-  if (!isClient) return null
-  
-  const snowflakeTypes = ['❄️', '❅', '❆', '✦', '✶', '✴︎', '✵']
+
+  const material = useMemo(() =>
+    new THREE.LineBasicMaterial({
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.1,
+      linewidth: 1
+    }), []
+  )
+
+  return <lineSegments ref={linesRef} geometry={geometry} material={material} />
+}
+
+// 5. ГЛАВНЫЙ КОМПОНЕНТ 3D ФОНА С ОПТИМИЗАЦИЯМИ
+const Optimized3DBackground = () => {
+  // Убрали весь useEffect с ограничением FPS
   
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {[...Array(150)].map((_, i) => {
-        const depth = Math.random() * 400 + 100 // Максимальная глубина
-        const size = Math.random() * 8 + 3
-        const opacity = Math.random() * 0.7 + 0.3
-        const speed = Math.random() * 20 + 20
-        
-        return (
-          <motion.div
-            key={i}
-            className="absolute text-white"
-            style={{
-              left: `${Math.random() * 100}vw`,
-              top: `${Math.random() * -20}vh`,
-              fontSize: `${size}px`,
-              transform: `translateZ(${depth}px)`,
-              opacity: opacity,
-              filter: 'blur(0.5px)'
-            }}
-            animate={{
-              y: ['0vh', '120vh'],
-              rotate: [0, 720],
-              x: [0, Math.sin(i * 0.1) * 100]
-            }}
-            transition={{
-              duration: speed,
-              repeat: Infinity,
-              delay: Math.random() * 10,
-              ease: "linear"
-            }}
-          >
-            {snowflakeTypes[Math.floor(Math.random() * snowflakeTypes.length)]}
-          </motion.div>
-        )
-      })}
+    <>
+      <color attach="background" args={[0x000000]} />
+      <fog attach="fog" args={[0x000000, 50, 200]} />
       
-      {/* Крупные снежинки на переднем плане */}
-      {[...Array(30)].map((_, i) => (
-        <motion.div
-          key={`large-${i}`}
-          className="absolute text-white"
-          style={{
-            left: `${Math.random() * 100}vw`,
-            top: `${Math.random() * -20}vh`,
-            fontSize: `${Math.random() * 20 + 15}px`,
-            transform: `translateZ(${Math.random() * 100 + 50}px)`,
-            opacity: 0.9,
-            filter: 'blur(1px) drop-shadow(0 0 10px rgba(255, 255, 255, 0.3))'
-          }}
-          animate={{
-            y: ['0vh', '120vh'],
-            rotate: [0, 1080],
-            x: [0, Math.cos(i * 0.2) * 150]
-          }}
-          transition={{
-            duration: Math.random() * 30 + 30,
-            repeat: Infinity,
-            delay: Math.random() * 20,
-            ease: "linear"
-          }}
-        >
-          {snowflakeTypes[Math.floor(Math.random() * snowflakeTypes.length)]}
-        </motion.div>
-      ))}
-    </div>
+      {/* Оптимизированные компоненты */}
+      <StarsInstanced />
+      <SnowflakesInstanced />
+      <GiftsInstanced />
+      <SpaceBeamsOptimized />
+      
+      {/* Освещение */}
+      <ambientLight intensity={0.3} />
+      <pointLight position={[10, 10, 10]} intensity={0.5} color={0xd67a9d} />
+      <pointLight position={[-10, -10, -10]} intensity={0.3} color={0x71b3c9} />
+    </>
   )
 }
 
-// 4. КОСМИЧЕСКИЕ ЛУЧИ И ЭФФЕКТЫ
-const SpaceBeams3D = () => {
-  const [isClient, setIsClient] = useState(false)
-  
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
-  
-  if (!isClient) return null
-  
+// 6. КОНТЕЙНЕР CANVAS С ОПТИМИЗАЦИЯМИ
+const ThreeDBackgroundContainer = () => {
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {/* Вертикальные лучи */}
-      {[...Array(15)].map((_, i) => (
-        <motion.div
-          key={`v-beam-${i}`}
-          className="absolute top-0 w-[1px]"
-          style={{
-            left: `${(i + 1) * 6.66}%`,
-            height: '100%',
-            background: 'linear-gradient(to bottom, transparent, rgba(214, 122, 157, 0.3), transparent)'
-          }}
-          animate={{
-            opacity: [0, 0.5, 0]
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            delay: i * 0.3,
-            ease: "easeInOut"
-          }}
-        />
-      ))}
-      
-      {/* Горизонтальные лучи */}
-      {[...Array(10)].map((_, i) => (
-        <motion.div
-          key={`h-beam-${i}`}
-          className="absolute left-0 h-[1px]"
-          style={{
-            top: `${(i + 1) * 10}%`,
-            width: '100%',
-            background: 'linear-gradient(to right, transparent, rgba(113, 179, 201, 0.3), transparent)'
-          }}
-          animate={{
-            opacity: [0, 0.3, 0]
-          }}
-          transition={{
-            duration: 5,
-            repeat: Infinity,
-            delay: i * 0.4,
-            ease: "easeInOut"
-          }}
-        />
-      ))}
-      
-      {/* Плавающие частицы */}
-      {[...Array(50)].map((_, i) => (
-        <motion.div
-          key={`particle-${i}`}
-          className="absolute rounded-full"
-          style={{
-            left: `${Math.random() * 100}vw`,
-            top: `${Math.random() * 100}vh`,
-            width: Math.random() * 3 + 1,
-            height: Math.random() * 3 + 1,
-            background: Math.random() > 0.5 ? '#d67a9d' : '#71b3c9',
-            transform: `translateZ(${Math.random() * 200 + 100}px)`
-          }}
-          animate={{
-            y: [0, Math.random() * 100 - 50],
-            x: [0, Math.random() * 100 - 50],
-            opacity: [0.1, 0.8, 0.1]
-          }}
-          transition={{
-            duration: Math.random() * 10 + 5,
-            repeat: Infinity,
-            delay: Math.random() * 5,
-            ease: "easeInOut"
-          }}
-        />
-      ))}
+    <div className="fixed inset-0 pointer-events-none z-0">
+      <Canvas
+        camera={{
+          position: [0, 0, 5],
+          fov: 75,
+          near: 0.1,
+          far: 1000
+        }}
+        gl={{
+          antialias: true,
+          alpha: false,
+          powerPreference: "high-performance",
+          stencil: false,
+          depth: true
+        }}
+        dpr={[1, 2]} // Адаптивный DPR
+        style={{
+          pointerEvents: 'none',
+          touchAction: 'none'
+        }}
+        performance={{ min: 0.5 }} // Уровень производительности
+      >
+        <Optimized3DBackground />
+      </Canvas>
     </div>
   )
 }
 
-// ==================== УЛУЧШЕННЫЙ МАГИЧЕСКИЙ ПОДАРОК ====================
+// ==================== ОПТИМИЗИРОВАННЫЙ МАГИЧЕСКИЙ ПОДАРОК ====================
 const MagicGift = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
   const [promoCode, setPromoCode] = useState('')
+  const confettiRef = useRef<HTMLDivElement>(null)
 
   const handleClick = () => {
     setShowConfetti(true)
     setPromoCode('HAPPY2026')
     setIsOpen(true)
-    
+
     toast.success(
       <div className="text-center">
         <p className="font-bold text-lg">🎉 ВАШ ПРОМОКОД АКТИВИРОВАН!</p>
@@ -363,57 +374,52 @@ const MagicGift = () => {
         }
       }
     )
-    
+
     setTimeout(() => setShowConfetti(false), 3000)
+  }
+
+  // Оптимизированный конфетти
+  const ConfettiParticle = ({ index }: { index: number }) => {
+    const style = {
+      '--x-start': `${50 + Math.sin(index) * 20}vw`,
+      '--y-start': '100vh',
+      '--x-end': `${Math.random() * 100}vw`,
+      '--y-end': '-100vh',
+      '--rotation': `${Math.random() * 720}deg`,
+      '--duration': `${Math.random() * 2 + 2}s`,
+      '--delay': `${Math.random() * 2}s`,
+      '--size': `${Math.random() * 20 + 10}px`,
+      '--color': ['#d67a9d', '#71b3c9', '#ffd166', '#ff6b9d', '#4da6cc'][Math.floor(Math.random() * 5)]
+    } as React.CSSProperties
+
+    const emojis = ['🎉', '✨', '⭐', '🎁', '🎊']
+
+    return (
+      <div
+        className="absolute text-2xl opacity-0 animate-confetti"
+        style={style}
+      >
+        {emojis[Math.floor(Math.random() * 5)]}
+      </div>
+    )
   }
 
   return (
     <>
-      {/* УЛУЧШЕННЫЙ КОНФЕТТИ ЭФФЕКТ */}
-      <AnimatePresence>
-        {showConfetti && (
-          <div className="fixed inset-0 pointer-events-none z-50">
-            {[...Array(200)].map((_, i) => {
-              const colors = ['#d67a9d', '#71b3c9', '#ffd166', '#ff6b9d', '#4da6cc']
-              const color = colors[Math.floor(Math.random() * colors.length)]
-              
-              return (
-                <motion.div
-                  key={i}
-                  className="absolute text-2xl"
-                  style={{
-                    color: color,
-                    filter: `drop-shadow(0 0 10px ${color})`
-                  }}
-                  initial={{
-                    x: '50vw',
-                    y: '100vh',
-                    rotate: 0,
-                    scale: 0
-                  }}
-                  animate={{
-                    x: Math.random() * 100 + 'vw',
-                    y: '-100vh',
-                    rotate: Math.random() * 1080,
-                    scale: [0, 1, 0.5]
-                  }}
-                  exit={{ opacity: 0 }}
-                  transition={{
-                    duration: Math.random() * 4 + 3,
-                    ease: "linear"
-                  }}
-                >
-                  {['🎉', '✨', '⭐', '🎁', '🎊'][Math.floor(Math.random() * 5)]}
-                </motion.div>
-              )
-            })}
-          </div>
-        )}
-      </AnimatePresence>
+      {/* Оптимизированный конфетти эффект с CSS анимациями */}
+      <div
+        ref={confettiRef}
+        className="fixed inset-0 pointer-events-none z-50"
+        style={{ display: showConfetti ? 'block' : 'none' }}
+      >
+        {Array.from({ length: 80 }).map((_, i) => (
+          <ConfettiParticle key={i} index={i} />
+        ))}
+      </div>
 
-      {/* КОМПОНЕНТ ПОДАРКА - ПЕРЕМЕЩЕН ВЫШЕ */}
+      {/* Компонент подарка */}
       <motion.div
-        className="fixed bottom-32 left-8 z-40 cursor-pointer" // Изменил bottom-8 на bottom-32
+        className="fixed bottom-32 left-8 z-40 cursor-pointer"
         animate={{
           scale: [1, 1.15, 1],
           rotate: [0, -8, 8, -8, 0],
@@ -426,65 +432,43 @@ const MagicGift = () => {
         }}
         onClick={handleClick}
       >
-        {/* АВРОРА ЭФФЕКТ */}
-        <motion.div
-          className="absolute inset-0 rounded-full"
-          animate={{
-            background: [
-              'linear-gradient(45deg, #d67a9d, #ff6b9d, transparent 60%)',
-              'linear-gradient(135deg, #71b3c9, #4da6cc, transparent 60%)',
-              'linear-gradient(225deg, #ffd166, #ffed99, transparent 60%)',
-              'linear-gradient(315deg, #d67a9d, #ff6b9d, transparent 60%)',
-            ]
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            ease: "linear"
-          }}
+        {/* Аврора эффект */}
+        <div
+          className="absolute inset-0 rounded-full blur-xl opacity-50"
           style={{
-            filter: 'blur(25px)',
-            opacity: 0.8
+            background: 'linear-gradient(45deg, #d67a9d, #ff6b9d, #71b3c9, #4da6cc)',
+            backgroundSize: '400% 400%',
+            animation: 'gradient 6s ease infinite'
           }}
         />
-        
+
         <div className="relative bg-gradient-to-br from-[#d67a9d] via-[#71b3c9] to-[#ffd166] p-1.5 rounded-2xl shadow-2xl">
           <div className="bg-black rounded-xl p-6">
             <div className="flex flex-col items-center">
               <div className="relative mb-4">
-                <motion.div
-                  animate={{
-                    rotateY: [0, 360],
-                    scale: [1, 1.2, 1]
-                  }}
-                  transition={{
-                    rotateY: { duration: 3, repeat: Infinity, ease: "linear" },
-                    scale: { duration: 2, repeat: Infinity }
-                  }}
-                  className="w-12 h-12"
-                >
+                <div className="animate-spin-slow w-12 h-12">
                   <Gift className="w-full h-full text-yellow-400" />
-                </motion.div>
+                </div>
                 <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 border-2 border-black flex items-center justify-center">
                   <span className="text-[10px] font-black">!</span>
                 </div>
               </div>
               <p className="text-sm font-black tracking-widest text-center leading-tight">
-                МАГИЧЕСКИЙ<br/>ПОДАРОК
+                МАГИЧЕСКИЙ<br />ПОДАРОК
               </p>
               <div className="mt-2 w-full h-1 bg-gradient-to-r from-transparent via-yellow-400 to-transparent rounded-full" />
             </div>
           </div>
         </div>
 
-        {/* ВСПЛЫВАЮЩЕЕ ОКНО С ПРОМОКОДОМ - УЛУЧШЕННАЯ ПОЗИЦИЯ */}
+        {/* Всплывающее окно с промокодом */}
         <AnimatePresence>
           {isOpen && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              className="absolute left-full ml-4 bottom-0 min-w-[320px] z-50" // Изменил top-1/2 на bottom-0
+              className="absolute left-full ml-4 bottom-0 min-w-[320px] z-50"
             >
               <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl border-2 border-yellow-500/50 p-6 shadow-2xl">
                 <div className="flex justify-between items-center mb-4">
@@ -502,7 +486,7 @@ const MagicGift = () => {
                     <X size={20} />
                   </button>
                 </div>
-                
+
                 <div className="bg-black/50 rounded-xl p-6 border border-yellow-500/30 text-center mb-4">
                   <p className="text-4xl font-black tracking-wider text-yellow-400 font-mono">
                     {promoCode}
@@ -520,7 +504,7 @@ const MagicGift = () => {
                     </button>
                   </div>
                 </div>
-                
+
                 <p className="text-xs text-white/40 text-center">
                   Промокод действителен до 31.01.2026
                 </p>
@@ -533,52 +517,19 @@ const MagicGift = () => {
   )
 }
 
-// ==================== АНИМИРОВАННЫЕ КОМПОНЕНТЫ ====================
+// ==================== ОПТИМИЗИРОВАННЫЕ КОМПОНЕНТЫ ====================
 
 // АНИМИРОВАННАЯ СФЕРА ДЛЯ БОНУСОВ
 const AnimatedSphere = ({ value }: { value: number }) => {
   return (
     <div className="relative flex items-center justify-center">
-      <motion.div
-        animate={{
-          scale: [1, 1.15, 1],
-          rotateY: [0, 180, 360],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "linear"
-        }}
-        className="relative w-56 h-56" // Увеличил размер
-      >
+      <div className="relative w-56 h-56">
         {/* Внешняя аура */}
-        <motion.div
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.3, 0.6, 0.3]
-          }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-          className="absolute -inset-10 rounded-full bg-gradient-to-r from-[#d67a9d]/20 via-[#71b3c9]/20 to-[#ffd166]/20 blur-3xl"
-        />
-        
+        <div className="absolute -inset-10 rounded-full bg-gradient-to-r from-[#d67a9d]/20 via-[#71b3c9]/20 to-[#ffd166]/20 blur-3xl animate-pulse-slow" />
+
         {/* Средняя сфера */}
-        <motion.div
-          animate={{
-            rotateX: [0, 360],
-            rotateY: [0, 360],
-          }}
-          transition={{
-            duration: 15,
-            repeat: Infinity,
-            ease: "linear"
-          }}
-          className="absolute inset-4 rounded-full bg-gradient-to-r from-[#d67a9d]/40 via-[#71b3c9]/40 to-transparent blur-lg"
-        />
-        
+        <div className="absolute inset-4 rounded-full bg-gradient-to-r from-[#d67a9d]/40 via-[#71b3c9]/40 to-transparent blur-lg animate-spin-slow" />
+
         {/* Внутренняя сфера */}
         <div className="absolute inset-10 rounded-full bg-gradient-to-br from-black to-gray-900 border-2 border-white/10 flex items-center justify-center shadow-2xl">
           <div className="text-center">
@@ -588,30 +539,21 @@ const AnimatedSphere = ({ value }: { value: number }) => {
             <p className="text-xs font-black tracking-widest text-white/60 mt-3">GIGA COINS</p>
           </div>
         </div>
-        
+
         {/* Сияющие частицы */}
-        {[...Array(16)].map((_, i) => (
-          <motion.div
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div
             key={i}
-            className="absolute w-3 h-3 rounded-full"
+            className="absolute w-3 h-3 rounded-full animate-pulse"
             style={{
-              left: `${50 + 45 * Math.cos((i * 22.5 * Math.PI) / 180)}%`,
-              top: `${50 + 45 * Math.sin((i * 22.5 * Math.PI) / 180)}%`,
-              background: `linear-gradient(45deg, ${i % 3 === 0 ? '#d67a9d' : i % 3 === 1 ? '#71b3c9' : '#ffd166'}, transparent)`
-            }}
-            animate={{
-              scale: [1, 2, 1],
-              opacity: [0.3, 1, 0.3],
-              rotate: [0, 180, 360]
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              delay: i * 0.1,
+              left: `${50 + 45 * Math.cos((i * 45 * Math.PI) / 180)}%`,
+              top: `${50 + 45 * Math.sin((i * 45 * Math.PI) / 180)}%`,
+              background: `linear-gradient(45deg, ${i % 3 === 0 ? '#d67a9d' : i % 3 === 1 ? '#71b3c9' : '#ffd166'}, transparent)`,
+              animationDelay: `${i * 0.1}s`
             }}
           />
         ))}
-      </motion.div>
+      </div>
     </div>
   )
 }
@@ -621,10 +563,10 @@ const ParallaxCard = ({ children, className = '' }: { children: React.ReactNode,
   const ref = useRef<HTMLDivElement>(null)
   const x = useMotionValue(0)
   const y = useMotionValue(0)
-  
+
   const rotateX = useSpring(useTransform(y, [-100, 100], [15, -15]), { stiffness: 300, damping: 30 })
   const rotateY = useSpring(useTransform(x, [-100, 100], [-15, 15]), { stiffness: 300, damping: 30 })
-  
+
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!ref.current) return
     const rect = ref.current.getBoundingClientRect()
@@ -633,12 +575,12 @@ const ParallaxCard = ({ children, className = '' }: { children: React.ReactNode,
     x.set(e.clientX - centerX)
     y.set(e.clientY - centerY)
   }
-  
+
   const handleMouseLeave = () => {
     x.set(0)
     y.set(0)
   }
-  
+
   return (
     <motion.div
       ref={ref}
@@ -658,16 +600,8 @@ const ParallaxCard = ({ children, className = '' }: { children: React.ReactNode,
 const BorderBeam = () => {
   return (
     <div className="absolute inset-0 rounded-3xl overflow-hidden">
-      <motion.div
-        className="absolute inset-0"
-        animate={{
-          backgroundPosition: ['0% 0%', '300% 300%'],
-        }}
-        transition={{
-          duration: 4,
-          repeat: Infinity,
-          ease: "linear"
-        }}
+      <div
+        className="absolute inset-0 animate-gradient-border"
         style={{
           background: `linear-gradient(90deg, 
             transparent 0%, 
@@ -684,17 +618,99 @@ const BorderBeam = () => {
   )
 }
 
+// ==================== CSS АНИМАЦИИ ДЛЯ ОПТИМИЗАЦИИ ====================
+const OptimizedAnimations = () => {
+  useEffect(() => {
+    // Добавляем CSS анимации в документ
+    const style = document.createElement('style')
+    style.textContent = `
+      @keyframes gradient {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+      }
+      
+      @keyframes gradient-border {
+        0% { background-position: 0% 0%; }
+        100% { background-position: 300% 300%; }
+      }
+      
+      @keyframes confetti {
+        0% {
+          opacity: 0;
+          transform: translate3d(var(--x-start), var(--y-start), 0) rotate(0deg) scale(0);
+        }
+        10% {
+          opacity: 1;
+          transform: translate3d(var(--x-start), calc(var(--y-start) - 20vh), 0) rotate(calc(var(--rotation) * 0.1)) scale(1);
+        }
+        90% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+          transform: translate3d(var(--x-end), var(--y-end), 0) rotate(var(--rotation)) scale(0.5);
+        }
+      }
+      
+      .animate-gradient {
+        animation: gradient 6s ease infinite;
+      }
+      
+      .animate-gradient-border {
+        animation: gradient-border 4s linear infinite;
+      }
+      
+      .animate-confetti {
+        animation: confetti var(--duration) ease-out var(--delay) forwards;
+      }
+      
+      .animate-spin-slow {
+        animation: spin 8s linear infinite;
+      }
+      
+      .animate-pulse-slow {
+        animation: pulse 3s ease-in-out infinite;
+      }
+      
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      
+      @keyframes pulse {
+        0%, 100% { opacity: 0.3; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(1.3); }
+      }
+      
+      /* Оптимизация для GPU */
+      .gpu-accelerated {
+        transform: translateZ(0);
+        backface-visibility: hidden;
+        perspective: 1000px;
+        will-change: transform, opacity;
+      }
+    `
+    document.head.appendChild(style)
+
+    return () => {
+      document.head.removeChild(style)
+    }
+  }, [])
+
+  return null
+}
+
 // ==================== МОДАЛЬНОЕ ОКНО ПОПОЛНЕНИЯ ====================
 const TopUpModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
   const [text, setText] = useState('')
   const fullText = "ФУНКЦИЯ В РАЗРАБОТКЕ"
-  
+
   useEffect(() => {
     if (!isOpen) {
       setText('')
       return
     }
-    
+
     let i = 0
     const timer = setInterval(() => {
       if (i <= fullText.length) {
@@ -704,7 +720,7 @@ const TopUpModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void 
         clearInterval(timer)
       }
     }, 100)
-    
+
     return () => clearInterval(timer)
   }, [isOpen])
 
@@ -728,59 +744,45 @@ const TopUpModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void 
             >
               <div className="bg-gradient-to-br from-gray-900 via-black to-gray-900 rounded-3xl border-2 border-white/10 p-8 shadow-2xl">
                 <div className="text-center mb-8">
-                  <motion.div
-                    animate={{ 
-                      rotateY: [0, 360],
-                      scale: [1, 1.2, 1]
-                    }}
-                    transition={{ 
-                      rotateY: { duration: 4, repeat: Infinity, ease: "linear" },
-                      scale: { duration: 3, repeat: Infinity }
-                    }}
-                    className="w-24 h-24 mx-auto mb-6"
-                  >
+                  <div className="animate-spin-slow w-24 h-24 mx-auto mb-6">
                     <CardIcon className="w-full h-full text-cyan-400" />
-                  </motion.div>
-                  
+                  </div>
+
                   <h2 className="text-2xl font-black tracking-widest mb-4 bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
                     ПОПОЛНЕНИЕ БАЛАНСА
                   </h2>
-                  
+
                   <div className="h-12 flex items-center justify-center">
                     <p className="text-xl font-mono tracking-widest">
                       {text}
-                      <motion.span
-                        animate={{ opacity: [1, 0] }}
-                        transition={{ duration: 0.5, repeat: Infinity }}
-                        className="inline-block w-[2px] h-6 bg-cyan-400 ml-1"
-                      />
+                      <span className="inline-block w-[2px] h-6 bg-cyan-400 ml-1 animate-pulse" />
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="space-y-4 mb-8">
                   <div className="flex gap-4">
-                    <input 
-                      type="text" 
-                      placeholder="НОМЕР КАРТЫ" 
+                    <input
+                      type="text"
+                      placeholder="НОМЕР КАРТЫ"
                       className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm tracking-widest"
                       disabled
                     />
-                    <input 
-                      type="text" 
-                      placeholder="CVC" 
+                    <input
+                      type="text"
+                      placeholder="CVC"
                       className="w-24 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm tracking-widest"
                       disabled
                     />
                   </div>
-                  <input 
-                    type="text" 
-                    placeholder="СУММА (₽)" 
+                  <input
+                    type="text"
+                    placeholder="СУММА (₽)"
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm tracking-widest"
                     disabled
                   />
                 </div>
-                
+
                 <div className="text-center">
                   <button
                     onClick={onClose}
@@ -828,8 +830,8 @@ const NewsFeed = ({ news }: { news: NewsItem[] }) => {
             <div className="flex gap-4">
               {item.image_url && (
                 <div className="flex-shrink-0 w-32 h-32 rounded-xl overflow-hidden">
-                  <img 
-                    src={item.image_url} 
+                  <img
+                    src={item.image_url}
                     alt={item.title}
                     className="w-full h-full object-cover"
                   />
@@ -876,7 +878,7 @@ export default function ProfilePage() {
   const [editingName, setEditingName] = useState(false)
   const [usernameInput, setUsernameInput] = useState('')
   const [topUpModalOpen, setTopUpModalOpen] = useState(false)
-  
+
   // Добавляем состояние для проверки клиента
   const [isClient, setIsClient] = useState(false)
 
@@ -899,7 +901,7 @@ export default function ProfilePage() {
         email: authUser.email || undefined,
         user_metadata: authUser.user_metadata as any || {}
       }
-      
+
       setUser(userData)
 
       const { data: profileData } = await supabase
@@ -1017,7 +1019,7 @@ export default function ProfilePage() {
       }))
 
       setEditingName(false)
-      
+
       toast.success('Имя успешно обновлено!', {
         style: {
           background: 'linear-gradient(90deg, #71b3c9, #d67a9d)',
@@ -1051,14 +1053,10 @@ export default function ProfilePage() {
   if (loading) return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center relative overflow-hidden">
       <div className="relative z-10 text-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          className="w-24 h-24 mx-auto mb-6 relative"
-        >
+        <div className="w-24 h-24 mx-auto mb-6 relative">
           <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#d67a9d] border-r-[#71b3c9] border-b-[#ffd166] border-l-[#ff6b9d] animate-spin" />
           <div className="absolute inset-4 rounded-full border-4 border-white/10" />
-        </motion.div>
+        </div>
         <p className="text-xl font-bold tracking-widest bg-gradient-to-r from-[#d67a9d] via-[#71b3c9] to-[#ffd166] bg-clip-text text-transparent">
           ЗАГРУЗКА ИНТЕРФЕЙСА...
         </p>
@@ -1071,7 +1069,7 @@ export default function ProfilePage() {
     { label: 'НОВЫЙ ЗАКАЗ', icon: ShoppingCart, color: '#d67a9d', link: '/catalog' },
     { label: 'ПОПОЛНИТЬ', icon: CreditCard, color: '#71b3c9', action: () => setTopUpModalOpen(true) },
     { label: 'ПОДАРКИ', icon: Gift, color: '#ffd166', link: '/layout/BonusSystem' },
-    { label: 'ПОМОЩЬ', icon: LifeBuoy, color: '#ff6b9d', link: '/contacts' }, // ИЗМЕНЕНО С Crown НА LifeBuoy
+    { label: 'ПОМОЩЬ', icon: LifeBuoy, color: '#ff6b9d', link: '/contacts' },
   ]
 
   return (
@@ -1079,22 +1077,17 @@ export default function ProfilePage() {
       {/* Модальное окно пополнения */}
       <TopUpModal isOpen={topUpModalOpen} onClose={() => setTopUpModalOpen(false)} />
 
-      {/* УЛУЧШЕННЫЕ ФОНОВЫЕ ЭФФЕКТЫ */}
-      <div className="fixed inset-0 bg-gradient-to-br from-black via-gray-900/30 to-black" />
-      <PremiumStarfield3D />
-      <PremiumFloatingGifts3D />
-      <PremiumSnowflakes3D />
-      <SpaceBeams3D />
-      
-      {/* Магический подарок - ПЕРЕМЕЩЕН ВЫШЕ */}
+      {/* Оптимизированные CSS анимации */}
+      <OptimizedAnimations />
+
+      {/* Оптимизированный 3D фон с InstancedMesh */}
+      <ThreeDBackgroundContainer />
+
+      {/* Магический подарок */}
       <MagicGift />
-      
+
       {/* Новогодний топ-баннер */}
-      <motion.div
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className="fixed top-0 left-0 right-0 z-50"
-      >
+      <div className="fixed top-0 left-0 right-0 z-50 animate-slideDown">
         <div className="bg-gradient-to-r from-[#d67a9d]/10 via-[#71b3c9]/10 to-[#ffd166]/10 backdrop-blur-2xl border-b border-white/10">
           <div className="max-w-7xl mx-auto px-6 py-3">
             <div className="flex items-center justify-center gap-4">
@@ -1106,62 +1099,50 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
       <div className="relative z-10 pt-28 pb-20 px-4 md:px-6 max-w-7xl mx-auto">
         {/* ГЛАВНАЯ КАРТОЧКА ПОЛЬЗОВАТЕЛЯ */}
-        <ParallaxCard className="relative mb-12">
+        <ParallaxCard className="relative mb-12 gpu-accelerated">
           <div className="relative bg-white/5 backdrop-blur-3xl rounded-3xl border border-white/10 p-10 overflow-hidden">
             {/* Анимированный градиентный бордер */}
             <BorderBeam />
-            
+
             {/* Внутренний контент */}
             <div className="relative z-10 flex flex-col lg:flex-row items-center gap-10">
               {/* Аватар с голограммой */}
               <div className="relative group">
                 <div className="relative">
-                  <motion.div
-                    animate={{ rotateY: [0, 360] }}
-                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                    className="absolute -inset-4 rounded-full bg-gradient-to-r from-[#d67a9d]/30 via-[#71b3c9]/30 to-[#ffd166]/30 blur-xl"
-                  />
-                  
+                  <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-[#d67a9d]/30 via-[#71b3c9]/30 to-[#ffd166]/30 blur-xl animate-spin-slow" />
+
                   <label htmlFor="avatar-input" className="cursor-pointer block">
                     <div className={`relative w-40 h-40 rounded-full border-2 ${uploading ? 'border-yellow-500' : 'border-transparent'} overflow-hidden bg-gradient-to-br from-black to-gray-900 p-1`}>
                       <div className="absolute inset-0 bg-gradient-to-r from-[#d67a9d] via-[#71b3c9] to-[#ffd166] rounded-full animate-spin" />
                       <div className="absolute inset-1 rounded-full bg-black" />
-                      <img 
+                      <img
                         src={user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${user?.email}&background=d67a9d&color=fff&bold=true&size=256`}
                         className="relative z-10 w-full h-full rounded-full object-cover"
                         alt="Аватар"
                       />
-                      
+
                       {uploading && (
                         <div className="absolute inset-0 bg-black/80 rounded-full flex items-center justify-center z-20">
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                            className="w-12 h-12 border-4 border-[#d67a9d]/30 border-t-[#d67a9d] rounded-full"
-                          />
+                          <div className="w-12 h-12 border-4 border-[#d67a9d]/30 border-t-[#d67a9d] rounded-full animate-spin" />
                         </div>
                       )}
                     </div>
-                    
+
                     <div className="absolute -bottom-2 -right-2">
-                      <motion.div
-                        animate={{ scale: [1, 1.3, 1] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="w-10 h-10 rounded-full bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] flex items-center justify-center border-4 border-black"
-                      >
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] flex items-center justify-center border-4 border-black animate-pulse">
                         <User size={16} />
-                      </motion.div>
+                      </div>
                     </div>
                   </label>
-                  <input 
-                    type="file" 
-                    id="avatar-input" 
-                    className="hidden" 
-                    accept="image/*" 
+                  <input
+                    type="file"
+                    id="avatar-input"
+                    className="hidden"
+                    accept="image/*"
                     onChange={handleAvatarUpload}
                     disabled={uploading}
                   />
@@ -1230,7 +1211,7 @@ export default function ProfilePage() {
                     </>
                   )}
                 </div>
-                
+
                 <div className="flex flex-wrap items-center gap-4 mb-6">
                   <div className="flex items-center gap-2 text-white/60">
                     <div className="w-2 h-2 rounded-full bg-[#d67a9d]" />
@@ -1258,20 +1239,14 @@ export default function ProfilePage() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="h-3 bg-white/10 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.min(orders.length * 10, 100)}%` }}
-                      transition={{ duration: 1.5 }}
-                      className="h-full bg-gradient-to-r from-[#d67a9d] via-[#71b3c9] to-[#ffd166] rounded-full relative"
+                    <div
+                      className="h-full bg-gradient-to-r from-[#d67a9d] via-[#71b3c9] to-[#ffd166] rounded-full relative animate-gradient"
+                      style={{ width: `${Math.min(orders.length * 10, 100)}%` }}
                     >
-                      <motion.div
-                        animate={{ x: ['0%', '100%'] }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                        className="absolute top-0 left-0 w-20 h-full bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12"
-                      />
-                    </motion.div>
+                      <div className="absolute top-0 left-0 w-20 h-full bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 animate-slide" />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1282,7 +1257,7 @@ export default function ProfilePage() {
         {/* БЫСТРЫЕ ДЕЙСТВИЯ С ОБНОВЛЕННОЙ КНОПКОЙ ПОМОЩИ */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
           {quickActions.map((action, i) => (
-            <ParallaxCard key={i} className="relative">
+            <ParallaxCard key={i} className="relative gpu-accelerated">
               {action.link ? (
                 <Link href={action.link}>
                   <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 text-center group hover:border-white/30 transition-all duration-300">
@@ -1290,11 +1265,8 @@ export default function ProfilePage() {
                       <action.icon size={28} style={{ color: action.color }} />
                     </div>
                     <p className="text-sm font-bold tracking-widest">{action.label}</p>
-                    <motion.div
-                      className="h-0.5 w-0 group-hover:w-full mx-auto mt-3"
-                      style={{ background: `linear-gradient(90deg, transparent, ${action.color}, transparent)` }}
-                      transition={{ duration: 0.3 }}
-                    />
+                    <div className="h-0.5 w-0 group-hover:w-full mx-auto mt-3 transition-all duration-300"
+                      style={{ background: `linear-gradient(90deg, transparent, ${action.color}, transparent)` }} />
                   </div>
                 </Link>
               ) : (
@@ -1306,11 +1278,8 @@ export default function ProfilePage() {
                     <action.icon size={28} style={{ color: action.color }} />
                   </div>
                   <p className="text-sm font-bold tracking-widest">{action.label}</p>
-                  <motion.div
-                    className="h-0.5 w-0 group-hover:w-full mx-auto mt-3"
-                    style={{ background: `linear-gradient(90deg, transparent, ${action.color}, transparent)` }}
-                    transition={{ duration: 0.3 }}
-                  />
+                  <div className="h-0.5 w-0 group-hover:w-full mx-auto mt-3 transition-all duration-300"
+                    style={{ background: `linear-gradient(90deg, transparent, ${action.color}, transparent)` }} />
                 </button>
               )}
             </ParallaxCard>
@@ -1322,11 +1291,11 @@ export default function ProfilePage() {
           {/* ЛЕВАЯ КОЛОНКА - ТОЛЬКО СФЕРА С БОНУСАМИ (БЛОКИ СТАТИСТИКИ УДАЛЕНЫ) */}
           <div className="lg:w-2/5 space-y-8">
             {/* БАЛАНС В СФЕРЕ */}
-            <ParallaxCard className="relative">
+            <ParallaxCard className="relative gpu-accelerated">
               <div className="bg-white/5 backdrop-blur-3xl rounded-3xl border border-white/10 p-8 overflow-hidden">
                 <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#d67a9d]/10 rounded-full blur-3xl" />
                 <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-[#71b3c9]/10 rounded-full blur-3xl" />
-                
+
                 <div className="text-center mb-6">
                   <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-4">
                     <Gem size={16} className="text-[#ffd166]" />
@@ -1334,11 +1303,11 @@ export default function ProfilePage() {
                   </div>
                   <p className="text-sm text-white/60 mb-2">ВАШ БАЛАНС</p>
                 </div>
-                
+
                 <div className="flex justify-center">
                   <AnimatedSphere value={userBonuses} />
                 </div>
-                
+
                 <div className="text-center mt-6">
                   <Link href="/catalog">
                     <button className="group relative px-8 py-4 rounded-xl bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] font-bold text-sm tracking-widest overflow-hidden">
@@ -1346,18 +1315,14 @@ export default function ProfilePage() {
                         ПОТРАТИТЬ БОНУСЫ
                         <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                       </span>
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-[#71b3c9] to-[#d67a9d]"
-                        animate={{ x: ['0%', '100%'] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      />
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#71b3c9] to-[#d67a9d] animate-gradient" />
                     </button>
                   </Link>
                 </div>
               </div>
             </ParallaxCard>
 
-            {/* БЛОКИ СТАТИСТИКИ (УРОВЕНЬ PLATINUM И СТРЕЙК 47 ДНЕЙ) УДАЛЕНЫ ПО ТРЕБОВАНИЮ */}
+            {/* БЛОКИ СТАТИСТИКИ УДАЛЕНЫ */}
           </div>
 
           {/* ПРАВАЯ КОЛОНКА - ЗАКАЗЫ И ИСТОРИЯ */}
@@ -1366,8 +1331,8 @@ export default function ProfilePage() {
             <div className="flex gap-2 mb-8 p-2 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`flex-1 py-4 rounded-xl font-bold text-sm tracking-widest transition-all ${activeTab === 'overview' 
-                  ? 'bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] text-white' 
+                className={`flex-1 py-4 rounded-xl font-bold text-sm tracking-widest transition-all ${activeTab === 'overview'
+                  ? 'bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] text-white'
                   : 'text-white/60 hover:text-white'}`}
               >
                 <span className="flex items-center justify-center gap-2">
@@ -1377,8 +1342,8 @@ export default function ProfilePage() {
               </button>
               <button
                 onClick={() => setActiveTab('orders')}
-                className={`flex-1 py-4 rounded-xl font-bold text-sm tracking-widest transition-all ${activeTab === 'orders' 
-                  ? 'bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] text-white' 
+                className={`flex-1 py-4 rounded-xl font-bold text-sm tracking-widest transition-all ${activeTab === 'orders'
+                  ? 'bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] text-white'
                   : 'text-white/60 hover:text-white'}`}
               >
                 <span className="flex items-center justify-center gap-2">
@@ -1463,18 +1428,12 @@ export default function ProfilePage() {
                               </span>
                             </div>
                             <div className="h-2 bg-white/10 rounded-full overflow-hidden relative">
-                              <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${(Math.random() * 30 + 70)}%` }}
-                                transition={{ duration: 1.5 }}
-                                className="h-full bg-gradient-to-r from-[#d67a9d] via-[#71b3c9] to-[#ffd166] rounded-full"
+                              <div
+                                className="h-full bg-gradient-to-r from-[#d67a9d] via-[#71b3c9] to-[#ffd166] rounded-full animate-gradient"
+                                style={{ width: `${(Math.random() * 30 + 70)}%` }}
                               >
-                                <motion.div
-                                  animate={{ x: ['0%', '100%'] }}
-                                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                  className="absolute top-0 left-0 w-20 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12"
-                                />
-                              </motion.div>
+                                <div className="absolute top-0 left-0 w-20 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12 animate-slide" />
+                              </div>
                             </div>
                           </div>
 
@@ -1488,8 +1447,8 @@ export default function ProfilePage() {
                                     <div className="relative bg-black rounded-xl p-3 min-w-[180px]">
                                       <div className="flex items-center gap-3">
                                         <div className="relative">
-                                          <img 
-                                            src={item.image} 
+                                          <img
+                                            src={item.image}
                                             alt={item.name}
                                             className="w-14 h-14 rounded-lg object-cover"
                                           />
