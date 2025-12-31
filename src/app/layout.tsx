@@ -6,6 +6,11 @@ import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
+export const metadata = {
+  title: 'Профиль пользователя',
+  description: 'Персональный кабинет с интерактивными эффектами',
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -13,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru">
-      <body className={inter.className}>
+      <body className={`${inter.className} antialiased`}>
         {children}
         <Toaster 
           position="top-right"

@@ -5,7 +5,7 @@ import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import toast from 'react-hot-toast' // Убрали импорт Toaster
+import toast from 'react-hot-toast'
 import {
   Coins,
   ArrowRight,
