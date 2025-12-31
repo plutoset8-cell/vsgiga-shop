@@ -293,10 +293,18 @@ const SpaceBeamsOptimized = () => {
 
   return <lineSegments ref={linesRef} geometry={geometry} material={material} />
 }
-
 // 5. ГЛАВНЫЙ КОМПОНЕНТ 3D ФОНА С ОПТИМИЗАЦИЯМИ
 const Optimized3DBackground = () => {
-  // Убрали весь useEffect с ограничением FPS
+  const { invalidate } = useThree()
+  
+  // Самостоятельно управляем рендерингом
+  useEffect(() => {
+    const interval = setInterval(() => {
+      invalidate() // Запрашиваем рендеринг каждые 100ms (10 FPS для фона)
+    }, 100)
+    
+    return () => clearInterval(interval)
+  }, [invalidate])
   
   return (
     <>
