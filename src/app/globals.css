@@ -10,11 +10,12 @@
 
 @layer base {
   * {
-    @apply border-border;
+    /* Исправлено: заменяем border-border на стандартный полупрозрачный цвет */
+    @apply border-white/10;
   }
   
   body {
-    @apply bg-background text-foreground;
+    /* Исправлено: убираем bg-background, так как он тоже может не существовать в конфиге */
     color: rgb(var(--foreground-rgb));
     background: linear-gradient(
         to bottom,
@@ -26,7 +27,7 @@
     overflow-x: hidden;
   }
   
-  /* Скрыть scrollbar для Chrome, Safari и Opera */
+  /* Скрыть scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
   }
