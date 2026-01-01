@@ -7,19 +7,24 @@ module.exports = {
   ],
   theme: {
     extend: {
+      colors: {
+        background: '#000000',
+        primary: { DEFAULT: '#d67a9d', foreground: '#ffffff' },
+        secondary: { DEFAULT: '#71b3c9', foreground: '#ffffff' },
+      },
       animation: {
         'spin-slow': 'spin 3s linear infinite',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'gradient': 'gradient 6s ease infinite', // ДОБАВИТЬ
-        'slide': 'slide 3s linear infinite', // ДОБАВИТЬ
-        'slideDown': 'slideDown 0.5s ease-out', // ДОБАВИТЬ
+        'gradient': 'gradient 6s ease infinite',
+        'slide': 'slide 3s linear infinite',
+        'slideDown': 'slideDown 0.5s ease-out',
       },
       backdropBlur: {
         '3xl': '64px',
       },
       zIndex: {
-        'negative': '-1', // ДОБАВИТЬ для фона
-        'background': '-10', // ДОБАВИТЬ
+        'negative': '-1',
+        'background': '-10',
       }
     },
   },

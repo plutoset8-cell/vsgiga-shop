@@ -9,10 +9,17 @@
   --background-end-rgb: 0, 0, 0;
 }
 
-/* ОСНОВНЫЕ ИСПРАВЛЕНИЯ ДЛЯ 3D СЦЕНЫ */
-html, body {
+/* ==================== БАЗОВЫЕ СТИЛИ ==================== */
+* {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
   width: 100%;
   height: 100%;
   overflow-x: hidden;
@@ -21,19 +28,90 @@ html, body {
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background: transparent !important; /* Убираем градиентный фон, так как теперь 3D */
   min-height: 100vh;
   position: relative;
-  z-index: 0;
-  isolation: isolate; /* Изолируем body от 3D сцены */
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-/* КРИТИЧЕСКИ ВАЖНЫЕ ИСПРАВЛЕНИЯ ДЛЯ FIXED ЭЛЕМЕНТОВ */
+/* ==================== СТИЛИ ДЛЯ 3D CANVAS ==================== */
+/* Контейнер для Canvas - должен быть под всем */
+canvas {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  pointer-events: none !important;
+  touch-action: none !important;
+  z-index: -50 !important; /* Ниже всего контента */
+  background: transparent !important;
+  mix-blend-mode: normal !important;
+  backdrop-filter: none !important;
+  opacity: 1 !important;
+  display: block !important;
+}
+
+/* Контейнер для 3D сцены */
+.fixed.inset-0 {
+  background: transparent !important;
+  z-index: -50 !important;
+}
+
+/* ==================== ПОЗИЦИОНИРОВАНИЕ И Z-INDEX ==================== */
+/* Основной контент должен быть над Canvas */
+main {
+  position: relative;
+  z-index: 1 !important;
+  isolation: isolate;
+}
+
+/* Fixed элементы с разными уровнями z-index */
+.fixed.z-10 {
+  z-index: 10 !important;
+}
+
+.fixed.z-20 {
+  z-index: 20 !important;
+}
+
+.fixed.z-30 {
+  z-index: 30 !important;
+}
+
+.fixed.z-40 {
+  z-index: 40 !important;
+}
+
+.fixed.z-50 {
+  z-index: 50 !important;
+}
+
+/* Отрицательные z-index для фонов */
+.z-\[-10\] {
+  z-index: -10 !important;
+}
+
+.z-\[-20\] {
+  z-index: -20 !important;
+}
+
+.z-\[-30\] {
+  z-index: -30 !important;
+}
+
+.z-\[-40\] {
+  z-index: -40 !important;
+}
+
+.z-\[-50\] {
+  z-index: -50 !important;
+}
+
+/* ==================== FIXED ЭЛЕМЕНТЫ ==================== */
 .fixed {
   position: fixed !important;
   transform: translate3d(0, 0, 0) !important;
@@ -43,16 +121,7 @@ body {
   contain: layout style paint !important;
 }
 
-/* Гарантия, что 3D сцена находится ПОД всем контентом */
-.z-\[-10\] {
-  z-index: -10 !important;
-}
-
-.z-\[-50\] {
-  z-index: -50 !important;
-}
-
-/* Отключение GPU ускорения для некоторых элементов, которые могут конфликтовать */
+/* ==================== GPU УСКОРЕНИЕ ==================== */
 .gpu-accelerated {
   transform: translateZ(0);
   backface-visibility: hidden;
@@ -61,69 +130,145 @@ body {
   contain: layout style paint;
 }
 
-/* Оптимизация для 3D Canvas - УПРОЩАЕМ СТИЛИ */
-.canvas-container {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  pointer-events: none !important;
-  touch-action: none !important;
-  z-index: -50 !important;
-  opacity: 0.5;
-  mix-blend-mode: normal;
+/* ==================== ТИПОГРАФИКА И ТЕКСТ ==================== */
+/* Улучшение читаемости текста на 3D фоне */
+.text-white {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
-/* Отключаем глобальные стили для canvas, чтобы не конфликтовать */
-/* canvas {
-  УДАЛЕНО: не переопределяем глобально
-} */
-
-/* Исправление для main контейнера */
-main {
-  position: relative;
-  z-index: 10; /* Увеличиваем z-index для контента */
-  isolation: isolate;
+.text-white\/60 {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 }
 
-/* Убедимся, что все fixed элементы правильно позиционируются */
-.fixed {
-  transform: translate3d(0,0,0);
+.text-white\/40 {
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
 }
 
-/* Улучшаем видимость контента над 3D фоном */
+/* ==================== КАРТОЧКИ И ЭЛЕМЕНТЫ UI ==================== */
+/* Полупрозрачные фоны для лучшей читаемости */
+.bg-white\/5 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.10) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.bg-white\/20 {
+  background-color: rgba(255, 255, 255, 0.20) !important;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+}
+
+/* Градиентные фоны - уменьшаем прозрачность для видимости 3D */
 .bg-gradient-to-br {
   background-blend-mode: overlay;
-  backdrop-filter: blur(1px);
 }
 
-/* Эффект свечения при наведении на кнопки */
+/* ==================== КНОПКИ И ИНТЕРАКТИВ ==================== */
 button {
   box-shadow: 0 0 0 rgba(214, 122, 157, 0);
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow 0.3s ease, transform 0.3s ease, background-color 0.3s ease;
 }
 
 button:hover {
   box-shadow: 0 0 20px rgba(214, 122, 157, 0.4);
+  transform: translateY(-1px);
 }
 
-/* ДОБАВИТЬ CSS АНИМАЦИИ ДЛЯ ИСПОЛЬЗУЕМЫХ КЛАССОВ */
+button:active {
+  transform: translateY(0);
+}
+
+/* Убираем outline, но оставляем для доступности */
+:focus {
+  outline: 2px solid rgba(214, 122, 157, 0.5);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(214, 122, 157, 0.5);
+  outline-offset: 2px;
+}
+
+/* ==================== ИЗОБРАЖЕНИЯ ==================== */
+img {
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+  font-style: italic;
+  background-repeat: no-repeat;
+  background-size: cover;
+  shape-margin: 0.75rem;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* ==================== CSS АНИМАЦИИ ==================== */
+/* Градиентная анимация */
 @keyframes gradient {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
+/* Скользящая анимация */
 @keyframes slide {
-  0% { transform: translateX(-100%) skewX(12deg); }
-  100% { transform: translateX(400%) skewX(12deg); }
+  0% {
+    transform: translateX(-100%) skewX(12deg);
+  }
+  100% {
+    transform: translateX(400%) skewX(12deg);
+  }
 }
 
+/* Анимация появления сверху */
 @keyframes slideDown {
-  0% { transform: translateY(-100%); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
+/* Анимация пульсации */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Анимация вращения */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Классы для анимаций */
 .animate-gradient {
   animation: gradient 6s ease infinite;
   background-size: 400% 400%;
@@ -137,63 +282,107 @@ button:hover {
   animation: slideDown 0.5s ease-out;
 }
 
-/* Улучшение производительности */
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* ==================== АДАПТИВНОСТЬ И ДОСТУПНОСТЬ ==================== */
 @media (prefers-reduced-motion: reduce) {
   .animate-gradient,
   .animate-slide,
-  .animate-slideDown {
+  .animate-slideDown,
+  .animate-pulse,
+  .animate-spin {
     animation: none;
+  }
+  
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
-/* Отключение outline для лучшего вида */
-:focus:not(:focus-visible) {
-  outline: none;
+/* Для мобильных устройств */
+@media (max-width: 768px) {
+  .bg-white\/5 {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  
+  .bg-white\/10 {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  
+  .text-white {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  }
 }
 
-/* Улучшение рендеринга текста */
-* {
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Для темной темы (по умолчанию) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+  }
 }
 
-/* Сброс стилей для изображений */
-img {
-  max-width: 100%;
-  height: auto;
-  vertical-align: middle;
-  font-style: italic;
-  background-repeat: no-repeat;
-  background-size: cover;
-  shape-margin: 0.75rem;
-}
-
-/* Изоляция для предотвращения конфликтов z-index */
+/* ==================== УТИЛИТЫ ==================== */
 .isolate {
   isolation: isolate;
 }
 
-/* Улучшаем контрастность текста на 3D фоне */
-.text-white, .text-white\/60, .text-white\/40 {
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+.contain-layout {
+  contain: layout;
 }
 
-/* Уменьшаем прозрачность фона для лучшей читаемости */
-.bg-white\/5 {
-  background-color: rgba(255, 255, 255, 0.08) !important;
-  backdrop-filter: blur(12px);
+.contain-paint {
+  contain: paint;
 }
 
-.bg-white\/10 {
-  background-color: rgba(255, 255, 255, 0.12) !important;
-}
-/* Добавьте в конец globals.css */
-.fixed.inset-0 {
-  background: transparent !important;
+.contain-strict {
+  contain: strict;
 }
 
-canvas {
-  mix-blend-mode: normal !important;
-  backdrop-filter: none !important;
+/* Улучшение скролла */
+.overflow-auto,
+.overflow-y-auto,
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
+
+/* Скрытие скроллбара для WebKit браузеров */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ==================== КОМПОНЕНТЫ TAILWIND ==================== */
+@layer components {
+  .card-glass {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl;
+  }
+  
+  .btn-primary {
+    @apply bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] text-white font-bold py-3 px-6 rounded-xl hover:opacity-90 transition-opacity;
+  }
+  
+  .btn-secondary {
+    @apply bg-white/10 backdrop-blur-sm text-white font-bold py-3 px-6 rounded-xl border border-white/20 hover:bg-white/20 transition-colors;
+  }
+  
+  .input-glass {
+    @apply bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:border-[#d67a9d] focus:outline-none transition-colors;
+  }
+}
+
+/* ==================== КОНЕЦ ФАЙЛА ==================== */

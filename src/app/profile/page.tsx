@@ -887,7 +887,7 @@ export default function ProfilePage() {
       </motion.div>
 
       {/* ОСНОВНОЙ КОНТЕНТ */}
-      <main className="relative min-h-screen bg-gradient-to-br from-gray-900/95 via-black/95 to-gray-900/95 text-white z-10">
+      <main className="relative min-h-screen text-white">
         <div className="relative z-10 pt-24 sm:pt-28 pb-20 px-4 sm:px-6 max-w-7xl mx-auto">
           {/* 3. Весь контент страницы */}
           {/* ГЛАВНАЯ КАРТОЧКА ПОЛЬЗОВАТЕЛЯ */}

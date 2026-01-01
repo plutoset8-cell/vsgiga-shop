@@ -1,24 +1,22 @@
-// ==================== ОБНОВЛЕННЫЙ КОМПОНЕНТ 3D СЦЕНЫ ====================
-// Вставьте этот код ВМЕСТО текущего Profile3DScene.tsx
-
+// src/components/canvas/Profile3DScene.tsx
 'use client'
 
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { Canvas, useFrame, useLoader } from '@react-three/fiber'
 import { Suspense, useRef, useMemo, useState, useEffect } from 'react'
 import * as THREE from 'three'
+import { TextureLoader } from 'three'; // ✅ ПРАВИЛЬНО
 
 // 1. УЛУЧШЕННАЯ СИСТЕМА ЧАСТИЦ ДЛЯ ЗВЕЗДНОГО НЕБА
 const StarField = () => {
   const meshRef = useRef<THREE.Points>(null!)
-  const count = 5000 // Больше звезд
+  const count = 3000 // Много звезд для реалистичности
   
   const positions = useMemo(() => {
     const positions = new Float32Array(count * 3)
     const colors = new Float32Array(count * 3)
     
     for (let i = 0; i < count * 3; i += 3) {
-      // Случайная позиция в сфере
-      const radius = 50 + Math.random() * 200
+      const radius = 100 + Math.random() * 200
       const theta = Math.random() * Math.PI * 2
       const phi = Math.acos(2 * Math.random() - 1)
       
@@ -26,11 +24,8 @@ const StarField = () => {
       positions[i + 1] = radius * Math.sin(phi) * Math.sin(theta)
       positions[i + 2] = radius * Math.cos(phi)
       
-      // Разные цвета звезд
       const color = new THREE.Color(
-        Math.random() > 0.8 ? 0xd67a9d : 
-        Math.random() > 0.6 ? 0x71b3c9 : 
-        Math.random() > 0.4 ? 0xffd166 : 0xffffff
+        0xffffff
       )
       colors[i] = color.r
       colors[i + 1] = color.g
@@ -42,11 +37,7 @@ const StarField = () => {
 
   useFrame((state) => {
     if (meshRef.current) {
-      // Медленное вращение звездного поля
-      meshRef.current.rotation.y = state.clock.elapsedTime * 0.01
-      // Легкое мерцание
-      const scale = 0.9 + Math.sin(state.clock.elapsedTime * 2) * 0.1
-      meshRef.current.scale.setScalar(scale)
+      meshRef.current.rotation.y = state.clock.elapsedTime * 0.005
     }
   })
 
@@ -81,26 +72,23 @@ const StarField = () => {
 // 2. СИСТЕМА ЧАСТИЦ ДЛЯ ПАДАЮЩИХ СНЕЖИНОК
 const Snowfall = () => {
   const meshRef = useRef<THREE.Points>(null!)
-  const count = 2000
+  const count = 1500
   
   const particles = useMemo(() => {
     const positions = new Float32Array(count * 3)
     const velocities = new Float32Array(count * 3)
-    const sizes = new Float32Array(count)
     
     for (let i = 0; i < count * 3; i += 3) {
       positions[i] = (Math.random() - 0.5) * 100
       positions[i + 1] = Math.random() * 50
       positions[i + 2] = (Math.random() - 0.5) * 100
       
-      velocities[i] = (Math.random() - 0.5) * 0.05 // X скорость
-      velocities[i + 1] = -Math.random() * 0.05 - 0.01 // Y скорость (вниз)
-      velocities[i + 2] = (Math.random() - 0.5) * 0.05 // Z скорость
-      
-      sizes[i / 3] = Math.random() * 0.2 + 0.05 // Размер снежинки
+      velocities[i] = (Math.random() - 0.5) * 0.02
+      velocities[i + 1] = -Math.random() * 0.02 - 0.005
+      velocities[i + 2] = (Math.random() - 0.5) * 0.02
     }
     
-    return { positions, velocities, sizes }
+    return { positions, velocities }
   }, [count])
 
   useFrame((state) => {
@@ -110,12 +98,10 @@ const Snowfall = () => {
     const velocities = particles.velocities
     
     for (let i = 0; i < count * 3; i += 3) {
-      // Обновление позиции
-      positions[i] += velocities[i] + Math.sin(state.clock.elapsedTime + i) * 0.01
+      positions[i] += velocities[i] + Math.sin(state.clock.elapsedTime + i) * 0.005
       positions[i + 1] += velocities[i + 1]
-      positions[i + 2] += velocities[i + 2] + Math.cos(state.clock.elapsedTime + i) * 0.01
+      positions[i + 2] += velocities[i + 2] + Math.cos(state.clock.elapsedTime + i) * 0.005
       
-      // Сброс позиции, если снежинка упала слишком низко
       if (positions[i + 1] < -25) {
         positions[i] = (Math.random() - 0.5) * 100
         positions[i + 1] = 50
@@ -124,9 +110,6 @@ const Snowfall = () => {
     }
     
     meshRef.current.geometry.attributes.position.needsUpdate = true
-    
-    // Легкое вращение всей системы снега
-    meshRef.current.rotation.y += 0.0001
   })
 
   return (
@@ -138,20 +121,14 @@ const Snowfall = () => {
           array={particles.positions}
           itemSize={3}
         />
-        <bufferAttribute
-          attach="attributes-size"
-          count={count}
-          array={particles.sizes}
-          itemSize={1}
-        />
       </bufferGeometry>
       <pointsMaterial
-        size={0.1}
+        size={0.15}
         sizeAttenuation
         transparent
         opacity={0.9}
         color="#ffffff"
-        blending={THREE.AdditiveBlending}
+        blending={THREE.NormalBlending}
         depthWrite={false}
       />
     </points>
@@ -166,172 +143,283 @@ const GiftBox = ({ position, scale = 1, color = 0xd67a9d }: any) => {
     if (meshRef.current) {
       meshRef.current.rotation.y = state.clock.elapsedTime * 0.5
       meshRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.3) * 0.1
-      // Плавающая анимация
-      meshRef.current.position.y = position[1] + Math.sin(state.clock.elapsedTime * 0.7 + position[0]) * 0.3
+      meshRef.current.position.y = position[1] + Math.sin(state.clock.elapsedTime * 0.7 + position[0]) * 0.2
     }
   })
 
   return (
     <group ref={meshRef} position={position} scale={scale}>
-      {/* Основная коробка */}
-      <mesh castShadow receiveShadow>
+      <mesh castShadow>
         <boxGeometry args={[1, 1, 1]} />
         <meshStandardMaterial
           color={color}
-          metalness={0.3}
-          roughness={0.4}
-          emissive={color}
-          emissiveIntensity={0.1}
+          metalness={0.2}
+          roughness={0.6}
         />
       </mesh>
       
-      {/* Лента */}
       <mesh position={[0, 0, 0.51]}>
-        <boxGeometry args={[1.2, 0.2, 0.1]} />
+        <boxGeometry args={[1.1, 0.15, 0.05]} />
         <meshStandardMaterial
           color={0xffd166}
-          metalness={0.5}
-          roughness={0.2}
-          emissive={0xffd166}
-          emissiveIntensity={0.3}
+          metalness={0.3}
+          roughness={0.4}
         />
       </mesh>
       
-      {/* Бант */}
-      <mesh position={[0, 0.3, 0.6]}>
-        <sphereGeometry args={[0.15, 8, 8]} />
+      <mesh position={[0, 0.25, 0.55]}>
+        <sphereGeometry args={[0.12, 8, 8]} />
         <meshStandardMaterial
           color={0xff6b9d}
-          metalness={0.5}
-          roughness={0.2}
-          emissive={0xff6b9d}
-          emissiveIntensity={0.4}
+          metalness={0.4}
+          roughness={0.3}
         />
       </mesh>
     </group>
   )
 }
 
-// 4. СТИЛИЗОВАННАЯ МОДЕЛЬ ДЕДА МОРОЗА
+// 4. НАСТОЯЩИЙ ДЕД МОРОЗ (детализированная модель)
 const SantaClaus = () => {
   const groupRef = useRef<THREE.Group>(null!)
   
   useFrame((state) => {
     if (groupRef.current) {
-      // Плавное покачивание
-      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.2) * 0.1
-      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.1
-      
-      // Медленное движение вперед-назад
-      groupRef.current.position.z = Math.sin(state.clock.elapsedTime * 0.1) * 2
+      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.1) * 0.05
+      groupRef.current.position.y = -8 + Math.sin(state.clock.elapsedTime * 0.3) * 0.2
     }
   })
 
   return (
-    <group ref={groupRef} position={[0, -5, -15]}>
-      {/* Тело */}
-      <mesh position={[0, 1.5, 0]} castShadow>
-        <coneGeometry args={[1, 3, 8]} />
+    <group ref={groupRef} position={[0, -8, -40]} scale={1.5}>
+      {/* Тело (шуба) */}
+      <mesh position={[0, 2, 0]} castShadow>
+        <coneGeometry args={[2, 5, 16]} />
         <meshStandardMaterial
           color={0xff0000}
-          metalness={0.2}
-          roughness={0.5}
-          emissive={0xff0000}
-          emissiveIntensity={0.1}
-        />
-      </mesh>
-      
-      {/* Голова */}
-      <mesh position={[0, 3.5, 0]} castShadow>
-        <sphereGeometry args={[0.8, 16, 16]} />
-        <meshStandardMaterial
-          color={0xffccaa}
           metalness={0.1}
           roughness={0.8}
         />
       </mesh>
       
-      {/* Шапка */}
-      <mesh position={[0, 4.2, 0]}>
-        <coneGeometry args={[0.9, 1.5, 8]} />
+      {/* Голова */}
+      <mesh position={[0, 5.5, 0]} castShadow>
+        <sphereGeometry args={[1.2, 32, 32]} />
         <meshStandardMaterial
-          color={0xff0000}
-          metalness={0.2}
-          roughness={0.5}
-          emissive={0xff0000}
-          emissiveIntensity={0.1}
-        />
-      </mesh>
-      
-      {/* Помпон на шапке */}
-      <mesh position={[0, 5, 0]}>
-        <sphereGeometry args={[0.3, 8, 8]} />
-        <meshStandardMaterial
-          color={0xffffff}
-          emissive={0xffffff}
-          emissiveIntensity={0.3}
-        />
-      </mesh>
-      
-      {/* Борода */}
-      <mesh position={[0, 2.8, 0.8]}>
-        <coneGeometry args={[0.9, 1.2, 8]} />
-        <meshStandardMaterial
-          color={0xffffff}
-          metalness={0.3}
-          roughness={0.7}
-          emissive={0xffffff}
-          emissiveIntensity={0.1}
-        />
-      </mesh>
-      
-      {/* Мешок с подарками */}
-      <mesh position={[1.5, 0.5, 0]} rotation={[0, 0, -0.3]}>
-        <sphereGeometry args={[0.8, 8, 8]} />
-        <meshStandardMaterial
-          color={0x8B4513}
+          color={0xffccaa}
           metalness={0.1}
           roughness={0.9}
         />
       </mesh>
       
-      {/* Освещение для Деда Мороза */}
+      {/* Шапка */}
+      <mesh position={[0, 6.8, 0]}>
+        <coneGeometry args={[1.3, 2, 16]} />
+        <meshStandardMaterial
+          color={0xff0000}
+          metalness={0.1}
+          roughness={0.8}
+        />
+      </mesh>
+      
+      {/* Помпон */}
+      <mesh position={[0, 7.8, 0]}>
+        <sphereGeometry args={[0.4, 16, 16]} />
+        <meshStandardMaterial
+          color={0xffffff}
+          metalness={0.1}
+          roughness={0.7}
+        />
+      </mesh>
+      
+      {/* Борода */}
+      <mesh position={[0, 4.8, 0.8]}>
+        <coneGeometry args={[1.4, 2.2, 16]} />
+        <meshStandardMaterial
+          color={0xffffff}
+          metalness={0.1}
+          roughness={0.9}
+        />
+      </mesh>
+      
+      {/* Усы */}
+      <mesh position={[0, 5.2, 1]}>
+        <cylinderGeometry args={[1.2, 1.2, 0.3, 16]} />
+        <meshStandardMaterial
+          color={0xffffff}
+          metalness={0.1}
+          roughness={0.9}
+        />
+      </mesh>
+      
+      {/* Глаза */}
+      <mesh position={[-0.4, 5.8, 1.1]}>
+        <sphereGeometry args={[0.15, 16, 16]} />
+        <meshStandardMaterial
+          color={0x000000}
+          metalness={0.5}
+          roughness={0.1}
+        />
+      </mesh>
+      <mesh position={[0.4, 5.8, 1.1]}>
+        <sphereGeometry args={[0.15, 16, 16]} />
+        <meshStandardMaterial
+          color={0x000000}
+          metalness={0.5}
+          roughness={0.1}
+        />
+      </mesh>
+      
+      {/* Нос */}
+      <mesh position={[0, 5.4, 1.4]}>
+        <sphereGeometry args={[0.25, 16, 16]} />
+        <meshStandardMaterial
+          color={0xff6600}
+          metalness={0.2}
+          roughness={0.7}
+        />
+      </mesh>
+      
+      {/* Ремень */}
+      <mesh position={[0, 0, 0.2]}>
+        <cylinderGeometry args={[1.1, 1.1, 0.3, 16]} />
+        <meshStandardMaterial
+          color={0x000000}
+          metalness={0.3}
+          roughness={0.7}
+        />
+      </mesh>
+      
+      {/* Пряжка */}
+      <mesh position={[0, 0, 0.35]}>
+        <boxGeometry args={[0.6, 0.4, 0.1]} />
+        <meshStandardMaterial
+          color={0xffd700}
+          metalness={0.8}
+          roughness={0.2}
+          emissive={0xffd700}
+          emissiveIntensity={0.1}
+        />
+      </mesh>
+      
+      {/* Руки */}
+      <mesh position={[1.8, 2, 0]} rotation={[0, 0, 0.3]}>
+        <cylinderGeometry args={[0.3, 0.2, 2.5, 16]} />
+        <meshStandardMaterial
+          color={0xff0000}
+          metalness={0.1}
+          roughness={0.8}
+        />
+      </mesh>
+      <mesh position={[-1.8, 2, 0]} rotation={[0, 0, -0.3]}>
+        <cylinderGeometry args={[0.3, 0.2, 2.5, 16]} />
+        <meshStandardMaterial
+          color={0xff0000}
+          metalness={0.1}
+          roughness={0.8}
+        />
+      </mesh>
+      
+      {/* Рукавицы */}
+      <mesh position={[1.8, 0.8, 0]} rotation={[0, 0, 0.3]}>
+        <sphereGeometry args={[0.4, 16, 16]} />
+        <meshStandardMaterial
+          color={0xff0000}
+          metalness={0.1}
+          roughness={0.8}
+        />
+      </mesh>
+      <mesh position={[-1.8, 0.8, 0]} rotation={[0, 0, -0.3]}>
+        <sphereGeometry args={[0.4, 16, 16]} />
+        <meshStandardMaterial
+          color={0xff0000}
+          metalness={0.1}
+          roughness={0.8}
+        />
+      </mesh>
+      
+      {/* Ноги */}
+      <mesh position={[0.6, -2.5, 0]}>
+        <cylinderGeometry args={[0.4, 0.3, 2, 16]} />
+        <meshStandardMaterial
+          color={0xff0000}
+          metalness={0.1}
+          roughness={0.8}
+        />
+      </mesh>
+      <mesh position={[-0.6, -2.5, 0]}>
+        <cylinderGeometry args={[0.4, 0.3, 2, 16]} />
+        <meshStandardMaterial
+          color={0xff0000}
+          metalness={0.1}
+          roughness={0.8}
+        />
+      </mesh>
+      
+      {/* Сапоги */}
+      <mesh position={[0.6, -3.5, 0.3]}>
+        <boxGeometry args={[0.7, 0.6, 1]} />
+        <meshStandardMaterial
+          color={0x000000}
+          metalness={0.3}
+          roughness={0.9}
+        />
+      </mesh>
+      <mesh position={[-0.6, -3.5, 0.3]}>
+        <boxGeometry args={[0.7, 0.6, 1]} />
+        <meshStandardMaterial
+          color={0x000000}
+          metalness={0.3}
+          roughness={0.9}
+        />
+      </mesh>
+      
+      {/* Мешок с подарками */}
+      <mesh position={[3, -2, -1]} rotation={[0, 0.5, -0.2]}>
+        <sphereGeometry args={[1.2, 16, 16]} />
+        <meshStandardMaterial
+          color={0x8b4513}
+          metalness={0.1}
+          roughness={0.9}
+        />
+      </mesh>
+      
+      {/* Свет от Деда Мороза */}
       <pointLight
         position={[0, 4, 2]}
-        intensity={1}
-        color={0xff6666}
-        distance={10}
+        intensity={0.8}
+        color={0xff4444}
+        distance={20}
       />
     </group>
   )
 }
 
-// 5. АНИМИРОВАННЫЕ ОГНИ
-const AnimatedLights = () => {
+// 5. АНИМИРОВАННЫЕ ОГНИ НА ЗАДНЕМ ПЛАНЕ
+const BackgroundLights = () => {
   const groupRef = useRef<THREE.Group>(null!)
   
   useFrame((state) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y = state.clock.elapsedTime * 0.05
+      groupRef.current.rotation.y = state.clock.elapsedTime * 0.02
     }
   })
 
   return (
     <group ref={groupRef}>
-      {/* Вращающиеся цветные огни */}
-      {Array.from({ length: 8 }).map((_, i) => {
-        const angle = (i / 8) * Math.PI * 2
-        const radius = 20
+      {Array.from({ length: 12 }).map((_, i) => {
+        const angle = (i / 12) * Math.PI * 2
+        const radius = 25
         const x = Math.cos(angle) * radius
         const z = Math.sin(angle) * radius
         
         return (
           <pointLight
             key={i}
-            position={[x, 5, z]}
-            intensity={0.8}
-            color={i % 3 === 0 ? 0xd67a9d : i % 3 === 1 ? 0x71b3c9 : 0xffd166}
-            distance={30}
+            position={[x, Math.sin(angle * 2) * 3 + 5, z]}
+            intensity={0.4}
+            color={i % 4 === 0 ? 0xd67a9d : i % 4 === 1 ? 0x71b3c9 : i % 4 === 2 ? 0xffd166 : 0xff6b9d}
+            distance={25}
             decay={2}
           />
         )
@@ -340,42 +428,34 @@ const AnimatedLights = () => {
   )
 }
 
-// 6. ОБЛАКА ИЗ ЧАСТИЦ
-const MagicClouds = () => {
-  const groupRef = useRef<THREE.Group>(null!)
-  const cloudsCount = 5
-  
-  useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.children.forEach((cloud, i) => {
-        cloud.position.x = Math.sin(state.clock.elapsedTime * 0.1 + i) * 10
-        cloud.position.y = Math.sin(state.clock.elapsedTime * 0.2 + i * 2) * 2 + 10
-        cloud.rotation.y += 0.001
-      })
-    }
-  })
+// 6. НЕБО И АТМОСФЕРА
+const SkyAndAtmosphere = () => {
+  const meshRef = useRef<THREE.Mesh>(null!)
 
   return (
-    <group ref={groupRef}>
-      {Array.from({ length: cloudsCount }).map((_, i) => {
-        const x = (i - cloudsCount / 2) * 15
-        const y = Math.random() * 5 + 10
-        const z = -30 - Math.random() * 20
-        
-        return (
-          <mesh key={i} position={[x, y, z]} castShadow>
-            <sphereGeometry args={[2 + Math.random() * 1, 8, 8]} />
-            <meshStandardMaterial
-              color={0xffffff}
-              transparent
-              opacity={0.1}
-              emissive={0xffffff}
-              emissiveIntensity={0.05}
-            />
-          </mesh>
-        )
-      })}
-    </group>
+    <>
+      {/* Глубокий фон (космос) */}
+      <mesh position={[0, 0, -200]} ref={meshRef}>
+        <sphereGeometry args={[180, 32, 32]} />
+        <meshBasicMaterial
+          color={0x000011}
+          side={THREE.BackSide}
+          transparent
+          opacity={0.3}
+        />
+      </mesh>
+      
+      {/* Легкая дымка/туман */}
+      <mesh position={[0, 0, -150]}>
+        <sphereGeometry args={[140, 32, 32]} />
+        <meshBasicMaterial
+          color={0x001122}
+          side={THREE.BackSide}
+          transparent
+          opacity={0.1}
+        />
+      </mesh>
+    </>
   )
 }
 
@@ -399,10 +479,10 @@ export default function Profile3DScene() {
     >
       <Canvas
         camera={{
-          position: [0, 5, 15],
-          fov: 60,
+          position: [0, 0, 20],
+          fov: 50,
           near: 0.1,
-          far: 500,
+          far: 1000,
         }}
         style={{
           position: 'fixed',
@@ -412,7 +492,7 @@ export default function Profile3DScene() {
           height: '100vh',
           pointerEvents: 'none',
           zIndex: -50,
-          background: 'linear-gradient(to bottom, #000428, #004e92)',
+          background: 'transparent', // УБРАН СИНИЙ ФОН!
         }}
         gl={{
           antialias: true,
@@ -420,55 +500,38 @@ export default function Profile3DScene() {
           powerPreference: "high-performance",
         }}
         dpr={[1, 1.5]}
-        shadows
         onCreated={({ gl, scene }) => {
-          gl.setClearColor(0x000000, 1)
+          gl.setClearColor(0x000000, 0) // Прозрачный фон!
           gl.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
-          
-          // Включение тумана для глубины
-          scene.fog = new THREE.Fog(0x000428, 20, 100)
         }}
       >
         {/* Основное освещение */}
         <ambientLight intensity={0.3} color={0xffffff} />
         <directionalLight
           position={[10, 20, 10]}
-          intensity={0.5}
+          intensity={0.4}
           color={0xffffff}
-          castShadow
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
         />
         
-        <AnimatedLights />
+        <BackgroundLights />
         
         {/* Графические эффекты */}
         <Suspense fallback={null}>
+          <SkyAndAtmosphere />
           <StarField />
           <Snowfall />
-          <MagicClouds />
           
-          {/* Подарки */}
-          <GiftBox position={[-8, 2, -10]} scale={1.5} color={0xd67a9d} />
-          <GiftBox position={[8, 1, -12]} scale={1.2} color={0x71b3c9} />
-          <GiftBox position={[-5, -1, -8]} scale={1} color={0xffd166} />
-          <GiftBox position={[6, -2, -14]} scale={0.8} color={0xff6b9d} />
+          {/* Подарки на заднем плане */}
+          <GiftBox position={[-15, -5, -30]} scale={1.5} color={0xd67a9d} />
+          <GiftBox position={[12, -3, -35]} scale={1.3} color={0x71b3c9} />
+          <GiftBox position={[-8, -8, -25]} scale={1} color={0xffd166} />
+          <GiftBox position={[18, -6, -40]} scale={0.9} color={0xff6b9d} />
+          <GiftBox position={[-20, -2, -45]} scale={1.2} color={0xd67a9d} />
+          <GiftBox position={[5, -10, -30]} scale={0.8} color={0x71b3c9} />
           
-          {/* Дед Мороз */}
+          {/* Настоящий Дед Мороз на фоне */}
           <SantaClaus />
         </Suspense>
-        
-        {/* Пол с отражением */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -10, 0]} receiveShadow>
-          <planeGeometry args={[100, 100]} />
-          <meshStandardMaterial
-            color={0x1a1a2e}
-            metalness={0.5}
-            roughness={0.8}
-            emissive={0x1a1a2e}
-            emissiveIntensity={0.1}
-          />
-        </mesh>
       </Canvas>
     </div>
   )
