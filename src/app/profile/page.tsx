@@ -868,11 +868,11 @@ export default function ProfilePage() {
 
       {/* Новогодний топ-баннер */}
       <motion.div 
-        className="fixed top-0 left-0 right-0 z-50"
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-      >
+      className="fixed top-0 left-0 right-0 z-40" // Изменил z-50 на z-40
+      initial={{ y: -100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
         <div className="bg-gradient-to-r from-[#d67a9d]/10 via-[#71b3c9]/10 to-[#ffd166]/10 backdrop-blur-2xl border-b border-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
             <div className="flex items-center justify-center gap-3">
@@ -887,7 +887,7 @@ export default function ProfilePage() {
       </motion.div>
 
       {/* ОСНОВНОЙ КОНТЕНТ */}
-      <main className="relative min-h-screen bg-gradient-to-br from-gray-900/95 via-black/95 to-gray-900/95 text-white">
+      <main className="relative min-h-screen bg-gradient-to-br from-gray-900/95 via-black/95 to-gray-900/95 text-white z-10">
         <div className="relative z-10 pt-24 sm:pt-28 pb-20 px-4 sm:px-6 max-w-7xl mx-auto">
           {/* 3. Весь контент страницы */}
           {/* ГЛАВНАЯ КАРТОЧКА ПОЛЬЗОВАТЕЛЯ */}

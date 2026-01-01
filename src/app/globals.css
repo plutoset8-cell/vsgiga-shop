@@ -16,7 +16,6 @@ html, body {
   width: 100%;
   height: 100%;
   overflow-x: hidden;
-  overflow-y: auto;
   position: relative;
 }
 
@@ -31,6 +30,7 @@ body {
   min-height: 100vh;
   position: relative;
   z-index: 0;
+  isolation: isolate; /* Изолируем body от 3D сцены */
 }
 
 /* КРИТИЧЕСКИ ВАЖНЫЕ ИСПРАВЛЕНИЯ ДЛЯ FIXED ЭЛЕМЕНТОВ */
@@ -61,9 +61,8 @@ body {
   contain: layout style paint;
 }
 
-/* Оптимизация для 3D Canvas */
-canvas {
-  display: block !important;
+/* Оптимизация для 3D Canvas - УПРОЩАЕМ СТИЛИ */
+.canvas-container {
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
@@ -71,20 +70,32 @@ canvas {
   height: 100% !important;
   pointer-events: none !important;
   touch-action: none !important;
-  z-index: -10 !important;
-  background: transparent !important;
+  z-index: -50 !important;
+  opacity: 0.5;
+  mix-blend-mode: normal;
 }
+
+/* Отключаем глобальные стили для canvas, чтобы не конфликтовать */
+/* canvas {
+  УДАЛЕНО: не переопределяем глобально
+} */
 
 /* Исправление для main контейнера */
 main {
   position: relative;
-  z-index: 1;
+  z-index: 10; /* Увеличиваем z-index для контента */
   isolation: isolate;
 }
 
 /* Убедимся, что все fixed элементы правильно позиционируются */
 .fixed {
   transform: translate3d(0,0,0);
+}
+
+/* Улучшаем видимость контента над 3D фоном */
+.bg-gradient-to-br {
+  background-blend-mode: overlay;
+  backdrop-filter: blur(1px);
 }
 
 /* Эффект свечения при наведении на кнопки */
@@ -161,4 +172,19 @@ img {
 /* Изоляция для предотвращения конфликтов z-index */
 .isolate {
   isolation: isolate;
+}
+
+/* Улучшаем контрастность текста на 3D фоне */
+.text-white, .text-white\/60, .text-white\/40 {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Уменьшаем прозрачность фона для лучшей читаемости */
+.bg-white\/5 {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(12px);
+}
+
+.bg-white\/10 {
+  background-color: rgba(255, 255, 255, 0.12) !important;
 }

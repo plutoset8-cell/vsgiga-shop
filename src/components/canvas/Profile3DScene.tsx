@@ -26,6 +26,8 @@ const ProfileStars = () => {
   )
 
   useEffect(() => {
+    if (!meshRef.current) return
+    
     // Инициализация позиций при монтировании
     for (let i = 0; i < count; i++) {
       const star = types[i]
@@ -38,6 +40,8 @@ const ProfileStars = () => {
   }, [types, dummy])
 
   useFrame((state) => {
+    if (!meshRef.current) return
+    
     const time = state.clock.elapsedTime
     
     for (let i = 0; i < count; i++) {
@@ -150,7 +154,7 @@ const AdditionalLighting = () => {
         position={[10, 10, 5]}
         intensity={0.8}
         color={0xffffff}
-        castShadow
+        castShadow={false}
       />
       <pointLight 
         position={[0, 5, 10]} 
@@ -205,10 +209,11 @@ export default function Profile3DScene() {
     <div 
       className="fixed inset-0 pointer-events-none"
       style={{
-        zIndex: -10,
+        zIndex: -50, // Увеличил отрицательный z-index
         transform: 'translate3d(0,0,0)',
         willChange: 'transform',
         contain: 'layout style paint',
+        isolation: 'isolate', // Изолируем контекст стека
       }}
     >
       <Canvas
@@ -237,16 +242,17 @@ export default function Profile3DScene() {
           height: '100vh',
           pointerEvents: 'none',
           touchAction: 'none',
-          zIndex: -10,
+          zIndex: -50, // Синхронизируем с родителем
           background: 'transparent',
-          mixBlendMode: 'normal'
+          mixBlendMode: 'normal',
+          opacity: 0.5, // Уменьшаем непрозрачность для видимости контента
         }}
         performance={{
           min: 0.5,
           current: 1,
           debounce: 1000
         }}
-        shadows
+        shadows={false}
         frameloop="always"
         onCreated={({ gl, scene }) => {
           gl.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
