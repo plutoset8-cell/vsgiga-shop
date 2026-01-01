@@ -29,7 +29,7 @@ html {
 /* ОСНОВНОЙ ТЕМНЫЙ ФОН ТЕЛА */
 body {
   color: rgb(var(--foreground-rgb));
-  background: #000000 !important; /* ЧЕРНЫЙ фон вместо градиента */
+  background: #000000 !important;
   min-height: 100vh;
   position: relative;
   width: 100%;
@@ -48,7 +48,7 @@ canvas {
   height: 100vh !important;
   pointer-events: none !important;
   touch-action: none !important;
-  z-index: -50 !important; /* Ниже всего контента */
+  z-index: -100 !important; /* УВЕЛИЧЕН до -100 */
   background: transparent !important;
   mix-blend-mode: normal !important;
   backdrop-filter: none !important;
@@ -59,7 +59,7 @@ canvas {
 /* Контейнер для 3D сцены */
 .fixed.inset-0 {
   background: transparent !important;
-  z-index: -50 !important;
+  z-index: -100 !important; /* УВЕЛИЧЕН до -100 */
 }
 
 /* ==================== ПОЗИЦИОНИРОВАНИЕ И Z-INDEX ==================== */
@@ -68,7 +68,7 @@ main {
   position: relative;
   z-index: 1 !important;
   isolation: isolate;
-  background: transparent !important; /* Прозрачный фон для видимости 3D */
+  background: transparent !important;
 }
 
 /* Fixed элементы с разными уровнями z-index */
@@ -93,24 +93,17 @@ main {
 }
 
 /* Отрицательные z-index для фонов */
-.z-\[-10\] {
-  z-index: -10 !important;
+.z-\[-100\] {
+  z-index: -100 !important;
 }
 
-.z-\[-20\] {
-  z-index: -20 !important;
+/* Модальные окна должны быть выше всего */
+.z-\[9999\] {
+  z-index: 9999 !important;
 }
 
-.z-\[-30\] {
-  z-index: -30 !important;
-}
-
-.z-\[-40\] {
-  z-index: -40 !important;
-}
-
-.z-\[-50\] {
-  z-index: -50 !important;
+.z-\[99999\] {
+  z-index: 99999 !important;
 }
 
 /* ==================== FIXED ЭЛЕМЕНТЫ ==================== */
@@ -152,21 +145,21 @@ main {
 /* ==================== КАРТОЧКИ И ЭЛЕМЕНТЫ UI ==================== */
 /* Полупрозрачные фоны для лучшей читаемости на темном фоне */
 .bg-white\/5 {
-  background-color: rgba(0, 0, 0, 0.3) !important; /* Темнее на черном фоне */
+  background-color: rgba(0, 0, 0, 0.3) !important;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .bg-white\/10 {
-  background-color: rgba(0, 0, 0, 0.4) !important; /* Темнее на черном фоне */
+  background-color: rgba(0, 0, 0, 0.4) !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .bg-white\/20 {
-  background-color: rgba(0, 0, 0, 0.5) !important; /* Темнее на черном фоне */
+  background-color: rgba(0, 0, 0, 0.5) !important;
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -391,6 +384,21 @@ img {
   .input-glass {
     @apply bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:border-[#d67a9d] focus:outline-none transition-colors;
   }
+}
+
+/* ==================== МОДАЛЬНЫЕ ОКНА ==================== */
+/* Фикс для модальных окон - должны быть выше всего */
+.modal-overlay {
+  z-index: 99998 !important;
+}
+
+.modal-content {
+  z-index: 99999 !important;
+}
+
+/* Гарантируем, что 3D сцена не мешает модалкам */
+.fixed.z-\[-100\] {
+  z-index: -100 !important;
 }
 
 /* ==================== КОНЕЦ ФАЙЛА ==================== */
