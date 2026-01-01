@@ -188,3 +188,12 @@ img {
 .bg-white\/10 {
   background-color: rgba(255, 255, 255, 0.12) !important;
 }
+/* Добавьте в конец globals.css */
+.fixed.inset-0 {
+  background: transparent !important;
+}
+
+canvas {
+  mix-blend-mode: normal !important;
+  backdrop-filter: none !important;
+}
