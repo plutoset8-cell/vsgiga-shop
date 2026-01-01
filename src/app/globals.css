@@ -26,9 +26,10 @@ html {
   position: relative;
 }
 
+/* ОСНОВНОЙ ТЕМНЫЙ ФОН ТЕЛА */
 body {
   color: rgb(var(--foreground-rgb));
-  background: transparent !important; /* Убираем градиентный фон, так как теперь 3D */
+  background: #000000 !important; /* ЧЕРНЫЙ фон вместо градиента */
   min-height: 100vh;
   position: relative;
   width: 100%;
@@ -67,6 +68,7 @@ main {
   position: relative;
   z-index: 1 !important;
   isolation: isolate;
+  background: transparent !important; /* Прозрачный фон для видимости 3D */
 }
 
 /* Fixed элементы с разными уровнями z-index */
@@ -131,40 +133,46 @@ main {
 }
 
 /* ==================== ТИПОГРАФИКА И ТЕКСТ ==================== */
-/* Улучшение читаемости текста на 3D фоне */
+/* Улучшение читаемости текста на темном фоне */
 .text-white {
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
 .text-white\/60 {
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  color: rgba(255, 255, 255, 0.6);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .text-white\/40 {
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+  color: rgba(255, 255, 255, 0.4);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.7);
 }
 
 /* ==================== КАРТОЧКИ И ЭЛЕМЕНТЫ UI ==================== */
-/* Полупрозрачные фоны для лучшей читаемости */
+/* Полупрозрачные фоны для лучшей читаемости на темном фоне */
 .bg-white\/5 {
-  background-color: rgba(255, 255, 255, 0.05) !important;
+  background-color: rgba(0, 0, 0, 0.3) !important; /* Темнее на черном фоне */
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .bg-white\/10 {
-  background-color: rgba(255, 255, 255, 0.10) !important;
+  background-color: rgba(0, 0, 0, 0.4) !important; /* Темнее на черном фоне */
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .bg-white\/20 {
-  background-color: rgba(255, 255, 255, 0.20) !important;
+  background-color: rgba(0, 0, 0, 0.5) !important; /* Темнее на черном фоне */
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Градиентные фоны - уменьшаем прозрачность для видимости 3D */
+/* Градиентные фоны */
 .bg-gradient-to-br {
   background-blend-mode: overlay;
 }
@@ -176,7 +184,7 @@ button {
 }
 
 button:hover {
-  box-shadow: 0 0 20px rgba(214, 122, 157, 0.4);
+  box-shadow: 0 0 20px rgba(214, 122, 157, 0.5);
   transform: translateY(-1px);
 }
 
@@ -186,7 +194,7 @@ button:active {
 
 /* Убираем outline, но оставляем для доступности */
 :focus {
-  outline: 2px solid rgba(214, 122, 157, 0.5);
+  outline: 2px solid rgba(214, 122, 157, 0.7);
   outline-offset: 2px;
 }
 
@@ -195,7 +203,7 @@ button:active {
 }
 
 :focus-visible {
-  outline: 2px solid rgba(214, 122, 157, 0.5);
+  outline: 2px solid rgba(214, 122, 157, 0.7);
   outline-offset: 2px;
 }
 
@@ -369,7 +377,7 @@ img {
 /* ==================== КОМПОНЕНТЫ TAILWIND ==================== */
 @layer components {
   .card-glass {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl;
+    @apply bg-black/30 backdrop-blur-xl border border-white/10 rounded-2xl;
   }
   
   .btn-primary {
@@ -377,11 +385,11 @@ img {
   }
   
   .btn-secondary {
-    @apply bg-white/10 backdrop-blur-sm text-white font-bold py-3 px-6 rounded-xl border border-white/20 hover:bg-white/20 transition-colors;
+    @apply bg-black/40 backdrop-blur-sm text-white font-bold py-3 px-6 rounded-xl border border-white/20 hover:bg-black/60 transition-colors;
   }
   
   .input-glass {
-    @apply bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:border-[#d67a9d] focus:outline-none transition-colors;
+    @apply bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:border-[#d67a9d] focus:outline-none transition-colors;
   }
 }
 
