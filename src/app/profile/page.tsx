@@ -1229,47 +1229,33 @@ export default function ProfilePage() {
     { label: 'ПОМОЩЬ', icon: LifeBuoy, color: '#ff6b9d', link: '/contacts' },
   ], [])
 
-  // Загрузочный экран
+  // 1. Блок загрузки (isClient или loading)
   if (!isClient || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center relative overflow-hidden">
-        <div className="relative z-10 text-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
+        <div className="text-center">
           <div className="w-24 h-24 mx-auto mb-6 relative">
-            <motion.div
-              className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#d67a9d] border-r-[#71b3c9] border-b-[#ffd166] border-l-[#ff6b9d]"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-            />
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#d67a9d] border-r-[#71b3c9] border-b-[#ffd166] border-l-[#ff6b9d] animate-spin" />
             <div className="absolute inset-4 rounded-full border-4 border-white/10" />
           </div>
-          <motion.p
-            className="text-xl font-bold tracking-widest bg-gradient-to-r from-[#d67a9d] via-[#71b3c9] to-[#ffd166] bg-clip-text text-transparent"
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
+          <p className="text-xl font-bold tracking-widest bg-gradient-to-r from-[#d67a9d] via-[#71b3c9] to-[#ffd166] bg-clip-text text-transparent">
             ЗАГРУЗКА ИНТЕРФЕЙСА...
-          </motion.p>
+          </p>
         </div>
       </div>
     )
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white overflow-hidden relative">
-      {/* Модальное окно пополнения */}
+    <>
+      {/* Модальные окна и фоновые компоненты */}
       <TopUpModal isOpen={topUpModalOpen} onClose={() => setTopUpModalOpen(false)} />
-
-      {/* Оптимизированные CSS анимации */}
       <OptimizedAnimations />
-
-      {/* Оптимизированный 3D фон с InstancedMesh */}
       <ThreeDBackgroundContainer />
-
-      {/* Магический подарок */}
       <MagicGift />
 
       {/* Новогодний топ-баннер */}
-      <motion.div
+      <motion.div 
         className="fixed top-0 left-0 right-0 z-50"
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -1288,182 +1274,199 @@ export default function ProfilePage() {
         </div>
       </motion.div>
 
-      <div className="relative z-10 pt-24 sm:pt-28 pb-20 px-4 sm:px-6 max-w-7xl mx-auto">
-        {/* ГЛАВНАЯ КАРТОЧКА ПОЛЬЗОВАТЕЛЯ */}
-        <ParallaxCard className="relative mb-8 sm:mb-12 gpu-accelerated">
-          <div className="relative bg-white/5 backdrop-blur-3xl rounded-3xl border border-white/10 p-6 sm:p-8 md:p-10 overflow-hidden">
-            {/* Анимированный градиентный бордер */}
-            <BorderBeam />
+      {/* ОСНОВНОЙ КОНТЕНТ */}
+      <main className="relative min-h-screen bg-gradient-to-br from-gray-900/95 via-black/95 to-gray-900/95 text-white">
+        <div className="relative z-10 pt-24 sm:pt-28 pb-20 px-4 sm:px-6 max-w-7xl mx-auto">
+          {/* 3. Весь контент страницы */}
+          {/* ГЛАВНАЯ КАРТОЧКА ПОЛЬЗОВАТЕЛЯ */}
+          <ParallaxCard className="relative mb-8 sm:mb-12 gpu-accelerated">
+            <div className="relative bg-white/5 backdrop-blur-3xl rounded-3xl border border-white/10 p-6 sm:p-8 md:p-10 overflow-hidden">
+              {/* Анимированный градиентный бордер */}
+              <BorderBeam />
 
-            {/* Внутренний контент */}
-            <div className="relative z-10 flex flex-col lg:flex-row items-center gap-6 lg:gap-10">
-              {/* Аватар с голограммой */}
-              <div className="relative group">
-                <div className="relative">
-                  <motion.div
-                    className="absolute -inset-4 rounded-full bg-gradient-to-r from-[#d67a9d]/30 via-[#71b3c9]/30 to-[#ffd166]/30 blur-xl"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                  />
+              {/* Внутренний контент */}
+              <div className="relative z-10 flex flex-col lg:flex-row items-center gap-6 lg:gap-10">
+                {/* Аватар с голограммой */}
+                <div className="relative group">
+                  <div className="relative">
+                    <motion.div
+                      className="absolute -inset-4 rounded-full bg-gradient-to-r from-[#d67a9d]/30 via-[#71b3c9]/30 to-[#ffd166]/30 blur-xl"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                    />
 
-                  <label htmlFor="avatar-input" className="cursor-pointer block">
-                    <div className={`relative w-32 h-32 sm:w-40 sm:h-40 rounded-full border-2 ${uploading ? 'border-yellow-500' : 'border-transparent'} overflow-hidden bg-gradient-to-br from-black to-gray-900 p-1`}>
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-[#d67a9d] via-[#71b3c9] to-[#ffd166] rounded-full"
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                      />
-                      <div className="absolute inset-1 rounded-full bg-black" />
-                      <img
-                        src={user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${user?.email}&background=d67a9d&color=fff&bold=true&size=256`}
-                        className="relative z-10 w-full h-full rounded-full object-cover"
-                        alt="Аватар"
-                        loading="eager"
-                      />
-
-                      {uploading && (
+                    <label htmlFor="avatar-input" className="cursor-pointer block">
+                      <div className={`relative w-32 h-32 sm:w-40 sm:h-40 rounded-full border-2 ${uploading ? 'border-yellow-500' : 'border-transparent'} overflow-hidden bg-gradient-to-br from-black to-gray-900 p-1`}>
                         <motion.div
-                          className="absolute inset-0 bg-black/80 rounded-full flex items-center justify-center z-20"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                        >
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-[#d67a9d]/30 border-t-[#d67a9d] rounded-full animate-spin" />
-                        </motion.div>
-                      )}
-                    </div>
+                          className="absolute inset-0 bg-gradient-to-r from-[#d67a9d] via-[#71b3c9] to-[#ffd166] rounded-full"
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                        />
+                        <div className="absolute inset-1 rounded-full bg-black" />
+                        <img
+                          src={user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${user?.email}&background=d67a9d&color=fff&bold=true&size=256`}
+                          className="relative z-10 w-full h-full rounded-full object-cover"
+                          alt="Аватар"
+                          loading="eager"
+                        />
 
-                    <div className="absolute -bottom-2 -right-2">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] flex items-center justify-center border-4 border-black">
-                        <User size={12} className="sm:w-4 sm:h-4" />
+                        {uploading && (
+                          <motion.div
+                            className="absolute inset-0 bg-black/80 rounded-full flex items-center justify-center z-20"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                          >
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-[#d67a9d]/30 border-t-[#d67a9d] rounded-full animate-spin" />
+                          </motion.div>
+                        )}
                       </div>
-                    </div>
-                  </label>
-                  <input
-                    type="file"
-                    id="avatar-input"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleAvatarUpload}
-                    disabled={uploading}
-                  />
-                </div>
-              </div>
 
-              {/* Информация пользователя */}
-              <div className="flex-1 text-center lg:text-left">
-                <div className="inline-flex items-center gap-2 sm:gap-3 mb-4">
-                  <div className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-gradient-to-r from-[#d67a9d]/20 to-[#71b3c9]/20 border border-white/10">
-                    <span className="text-xs font-bold tracking-widest flex items-center gap-1.5 sm:gap-2">
-                      <User size={10} className="sm:w-3 sm:h-3 text-yellow-400" />
-                      ПОЛЬЗОВАТЕЛЬ
-                    </span>
+                      <div className="absolute -bottom-2 -right-2">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] flex items-center justify-center border-4 border-black">
+                          <User size={12} className="sm:w-4 sm:h-4" />
+                        </div>
+                      </div>
+                    </label>
+                    <input
+                      type="file"
+                      id="avatar-input"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      disabled={uploading}
+                    />
                   </div>
-                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500" />
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 mb-3">
-                  {editingName ? (
-                    <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
-                      <input
-                        type="text"
-                        value={usernameInput}
-                        onChange={(e) => setUsernameInput(e.target.value)}
-                        className="bg-black/50 border-2 border-[#d67a9d] rounded-xl px-4 sm:px-6 py-2 sm:py-3 text-2xl sm:text-3xl font-bold tracking-widest text-center lg:text-left w-full sm:w-auto min-w-0"
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleUsernameSave()
-                          if (e.key === 'Escape') {
-                            setEditingName(false)
-                            setUsernameInput(user?.user_metadata?.username || '')
-                          }
-                        }}
-                      />
-                      <div className="flex gap-2">
-                        <button
-                          onClick={handleUsernameSave}
-                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-green-500/20 border border-green-500 flex items-center justify-center hover:bg-green-500/30 transition-colors"
-                        >
-                          <CheckCircle size={16} className="sm:w-5 sm:h-5 text-green-400" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setEditingName(false)
-                            setUsernameInput(user?.user_metadata?.username || '')
+                {/* Информация пользователя */}
+                <div className="flex-1 text-center lg:text-left">
+                  <div className="inline-flex items-center gap-2 sm:gap-3 mb-4">
+                    <div className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-gradient-to-r from-[#d67a9d]/20 to-[#71b3c9]/20 border border-white/10">
+                      <span className="text-xs font-bold tracking-widest flex items-center gap-1.5 sm:gap-2">
+                        <User size={10} className="sm:w-3 sm:h-3 text-yellow-400" />
+                        ПОЛЬЗОВАТЕЛЬ
+                      </span>
+                    </div>
+                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500" />
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 mb-3">
+                    {editingName ? (
+                      <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+                        <input
+                          type="text"
+                          value={usernameInput}
+                          onChange={(e) => setUsernameInput(e.target.value)}
+                          className="bg-black/50 border-2 border-[#d67a9d] rounded-xl px-4 sm:px-6 py-2 sm:py-3 text-2xl sm:text-3xl font-bold tracking-widest text-center lg:text-left w-full sm:w-auto min-w-0"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleUsernameSave()
+                            if (e.key === 'Escape') {
+                              setEditingName(false)
+                              setUsernameInput(user?.user_metadata?.username || '')
+                            }
                           }}
-                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-red-500/20 border border-red-500 flex items-center justify-center hover:bg-red-500/30 transition-colors"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleUsernameSave}
+                            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-green-500/20 border border-green-500 flex items-center justify-center hover:bg-green-500/30 transition-colors"
+                          >
+                            <CheckCircle size={16} className="sm:w-5 sm:h-5 text-green-400" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingName(false)
+                              setUsernameInput(user?.user_metadata?.username || '')
+                            }}
+                            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-red-500/20 border border-red-500 flex items-center justify-center hover:bg-red-500/30 transition-colors"
+                          >
+                            <X size={16} className="sm:w-5 sm:h-5 text-red-400" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent break-words">
+                          {user?.user_metadata?.username || user?.email?.split('@')[0]?.toUpperCase()}
+                        </h1>
+                        <button
+                          onClick={() => setEditingName(true)}
+                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:border-[#d67a9d] hover:bg-[#d67a9d]/10 transition-all group"
                         >
-                          <X size={16} className="sm:w-5 sm:h-5 text-red-400" />
+                          <Edit3 size={18} className="sm:w-5 sm:h-5 text-white/60 group-hover:text-[#d67a9d]" />
                         </button>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-4 mb-6">
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-white/60">
+                      <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#d67a9d]" />
+                      <span className="text-xs sm:text-sm font-bold tracking-widest truncate max-w-[200px] sm:max-w-none">
+                        {user?.email}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-white/60">
+                      <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#71b3c9]" />
+                      <span className="text-xs sm:text-sm font-bold tracking-widest">
+                        ID: {user?.id?.slice(0, 8)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* БЛОК ЗАКАЗОВ */}
+                  <div className="bg-white/5 rounded-2xl p-4 sm:p-6 border border-white/10 backdrop-blur-xl">
+                    <div className="flex justify-between items-center mb-4">
+                      <div>
+                        <p className="text-xs font-bold tracking-widest text-white/60 mb-1">ЗАКАЗЫ</p>
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-2xl sm:text-3xl font-black text-yellow-400">{orders.length}</span>
+                          <span className="text-xs sm:text-sm text-white/40">завершено</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-[#d67a9d] to-[#71b3c9] bg-opacity-20 flex items-center justify-center">
+                          <Package size={24} className="sm:w-7 sm:h-7 bg-gradient-to-br from-[#d67a9d] to-[#71b3c9] bg-clip-text text-transparent" />
+                        </div>
                       </div>
                     </div>
-                  ) : (
-                    <>
-                      <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent break-words">
-                        {user?.user_metadata?.username || user?.email?.split('@')[0]?.toUpperCase()}
-                      </h1>
-                      <button
-                        onClick={() => setEditingName(true)}
-                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:border-[#d67a9d] hover:bg-[#d67a9d]/10 transition-all group"
+
+                    <div className="h-2 sm:h-3 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-[#d67a9d] via-[#71b3c9] to-[#ffd166] rounded-full relative animate-gradient"
+                        style={{ width: `${Math.min(orders.length * 10, 100)}%` }}
                       >
-                        <Edit3 size={18} className="sm:w-5 sm:h-5 text-white/60 group-hover:text-[#d67a9d]" />
-                      </button>
-                    </>
-                  )}
-                </div>
-
-                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-4 mb-6">
-                  <div className="flex items-center gap-1.5 sm:gap-2 text-white/60">
-                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#d67a9d]" />
-                    <span className="text-xs sm:text-sm font-bold tracking-widest truncate max-w-[200px] sm:max-w-none">
-                      {user?.email}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 sm:gap-2 text-white/60">
-                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#71b3c9]" />
-                    <span className="text-xs sm:text-sm font-bold tracking-widest">
-                      ID: {user?.id?.slice(0, 8)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* БЛОК ЗАКАЗОВ */}
-                <div className="bg-white/5 rounded-2xl p-4 sm:p-6 border border-white/10 backdrop-blur-xl">
-                  <div className="flex justify-between items-center mb-4">
-                    <div>
-                      <p className="text-xs font-bold tracking-widest text-white/60 mb-1">ЗАКАЗЫ</p>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-2xl sm:text-3xl font-black text-yellow-400">{orders.length}</span>
-                        <span className="text-xs sm:text-sm text-white/40">завершено</span>
+                        <div className="absolute top-0 left-0 w-16 sm:w-20 h-full bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 animate-slide" />
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-[#d67a9d] to-[#71b3c9] bg-opacity-20 flex items-center justify-center">
-                        <Package size={24} className="sm:w-7 sm:h-7 bg-gradient-to-br from-[#d67a9d] to-[#71b3c9] bg-clip-text text-transparent" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="h-2 sm:h-3 bg-white/10 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-[#d67a9d] via-[#71b3c9] to-[#ffd166] rounded-full relative animate-gradient"
-                      style={{ width: `${Math.min(orders.length * 10, 100)}%` }}
-                    >
-                      <div className="absolute top-0 left-0 w-16 sm:w-20 h-full bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 animate-slide" />
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </ParallaxCard>
+          </ParallaxCard>
 
-        {/* БЫСТРЫЕ ДЕЙСТВИЯ */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8 sm:mb-12">
-          {quickActions.map((action, i) => (
-            <ParallaxCard key={i} className="relative gpu-accelerated">
-              {action.link ? (
-                <Link href={action.link} className="block">
-                  <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4 sm:p-6 text-center group hover:border-white/30 transition-all duration-300 h-full">
+          {/* БЫСТРЫЕ ДЕЙСТВИЯ */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8 sm:mb-12">
+            {quickActions.map((action, i) => (
+              <ParallaxCard key={i} className="relative gpu-accelerated">
+                {action.link ? (
+                  <Link href={action.link} className="block">
+                    <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4 sm:p-6 text-center group hover:border-white/30 transition-all duration-300 h-full">
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl mx-auto mb-3 sm:mb-4 flex items-center justify-center"
+                        style={{ backgroundColor: `${action.color}20` }}>
+                        <action.icon size={20} className="sm:w-7 sm:h-7" style={{ color: action.color }} />
+                      </div>
+                      <p className="text-xs sm:text-sm font-bold tracking-widest">{action.label}</p>
+                      <div className="h-0.5 w-0 group-hover:w-full mx-auto mt-2 sm:mt-3 transition-all duration-300"
+                        style={{ background: `linear-gradient(90deg, transparent, ${action.color}, transparent)` }} />
+                    </div>
+                  </Link>
+                ) : (
+                  <button
+                    onClick={action.action}
+                    className="w-full bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4 sm:p-6 text-center group hover:border-white/30 transition-all duration-300 h-full"
+                  >
                     <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl mx-auto mb-3 sm:mb-4 flex items-center justify-center"
                       style={{ backgroundColor: `${action.color}20` }}>
                       <action.icon size={20} className="sm:w-7 sm:h-7" style={{ color: action.color }} />
@@ -1471,256 +1474,243 @@ export default function ProfilePage() {
                     <p className="text-xs sm:text-sm font-bold tracking-widest">{action.label}</p>
                     <div className="h-0.5 w-0 group-hover:w-full mx-auto mt-2 sm:mt-3 transition-all duration-300"
                       style={{ background: `linear-gradient(90deg, transparent, ${action.color}, transparent)` }} />
-                  </div>
-                </Link>
-              ) : (
-                <button
-                  onClick={action.action}
-                  className="w-full bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4 sm:p-6 text-center group hover:border-white/30 transition-all duration-300 h-full"
-                >
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl mx-auto mb-3 sm:mb-4 flex items-center justify-center"
-                    style={{ backgroundColor: `${action.color}20` }}>
-                    <action.icon size={20} className="sm:w-7 sm:h-7" style={{ color: action.color }} />
-                  </div>
-                  <p className="text-xs sm:text-sm font-bold tracking-widest">{action.label}</p>
-                  <div className="h-0.5 w-0 group-hover:w-full mx-auto mt-2 sm:mt-3 transition-all duration-300"
-                    style={{ background: `linear-gradient(90deg, transparent, ${action.color}, transparent)` }} />
-                </button>
-              )}
-            </ParallaxCard>
-          ))}
-        </div>
-
-        {/* ОСНОВНОЙ КОНТЕНТ */}
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-          {/* ЛЕВАЯ КОЛОНКА - СФЕРА С БОНУСАМИ */}
-          <div className="lg:w-2/5">
-            <ParallaxCard className="relative gpu-accelerated">
-              <div className="bg-white/5 backdrop-blur-3xl rounded-3xl border border-white/10 p-6 sm:p-8 overflow-hidden">
-                <div className="absolute -top-20 -right-20 w-32 h-32 sm:w-40 sm:h-40 bg-[#d67a9d]/10 rounded-full blur-3xl" />
-                <div className="absolute -bottom-20 -left-20 w-32 h-32 sm:w-40 sm:h-40 bg-[#71b3c9]/10 rounded-full blur-3xl" />
-
-                <div className="text-center mb-6">
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/5 border border-white/10 mb-4">
-                    <Gem size={14} className="sm:w-4 sm:h-4 text-[#ffd166]" />
-                    <span className="text-xs font-bold tracking-widest">GIGA COINS</span>
-                  </div>
-                  <p className="text-sm text-white/60 mb-2">ВАШ БАЛАНС</p>
-                </div>
-
-                <div className="flex justify-center">
-                  <div className="w-48 h-48 sm:w-56 sm:h-56">
-                    <AnimatedSphere value={userBonuses} />
-                  </div>
-                </div>
-
-                <div className="text-center mt-6">
-                  <Link href="/catalog">
-                    <button className="group relative px-6 py-3 sm:px-8 sm:py-4 rounded-xl bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] font-bold text-xs sm:text-sm tracking-widest overflow-hidden">
-                      <span className="relative z-10 flex items-center gap-2 sm:gap-3">
-                        ПОТРАТИТЬ БОНУСЫ
-                        <ArrowRight size={14} className="sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" />
-                      </span>
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-[#71b3c9] to-[#d67a9d]"
-                        animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
-                        transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-                      />
-                    </button>
-                  </Link>
-                </div>
-              </div>
-            </ParallaxCard>
+                  </button>
+                )}
+              </ParallaxCard>
+            ))}
           </div>
 
-          {/* ПРАВАЯ КОЛОНКА - ЗАКАЗЫ И ИСТОРИЯ */}
-          <div className="lg:w-3/5">
-            {/* ТАБЫ */}
-            <div className="flex gap-1 sm:gap-2 mb-6 sm:mb-8 p-1 sm:p-2 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
-              <button
-                onClick={() => setActiveTab('overview')}
-                className={`flex-1 py-3 sm:py-4 rounded-xl font-bold text-xs sm:text-sm tracking-widest transition-all ${activeTab === 'overview'
-                  ? 'bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] text-white'
-                  : 'text-white/60 hover:text-white'}`}
-              >
-                <span className="flex items-center justify-center gap-1.5 sm:gap-2">
-                  <Activity size={14} className="sm:w-4 sm:h-4" />
-                  ОБЗОР
-                </span>
-              </button>
-              <button
-                onClick={() => setActiveTab('orders')}
-                className={`flex-1 py-3 sm:py-4 rounded-xl font-bold text-xs sm:text-sm tracking-widest transition-all ${activeTab === 'orders'
-                  ? 'bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] text-white'
-                  : 'text-white/60 hover:text-white'}`}
-              >
-                <span className="flex items-center justify-center gap-1.5 sm:gap-2">
-                  <Package size={14} className="sm:w-4 sm:h-4" />
-                  ЗАКАЗЫ ({orders.length})
-                </span>
-              </button>
+          {/* ОСНОВНОЙ КОНТЕНТ */}
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            {/* ЛЕВАЯ КОЛОНКА - СФЕРА С БОНУСАМИ */}
+            <div className="lg:w-2/5">
+              <ParallaxCard className="relative gpu-accelerated">
+                <div className="bg-white/5 backdrop-blur-3xl rounded-3xl border border-white/10 p-6 sm:p-8 overflow-hidden">
+                  <div className="absolute -top-20 -right-20 w-32 h-32 sm:w-40 sm:h-40 bg-[#d67a9d]/10 rounded-full blur-3xl" />
+                  <div className="absolute -bottom-20 -left-20 w-32 h-32 sm:w-40 sm:h-40 bg-[#71b3c9]/10 rounded-full blur-3xl" />
+
+                  <div className="text-center mb-6">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/5 border border-white/10 mb-4">
+                      <Gem size={14} className="sm:w-4 sm:h-4 text-[#ffd166]" />
+                      <span className="text-xs font-bold tracking-widest">GIGA COINS</span>
+                    </div>
+                    <p className="text-sm text-white/60 mb-2">ВАШ БАЛАНС</p>
+                  </div>
+
+                  <div className="flex justify-center">
+                    <div className="w-48 h-48 sm:w-56 sm:h-56">
+                      <AnimatedSphere value={userBonuses} />
+                    </div>
+                  </div>
+
+                  <div className="text-center mt-6">
+                    <Link href="/catalog">
+                      <button className="group relative px-6 py-3 sm:px-8 sm:py-4 rounded-xl bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] font-bold text-xs sm:text-sm tracking-widest overflow-hidden">
+                        <span className="relative z-10 flex items-center gap-2 sm:gap-3">
+                          ПОТРАТИТЬ БОНУСЫ
+                          <ArrowRight size={14} className="sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" />
+                        </span>
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-[#71b3c9] to-[#d67a9d]"
+                          animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+                          transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+                        />
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              </ParallaxCard>
             </div>
 
-            {/* КОНТЕНТ ТАБОВ */}
-            <AnimatePresence mode="wait">
-              {activeTab === 'overview' ? (
-                <motion.div
-                  key="overview"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="space-y-6"
+            {/* ПРАВАЯ КОЛОНКА - ЗАКАЗЫ И ИСТОРИЯ */}
+            <div className="lg:w-3/5">
+              {/* ТАБЫ */}
+              <div className="flex gap-1 sm:gap-2 mb-6 sm:mb-8 p-1 sm:p-2 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
+                <button
+                  onClick={() => setActiveTab('overview')}
+                  className={`flex-1 py-3 sm:py-4 rounded-xl font-bold text-xs sm:text-sm tracking-widest transition-all ${activeTab === 'overview'
+                    ? 'bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] text-white'
+                    : 'text-white/60 hover:text-white'}`}
                 >
-                  <ParallaxCard>
-                    <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4 sm:p-6">
-                      <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-3">
-                        <h3 className="text-lg font-bold tracking-widest flex items-center gap-2">
-                          <TrendingUp size={18} className="sm:w-5 sm:h-5 text-green-400" />
-                          ЛЕНТА НОВОСТЕЙ
-                        </h3>
-                        <span className="text-xs font-bold text-white/40">АКТУАЛЬНО</span>
+                  <span className="flex items-center justify-center gap-1.5 sm:gap-2">
+                    <Activity size={14} className="sm:w-4 sm:h-4" />
+                    ОБЗОР
+                  </span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('orders')}
+                  className={`flex-1 py-3 sm:py-4 rounded-xl font-bold text-xs sm:text-sm tracking-widest transition-all ${activeTab === 'orders'
+                    ? 'bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] text-white'
+                    : 'text-white/60 hover:text-white'}`}
+                >
+                  <span className="flex items-center justify-center gap-1.5 sm:gap-2">
+                    <Package size={14} className="sm:w-4 sm:h-4" />
+                    ЗАКАЗЫ ({orders.length})
+                  </span>
+                </button>
+              </div>
+
+              {/* КОНТЕНТ ТАБОВ */}
+              <AnimatePresence mode="wait">
+                {activeTab === 'overview' ? (
+                  <motion.div
+                    key="overview"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="space-y-6"
+                  >
+                    <ParallaxCard>
+                      <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4 sm:p-6">
+                        <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-3">
+                          <h3 className="text-lg font-bold tracking-widest flex items-center gap-2">
+                            <TrendingUp size={18} className="sm:w-5 sm:h-5 text-green-400" />
+                            ЛЕНТА НОВОСТЕЙ
+                          </h3>
+                          <span className="text-xs font-bold text-white/40">АКТУАЛЬНО</span>
+                        </div>
+                        <NewsFeed news={news} />
                       </div>
-                      <NewsFeed news={news} />
-                    </div>
-                  </ParallaxCard>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="orders"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="space-y-6"
-                >
-                  {orders.length > 0 ? (
-                    orders.map((order, index) => (
-                      <ParallaxCard key={order.id}>
-                        <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4 sm:p-6">
-                          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                                <div className="px-2 py-1 sm:px-3 sm:py-1 rounded-full bg-white/5 border border-white/10">
-                                  <span className="text-xs font-bold tracking-widest text-[#71b3c9]">
-                                    #{order.id.slice(0, 8).toUpperCase()}
-                                  </span>
+                    </ParallaxCard>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="orders"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="space-y-6"
+                  >
+                    {orders.length > 0 ? (
+                      orders.map((order, index) => (
+                        <ParallaxCard key={order.id}>
+                          <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4 sm:p-6">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                                  <div className="px-2 py-1 sm:px-3 sm:py-1 rounded-full bg-white/5 border border-white/10">
+                                    <span className="text-xs font-bold tracking-widest text-[#71b3c9]">
+                                      #{order.id.slice(0, 8).toUpperCase()}
+                                    </span>
+                                  </div>
+                                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500" />
                                 </div>
-                                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-500" />
+                                <p className="text-base sm:text-lg font-bold truncate">
+                                  {new Date(order.created_at).toLocaleDateString('ru-RU', {
+                                    day: 'numeric',
+                                    month: 'long',
+                                    year: 'numeric'
+                                  })}
+                                </p>
+                                <p className="text-xs sm:text-sm text-white/60 mt-1 truncate">{order.address}</p>
                               </div>
-                              <p className="text-base sm:text-lg font-bold truncate">
-                                {new Date(order.created_at).toLocaleDateString('ru-RU', {
-                                  day: 'numeric',
-                                  month: 'long',
-                                  year: 'numeric'
-                                })}
-                              </p>
-                              <p className="text-xs sm:text-sm text-white/60 mt-1 truncate">{order.address}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] bg-clip-text text-transparent">
-                                {order.total_amount.toLocaleString()} ₽
-                              </p>
-                              <div className="inline-flex items-center gap-1.5 sm:gap-2 mt-2 px-3 py-1 sm:px-4 sm:py-1 rounded-full bg-white/10">
-                                <Truck size={10} className="sm:w-3 sm:h-3" />
-                                <span className="text-xs font-bold tracking-widest">{order.status}</span>
+                              <div className="text-right">
+                                <p className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] bg-clip-text text-transparent">
+                                  {order.total_amount.toLocaleString()} ₽
+                                </p>
+                                <div className="inline-flex items-center gap-1.5 sm:gap-2 mt-2 px-3 py-1 sm:px-4 sm:py-1 rounded-full bg-white/10">
+                                  <Truck size={10} className="sm:w-3 sm:h-3" />
+                                  <span className="text-xs font-bold tracking-widest">{order.status}</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
 
-                          {/* Прогресс бар */}
-                          <div className="relative mb-6">
-                            <div className="flex justify-between text-xs font-bold text-white/40 mb-2">
-                              <span>СТАТУС ДОСТАВКИ</span>
-                              <span className="flex items-center gap-1.5 sm:gap-2">
-                                <Target size={8} className="sm:w-2.5 sm:h-2.5" />
-                                {order.status}
-                              </span>
-                            </div>
-                            <div className="h-1.5 sm:h-2 bg-white/10 rounded-full overflow-hidden relative">
-                              <div
-                                className="h-full bg-gradient-to-r from-[#d67a9d] via-[#71b3c9] to-[#ffd166] rounded-full animate-gradient"
-                                style={{ width: `${(Math.random() * 30 + 70)}%` }}
-                              >
-                                <div className="absolute top-0 left-0 w-12 sm:w-20 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12 animate-slide" />
+                            {/* Прогресс бар */}
+                            <div className="relative mb-6">
+                              <div className="flex justify-between text-xs font-bold text-white/40 mb-2">
+                                <span>СТАТУС ДОСТАВКИ</span>
+                                <span className="flex items-center gap-1.5 sm:gap-2">
+                                  <Target size={8} className="sm:w-2.5 sm:h-2.5" />
+                                  {order.status}
+                                </span>
+                              </div>
+                              <div className="h-1.5 sm:h-2 bg-white/10 rounded-full overflow-hidden relative">
+                                <div
+                                  className="h-full bg-gradient-to-r from-[#d67a9d] via-[#71b3c9] to-[#ffd166] rounded-full animate-gradient"
+                                  style={{ width: `${(Math.random() * 30 + 70)}%` }}
+                                >
+                                  <div className="absolute top-0 left-0 w-12 sm:w-20 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12 animate-slide" />
+                                </div>
                               </div>
                             </div>
-                          </div>
 
-                          {/* Товары */}
-                          {order.items && (
-                            <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 -mx-1 px-1">
-                              {order.items.map((item: any, idx: number) => (
-                                <div key={idx} className="flex-shrink-0">
-                                  <div className="relative group">
-                                    <div className="absolute -inset-0.5 bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] rounded-xl blur opacity-30 group-hover:opacity-50 transition-opacity" />
-                                    <div className="relative bg-black rounded-xl p-2 sm:p-3 min-w-[140px] sm:min-w-[180px]">
-                                      <div className="flex items-center gap-2 sm:gap-3">
-                                        <div className="relative">
-                                          <img
-                                            src={item.image}
-                                            alt={item.name}
-                                            className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg object-cover"
-                                            loading="lazy"
-                                          />
-                                          <div className="absolute inset-0 rounded-lg bg-gradient-to-t from-black/50 to-transparent" />
-                                        </div>
-                                        <div className="min-w-0">
-                                          <p className="text-xs sm:text-sm font-bold line-clamp-1">{item.name}</p>
-                                          <div className="flex items-center gap-1 sm:gap-2 mt-1">
-                                            <span className="text-xs text-white/60">x{item.quantity}</span>
-                                            <div className="w-0.5 h-0.5 sm:w-1 sm:h-1 rounded-full bg-white/20" />
-                                            <span className="text-xs font-bold text-[#71b3c9]">
-                                              {(item.price * item.quantity).toLocaleString()} ₽
-                                            </span>
+                            {/* Товары */}
+                            {order.items && (
+                              <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 -mx-1 px-1">
+                                {order.items.map((item: any, idx: number) => (
+                                  <div key={idx} className="flex-shrink-0">
+                                    <div className="relative group">
+                                      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] rounded-xl blur opacity-30 group-hover:opacity-50 transition-opacity" />
+                                      <div className="relative bg-black rounded-xl p-2 sm:p-3 min-w-[140px] sm:min-w-[180px]">
+                                        <div className="flex items-center gap-2 sm:gap-3">
+                                          <div className="relative">
+                                            <img
+                                              src={item.image}
+                                              alt={item.name}
+                                              className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg object-cover"
+                                              loading="lazy"
+                                            />
+                                            <div className="absolute inset-0 rounded-lg bg-gradient-to-t from-black/50 to-transparent" />
+                                          </div>
+                                          <div className="min-w-0">
+                                            <p className="text-xs sm:text-sm font-bold line-clamp-1">{item.name}</p>
+                                            <div className="flex items-center gap-1 sm:gap-2 mt-1">
+                                              <span className="text-xs text-white/60">x{item.quantity}</span>
+                                              <div className="w-0.5 h-0.5 sm:w-1 sm:h-1 rounded-full bg-white/20" />
+                                              <span className="text-xs font-bold text-[#71b3c9]">
+                                                {(item.price * item.quantity).toLocaleString()} ₽
+                                              </span>
+                                            </div>
                                           </div>
                                         </div>
                                       </div>
                                     </div>
                                   </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </ParallaxCard>
+                      ))
+                    ) : (
+                      <ParallaxCard>
+                        <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-8 sm:p-12 text-center">
+                          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-r from-[#d67a9d]/20 to-[#71b3c9]/20 flex items-center justify-center mx-auto mb-6">
+                            <Package size={24} className="sm:w-8 sm:h-8 text-white/20" />
+                          </div>
+                          <p className="text-xl sm:text-2xl font-bold tracking-widest mb-3">АКТИВНЫХ ЗАКАЗОВ НЕТ</p>
+                          <p className="text-white/60 mb-6 sm:mb-8 text-sm sm:text-base">Совершите первую покупку и получите бонусы!</p>
+                          <Link href="/catalog">
+                            <button className="px-6 py-3 sm:px-8 sm:py-4 rounded-xl bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] font-bold text-xs sm:text-sm tracking-widest hover:scale-105 transition-all">
+                              ПЕРЕЙТИ В КАТАЛОГ
+                            </button>
+                          </Link>
                         </div>
                       </ParallaxCard>
-                    ))
-                  ) : (
-                    <ParallaxCard>
-                      <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-8 sm:p-12 text-center">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-r from-[#d67a9d]/20 to-[#71b3c9]/20 flex items-center justify-center mx-auto mb-6">
-                          <Package size={24} className="sm:w-8 sm:h-8 text-white/20" />
-                        </div>
-                        <p className="text-xl sm:text-2xl font-bold tracking-widest mb-3">АКТИВНЫХ ЗАКАЗОВ НЕТ</p>
-                        <p className="text-white/60 mb-6 sm:mb-8 text-sm sm:text-base">Совершите первую покупку и получите бонусы!</p>
-                        <Link href="/catalog">
-                          <button className="px-6 py-3 sm:px-8 sm:py-4 rounded-xl bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] font-bold text-xs sm:text-sm tracking-widest hover:scale-105 transition-all">
-                            ПЕРЕЙТИ В КАТАЛОГ
-                          </button>
-                        </Link>
-                      </div>
-                    </ParallaxCard>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* КНОПКА ВЫХОДА */}
+          <div className="mt-12 sm:mt-16 text-center">
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut()
+                router.push('/')
+              }}
+              className="group relative px-6 py-3 sm:px-8 sm:py-4 rounded-xl border border-white/10 hover:border-red-500/50 transition-all"
+            >
+              <span className="text-xs sm:text-sm font-bold tracking-widest text-white/60 group-hover:text-red-400 transition-colors">
+                ЗАВЕРШИТЬ СЕССИЮ
+              </span>
+              <div className="absolute inset-x-4 bottom-2 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:via-red-500/50 transition-all" />
+            </button>
           </div>
         </div>
-
-        {/* КНОПКА ВЫХОДА */}
-        <div className="mt-12 sm:mt-16 text-center">
-          <button
-            onClick={async () => {
-              await supabase.auth.signOut()
-              router.push('/')
-            }}
-            className="group relative px-6 py-3 sm:px-8 sm:py-4 rounded-xl border border-white/10 hover:border-red-500/50 transition-all"
-          >
-            <span className="text-xs sm:text-sm font-bold tracking-widest text-white/60 group-hover:text-red-400 transition-colors">
-              ЗАВЕРШИТЬ СЕССИЮ
-            </span>
-            <div className="absolute inset-x-4 bottom-2 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:via-red-500/50 transition-all" />
-          </button>
-        </div>
-      </div>
-    </main>
+      </main>
+    </>
   )
 }
