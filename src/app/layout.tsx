@@ -1,13 +1,11 @@
 import { Inter } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
 import './globals.css'
-// Импортируем твои пропавшие компоненты
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 
 const inter = Inter({ subsets: ['latin'] })
 
-// Теперь метаданные можно экспортировать, так как файл серверный
 export const metadata = {
   title: 'VSGIGA SHOP',
   description: 'Персональный кабинет с интерактивными эффектами',
@@ -19,13 +17,15 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ru">
-      <body className={`${inter.className} antialiased bg-black`}>
+    <html lang="ru" className="h-full"> {/* ДОБАВИТЬ h-full */}
+      <body className={`${inter.className} antialiased bg-black min-h-full`}> {/* ИЗМЕНИТЬ bg-black на min-h-full */}
         {/* Возвращаем шапку сайта */}
         <Navbar />
 
         {/* Контент страницы */}
-        {children}
+        <div className="min-h-screen"> {/* ОБЕРНУТЬ в div с min-h-screen */}
+          {children}
+        </div>
 
         {/* Возвращаем подвал сайта */}
         <Footer />

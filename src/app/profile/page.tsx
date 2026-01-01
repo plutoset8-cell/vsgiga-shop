@@ -68,10 +68,10 @@ const SnowflakesInstanced = () => {
   useFrame((state) => {
     const time = state.clock.elapsedTime
     const delta = Math.min(state.clock.getDelta(), 0.1) // Защита от больших delta
-    
+
     // Оптимизация: обновляем только при необходимости
     if (time - lastUpdate.current < updateInterval / 1000) return
-    
+
     for (let i = 0; i < count; i++) {
       const snowflake = types[i]
       const progress = ((time * snowflake.speed) + snowflake.phase) % 1
@@ -151,18 +151,18 @@ const GiftsInstanced = () => {
       colors[i * 3 + 1] = color.g
       colors[i * 3 + 2] = color.b
     }
-    
-    meshRef.current.geometry.setAttribute('color', 
+
+    meshRef.current.geometry.setAttribute('color',
       new THREE.InstancedBufferAttribute(colors, 3)
     )
   }, [types])
 
   useFrame((state) => {
     const time = state.clock.elapsedTime
-    
+
     // Оптимизация: пропускаем кадры для слабых ПК
     if (time - lastUpdate.current < 0.032) return // ~30 FPS
-    
+
     for (let i = 0; i < count; i++) {
       const gift = types[i]
       const progress = ((time * gift.speed) + gift.phase) % 1
@@ -229,10 +229,10 @@ const StarsInstanced = () => {
 
   useFrame((state) => {
     const time = state.clock.elapsedTime
-    
+
     // Оптимизация: звезды пульсируют медленнее
     if (time - lastUpdate.current < 0.05) return // ~20 FPS
-    
+
     for (let i = 0; i < count; i++) {
       const star = types[i]
 
@@ -270,7 +270,7 @@ const SpaceBeamsOptimized = () => {
   useFrame((state) => {
     const time = state.clock.elapsedTime
     if (time - lastUpdate.current < 0.016) return // ~60 FPS
-    
+
     if (linesRef.current) {
       linesRef.current.rotation.y = time * 0.01
     }
@@ -324,7 +324,7 @@ const SpaceBeamsOptimized = () => {
 // 5. ГЛАВНЫЙ КОМПОНЕНТ 3D ФОНА С ОПТИМИЗАЦИЯМИ
 const Optimized3DBackground = () => {
   const { scene } = useThree()
-  
+
   // Оптимизация: автоматическая очистка при скрытии страницы
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -346,18 +346,18 @@ const Optimized3DBackground = () => {
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [scene])
-  
+
   return (
     <>
       <color attach="background" args={[0x000000]} />
       <fog attach="fog" args={[0x000000, 50, 200]} />
-      
+
       {/* Оптимизированные компоненты */}
       <StarsInstanced />
       <SnowflakesInstanced />
       <GiftsInstanced />
       <SpaceBeamsOptimized />
-      
+
       {/* Освещение */}
       <ambientLight intensity={0.3} />
       <pointLight position={[10, 10, 10]} intensity={0.5} color={0xd67a9d} />
@@ -369,16 +369,22 @@ const Optimized3DBackground = () => {
 // 7. OPTIMIZED КОНТЕЙНЕР CANVAS
 const ThreeDBackgroundContainer = () => {
   const [isMounted, setIsMounted] = useState(false)
-  
+
   useEffect(() => {
     setIsMounted(true)
     return () => setIsMounted(false)
   }, [])
-  
+
   if (!isMounted) return null
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-0">
+    <div
+      className="fixed inset-0 pointer-events-none"
+      style={{
+        zIndex: -50,
+        transform: 'translate3d(0,0,0)',
+      }}
+    >
       <Canvas
         camera={{
           position: [0, 0, 5],
@@ -394,17 +400,21 @@ const ThreeDBackgroundContainer = () => {
           depth: true,
           preserveDrawingBuffer: false
         }}
-        dpr={[1, 1.5]} // Оптимизированный DPR
+        dpr={[1, 1.5]}
         style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
           pointerEvents: 'none',
           touchAction: 'none',
-          width: '100%',
-          height: '100%'
+          zIndex: -50,
         }}
-        performance={{ 
+        performance={{
           min: 0.5,
           current: 1,
-          debounce: 1000 
+          debounce: 1000
         }}
         frameloop="always"
         onCreated={({ gl }) => {
@@ -426,7 +436,7 @@ const MagicGift = () => {
 
   const handleClick = useCallback(() => {
     if (isOpen) return
-    
+
     setShowConfetti(true)
     setPromoCode('HAPPY2026')
     setIsOpen(true)
@@ -451,7 +461,7 @@ const MagicGift = () => {
   }, [isOpen])
 
   // Оптимизированный конфетти с useMemo
-  const confettiParticles = useMemo(() => 
+  const confettiParticles = useMemo(() =>
     Array.from({ length: 80 }, (_, i) => ({
       id: i,
       xStart: 50 + Math.sin(i) * 20,
@@ -627,7 +637,7 @@ const MagicGift = () => {
 
 // АНИМИРОВАННАЯ СФЕРА ДЛЯ БОНУСОВ
 const AnimatedSphere = ({ value }: { value: number }) => {
-  const particles = useMemo(() => 
+  const particles = useMemo(() =>
     Array.from({ length: 8 }, (_, i) => ({
       id: i,
       left: 50 + 45 * Math.cos((i * 45 * Math.PI) / 180),
@@ -703,13 +713,13 @@ const ParallaxCard = ({ children, className = '' }: { children: React.ReactNode,
   const x = useMotionValue(0)
   const y = useMotionValue(0)
 
-  const rotateX = useSpring(useTransform(y, [-100, 100], [15, -15]), { 
-    stiffness: 300, 
+  const rotateX = useSpring(useTransform(y, [-100, 100], [15, -15]), {
+    stiffness: 300,
     damping: 30,
     mass: 0.5
   })
-  const rotateY = useSpring(useTransform(x, [-100, 100], [-15, 15]), { 
-    stiffness: 300, 
+  const rotateY = useSpring(useTransform(x, [-100, 100], [-15, 15]), {
+    stiffness: 300,
     damping: 30,
     mass: 0.5
   })
@@ -732,19 +742,19 @@ const ParallaxCard = ({ children, className = '' }: { children: React.ReactNode,
     <motion.div
       ref={ref}
       className={`${className} will-change-transform`}
-      style={{ 
-        rotateX, 
+      style={{
+        rotateX,
         rotateY,
         transformStyle: 'preserve-3d'
       }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       whileHover={{ scale: 1.03 }}
-      transition={{ 
-        type: "spring", 
-        stiffness: 300, 
+      transition={{
+        type: "spring",
+        stiffness: 300,
         damping: 25,
-        mass: 0.5 
+        mass: 0.5
       }}
     >
       {children}
@@ -787,7 +797,7 @@ const OptimizedAnimations = () => {
   useEffect(() => {
     // Добавляем CSS анимации в документ только один раз
     if (document.querySelector('#optimized-animations')) return
-    
+
     const style = document.createElement('style')
     style.id = 'optimized-animations'
     style.textContent = `
@@ -1049,7 +1059,7 @@ export default function ProfilePage() {
     const getData = async () => {
       try {
         setLoading(true)
-        
+
         const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
         if (authError || !authUser) {
           router.push('/login')
@@ -1113,7 +1123,7 @@ export default function ProfilePage() {
         setLoading(false)
       }
     }
-    
+
     getData()
   }, [router, isClient])
 
@@ -1259,7 +1269,7 @@ export default function ProfilePage() {
       <MagicGift />
 
       {/* Новогодний топ-баннер */}
-      <motion.div 
+      <motion.div
         className="fixed top-0 left-0 right-0 z-50"
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -1312,7 +1322,7 @@ export default function ProfilePage() {
                       />
 
                       {uploading && (
-                        <motion.div 
+                        <motion.div
                           className="absolute inset-0 bg-black/80 rounded-full flex items-center justify-center z-20"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
@@ -1454,8 +1464,8 @@ export default function ProfilePage() {
               {action.link ? (
                 <Link href={action.link} className="block">
                   <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4 sm:p-6 text-center group hover:border-white/30 transition-all duration-300 h-full">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl mx-auto mb-3 sm:mb-4 flex items-center justify-center" 
-                         style={{ backgroundColor: `${action.color}20` }}>
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl mx-auto mb-3 sm:mb-4 flex items-center justify-center"
+                      style={{ backgroundColor: `${action.color}20` }}>
                       <action.icon size={20} className="sm:w-7 sm:h-7" style={{ color: action.color }} />
                     </div>
                     <p className="text-xs sm:text-sm font-bold tracking-widest">{action.label}</p>
@@ -1468,8 +1478,8 @@ export default function ProfilePage() {
                   onClick={action.action}
                   className="w-full bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4 sm:p-6 text-center group hover:border-white/30 transition-all duration-300 h-full"
                 >
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl mx-auto mb-3 sm:mb-4 flex items-center justify-center" 
-                       style={{ backgroundColor: `${action.color}20` }}>
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl mx-auto mb-3 sm:mb-4 flex items-center justify-center"
+                    style={{ backgroundColor: `${action.color}20` }}>
                     <action.icon size={20} className="sm:w-7 sm:h-7" style={{ color: action.color }} />
                   </div>
                   <p className="text-xs sm:text-sm font-bold tracking-widest">{action.label}</p>
@@ -1511,7 +1521,7 @@ export default function ProfilePage() {
                         ПОТРАТИТЬ БОНУСЫ
                         <ArrowRight size={14} className="sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" />
                       </span>
-                      <motion.div 
+                      <motion.div
                         className="absolute inset-0 bg-gradient-to-r from-[#71b3c9] to-[#d67a9d]"
                         animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
                         transition={{ duration: 6, repeat: Infinity, ease: "linear" }}

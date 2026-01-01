@@ -8,6 +8,7 @@
   --background-end-rgb: 0, 0, 0;
 }
 
+/* УДАЛИТЬ overflow-x: hidden из body - это ломает fixed элементы */
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
@@ -16,24 +17,15 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
-}
-html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100%;
-  overflow-x: hidden;
+  min-height: 100vh; /* ИЗМЕНИТЬ с height на min-height */
 }
-/* Добавь это в конец файла */
-.logo-glow {
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 20px rgba(255, 0, 0, 0.3);
-}
-@layer base {
-  body {
-    @apply bg-black text-white antialiased overflow-x-hidden;
-    font-family: 'Inter', sans-serif; /* Или любой другой шрифт */
-  }
-}
+
+/* УДАЛИТЬ ВЕСЬ БЛОК html, body - он вызывает проблемы */
+
+/* УДАЛИТЬ @layer base - он конфликтует с Tailwind */
 
 /* Эффект свечения при наведении на кнопки */
 button {
@@ -44,6 +36,21 @@ button {
 button:hover {
   box-shadow: 0 0 20px rgba(214, 122, 157, 0.4);
 }
-@keyframes shimmer {
-  100% { transform: translateX(100%); }
+
+/* ДОБАВИТЬ CSS АНИМАЦИИ ДЛЯ ИСПОЛЬЗУЕМЫХ КЛАССОВ */
+@keyframes gradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
+
+@keyframes slide {
+  0% { transform: translateX(-100%) skewX(12deg); }
+  100% { transform: translateX(400%) skewX(12deg); }
+}
+
+@keyframes slideDown {
+  0% { transform: translateY(-100%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* УДАЛИТЬ @keyframes shimmer - не используется */
