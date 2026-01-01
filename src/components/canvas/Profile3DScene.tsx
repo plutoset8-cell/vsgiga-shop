@@ -1,12 +1,12 @@
-// components/canvas/Profile3DScene.tsx
+// src/components/canvas/Profile3DScene.tsx
 'use client'
 
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Suspense, useRef, useMemo } from 'react'
+import { Suspense, useRef, useMemo, useEffect, useState } from 'react'
 import * as THREE from 'three'
 import Snow from './Snow'
 import Aurora from './Aurora'
-import { InstancedMesh, Object3D, Color } from 'three'
+import { InstancedMesh, Object3D, Color, Scene } from 'three'
 
 // Звезды из профиля (упрощенная версия)
 const ProfileStars = () => {
@@ -24,6 +24,18 @@ const ProfileStars = () => {
       pulseOffset: Math.random() * Math.PI * 2
     })), [count]
   )
+
+  useEffect(() => {
+    // Инициализация позиций при монтировании
+    for (let i = 0; i < count; i++) {
+      const star = types[i]
+      dummy.position.set(star.x, star.y, star.z)
+      dummy.scale.setScalar(star.size)
+      dummy.updateMatrix()
+      meshRef.current.setMatrixAt(i, dummy.matrix)
+    }
+    meshRef.current.instanceMatrix.needsUpdate = true
+  }, [types, dummy])
 
   useFrame((state) => {
     const time = state.clock.elapsedTime
@@ -46,7 +58,7 @@ const ProfileStars = () => {
       <meshBasicMaterial
         color="#ffffff"
         transparent
-        opacity={0.7}
+        opacity={0.9}
       />
     </instancedMesh>
   )
@@ -70,7 +82,25 @@ const ProfileGifts = () => {
     })), [count]
   )
 
+  // Инициализация цветов
+  useEffect(() => {
+    if (!meshRef.current) return
+    
+    const colors = new Float32Array(count * 3)
+    for (let i = 0; i < count; i++) {
+      const color = new Color(types[i].color)
+      colors[i * 3] = color.r
+      colors[i * 3 + 1] = color.g
+      colors[i * 3 + 2] = color.b
+    }
+    
+    const geometry = meshRef.current.geometry
+    geometry.setAttribute('color', new THREE.InstancedBufferAttribute(colors, 3))
+  }, [types])
+
   useFrame((state) => {
+    if (!meshRef.current) return
+    
     const time = state.clock.elapsedTime
     
     for (let i = 0; i < count; i++) {
@@ -100,32 +130,103 @@ const ProfileGifts = () => {
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial
         color="#ffffff"
-        emissiveIntensity={0.3}
+        emissiveIntensity={0.5}
         roughness={0.2}
         metalness={0.5}
         transparent
-        opacity={0.8}
+        opacity={0.9}
+        vertexColors={true}
       />
     </instancedMesh>
   )
 }
 
-export default function Profile3DScene() {
+// Дополнительный свет для лучшей видимости
+const AdditionalLighting = () => {
   return (
-    <div className="fixed inset-0 -z-50 pointer-events-none">
+    <>
+      <ambientLight intensity={0.6} color={0xffffff} />
+      <directionalLight
+        position={[10, 10, 5]}
+        intensity={0.8}
+        color={0xffffff}
+        castShadow
+      />
+      <pointLight 
+        position={[0, 5, 10]} 
+        intensity={1.0} 
+        color={0xd67a9d} 
+        distance={50}
+      />
+      <pointLight 
+        position={[-10, 3, 5]} 
+        intensity={0.7} 
+        color={0x71b3c9} 
+        distance={50}
+      />
+      <pointLight 
+        position={[10, 3, 5]} 
+        intensity={0.7} 
+        color={0xffd166} 
+        distance={50}
+      />
+    </>
+  )
+}
+
+// Прозрачная плоскость для эффекта глубины
+const DepthPlane = () => {
+  const meshRef = useRef<THREE.Mesh>(null!)
+
+  return (
+    <mesh position={[0, 0, -100]} ref={meshRef}>
+      <planeGeometry args={[200, 200]} />
+      <meshBasicMaterial
+        color={0x000000}
+        transparent
+        opacity={0.2}
+        side={THREE.DoubleSide}
+      />
+    </mesh>
+  )
+}
+
+export default function Profile3DScene() {
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+    return () => setIsMounted(false)
+  }, [])
+
+  if (!isMounted) return null
+
+  return (
+    <div 
+      className="fixed inset-0 pointer-events-none"
+      style={{
+        zIndex: -10,
+        transform: 'translate3d(0,0,0)',
+        willChange: 'transform',
+        contain: 'layout style paint',
+      }}
+    >
       <Canvas
         camera={{
-          position: [0, 0, 5],
+          position: [0, 0, 10],
           fov: 75,
           near: 0.1,
-          far: 500
+          far: 1000,
+          zoom: 1
         }}
         gl={{
           antialias: true,
-          alpha: true,
+          alpha: false,
           powerPreference: "high-performance",
           stencil: false,
-          depth: true
+          depth: true,
+          preserveDrawingBuffer: false,
+          logarithmicDepthBuffer: true
         }}
         dpr={[1, 1.5]}
         style={{
@@ -135,39 +236,59 @@ export default function Profile3DScene() {
           width: '100vw',
           height: '100vh',
           pointerEvents: 'none',
-          touchAction: 'none'
+          touchAction: 'none',
+          zIndex: -10,
+          background: 'transparent',
+          mixBlendMode: 'normal'
         }}
         performance={{
           min: 0.5,
           current: 1,
           debounce: 1000
         }}
-        onCreated={({ gl }) => {
+        shadows
+        frameloop="always"
+        onCreated={({ gl, scene }) => {
           gl.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
+          gl.setClearColor(0x000000, 1)
+          gl.autoClear = true
+          gl.sortObjects = true
+          
+          // Оптимизация сцены
+          scene.traverse((obj) => {
+            if (obj instanceof THREE.Mesh) {
+              obj.frustumCulled = true
+              obj.castShadow = false
+              obj.receiveShadow = false
+            }
+          })
         }}
       >
         <color attach="background" args={[0x000000]} />
-        <fog attach="fog" args={[0x000000, 40, 200]} />
+        <fog attach="fog" args={[0x000000, 20, 150]} />
+        
+        <AdditionalLighting />
+        <DepthPlane />
         
         <Suspense fallback={null}>
-          {/* Существующий снег */}
           <Snow />
-          
-          {/* Существующее северное сияние */}
           <Aurora />
-          
-          {/* Звезды из профиля */}
-          <ProfileStars />
-          
-          {/* Подарки из профиля */}
-          <ProfileGifts />
-          
-          {/* Освещение */}
-          <ambientLight intensity={0.4} />
-          <pointLight position={[10, 10, 10]} intensity={0.4} color={0xd67a9d} />
-          <pointLight position={[-10, -10, -10]} intensity={0.2} color={0x71b3c9} />
-          <pointLight position={[0, 20, 0]} intensity={0.1} color={0xffffff} />
         </Suspense>
+        
+        {/* Профильные элементы - вне Suspense для надежности */}
+        <ProfileStars />
+        <ProfileGifts />
+        
+        {/* Дополнительные эффекты */}
+        <mesh position={[0, 0, -50]}>
+          <sphereGeometry args={[30, 16, 16]} />
+          <meshBasicMaterial
+            color={0x000000}
+            transparent
+            opacity={0.1}
+            side={THREE.BackSide}
+          />
+        </mesh>
       </Canvas>
     </div>
   )

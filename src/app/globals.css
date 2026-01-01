@@ -1,3 +1,4 @@
+/* src/app/globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,7 +9,17 @@
   --background-end-rgb: 0, 0, 0;
 }
 
-/* УДАЛИТЬ overflow-x: hidden из body - это ломает fixed элементы */
+/* ОСНОВНЫЕ ИСПРАВЛЕНИЯ ДЛЯ 3D СЦЕНЫ */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
@@ -17,15 +28,64 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  min-height: 100vh; /* ИЗМЕНИТЬ с height на min-height */
+  min-height: 100vh;
+  position: relative;
+  z-index: 0;
 }
 
-/* УДАЛИТЬ ВЕСЬ БЛОК html, body - он вызывает проблемы */
+/* КРИТИЧЕСКИ ВАЖНЫЕ ИСПРАВЛЕНИЯ ДЛЯ FIXED ЭЛЕМЕНТОВ */
+.fixed {
+  position: fixed !important;
+  transform: translate3d(0, 0, 0) !important;
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+  will-change: transform !important;
+  contain: layout style paint !important;
+}
 
-/* УДАЛИТЬ @layer base - он конфликтует с Tailwind */
+/* Гарантия, что 3D сцена находится ПОД всем контентом */
+.z-\[-10\] {
+  z-index: -10 !important;
+}
+
+.z-\[-50\] {
+  z-index: -50 !important;
+}
+
+/* Отключение GPU ускорения для некоторых элементов, которые могут конфликтовать */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: transform, opacity;
+  contain: layout style paint;
+}
+
+/* Оптимизация для 3D Canvas */
+canvas {
+  display: block !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+  touch-action: none !important;
+  z-index: -10 !important;
+  background: transparent !important;
+}
+
+/* Исправление для main контейнера */
+main {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+}
+
+/* Убедимся, что все fixed элементы правильно позиционируются */
+.fixed {
+  transform: translate3d(0,0,0);
+}
 
 /* Эффект свечения при наведении на кнопки */
 button {
@@ -53,4 +113,52 @@ button:hover {
   100% { transform: translateY(0); opacity: 1; }
 }
 
-/* УДАЛИТЬ @keyframes shimmer - не используется */
+.animate-gradient {
+  animation: gradient 6s ease infinite;
+  background-size: 400% 400%;
+}
+
+.animate-slide {
+  animation: slide 3s linear infinite;
+}
+
+.animate-slideDown {
+  animation: slideDown 0.5s ease-out;
+}
+
+/* Улучшение производительности */
+@media (prefers-reduced-motion: reduce) {
+  .animate-gradient,
+  .animate-slide,
+  .animate-slideDown {
+    animation: none;
+  }
+}
+
+/* Отключение outline для лучшего вида */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Улучшение рендеринга текста */
+* {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Сброс стилей для изображений */
+img {
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+  font-style: italic;
+  background-repeat: no-repeat;
+  background-size: cover;
+  shape-margin: 0.75rem;
+}
+
+/* Изоляция для предотвращения конфликтов z-index */
+.isolate {
+  isolation: isolate;
+}
