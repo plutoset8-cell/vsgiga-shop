@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback, useMemo, useContext } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
@@ -90,7 +90,351 @@ type UserProfile = {
     progress: number
 }
 
+// --- OrderCard как отдельный компонент ---
+const OrderCard = React.memo(({
+    order,
+    expanded,
+    onToggle,
+    onStatusClick
+}: {
+    order: Order
+    expanded: boolean
+    onToggle: () => void
+    onStatusClick: (orderId: string, currentStatus: string) => void
+}) => {
+    const delivery = order.delivery_info || {
+        fullName: 'НЕ УКАЗАНО',
+        phone: '—',
+        address: '—',
+        method: 'delivery'
+    }
+
+    const getStatusColor = (status: string) => {
+        if (status.includes('ОТКЛОНЕН')) return 'bg-red-500/20 border-red-500/30 text-red-400'
+        if (status.includes('Получен')) return 'bg-green-500/20 border-green-500/30 text-green-400'
+        if (status.includes('Отправлен')) return 'bg-blue-500/20 border-blue-500/30 text-blue-400'
+        return 'bg-cyan-500/20 border-cyan-500/30 text-cyan-400'
+    }
+
+    return (
+        <motion.div
+            layout
+            className="bg-gradient-to-br from-white/5 to-transparent border border-white/10 rounded-[2.5rem] overflow-hidden backdrop-blur-lg"
+            whileHover={{ scale: 1.005, borderColor: 'rgba(214,122,157,0.3)' }}
+            transition={{ duration: 0.3 }}
+        >
+            {/* ВЕРХНЯЯ ПАНЕЛЬ ЗАКАЗА */}
+            <div className="p-8 flex flex-wrap items-center justify-between gap-6 relative">
+                <div className="absolute top-0 left-0 w-32 h-32 bg-[#ff007a]/5 blur-3xl -translate-x-1/2 -translate-y-1/2" />
+
+                <div className="flex items-center gap-6 relative z-10">
+                    <motion.div
+                        className="w-16 h-16 bg-gradient-to-br from-[#d67a9d]/20 to-[#71b3c9]/20 rounded-2xl flex items-center justify-center border border-white/10 backdrop-blur-sm"
+                        whileHover={{ rotate: 10 }}
+                    >
+                        <Package className="text-white" size={28} />
+                    </motion.div>
+                    <div>
+                        <h3 className="font-black text-xl italic uppercase tracking-tighter bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
+                            ЗАКАЗ_{order.id.slice(0, 8)}
+                        </h3>
+                        <div className="flex items-center gap-3 mt-2">
+                            <div className="flex items-center gap-1 text-[10px] text-white/30">
+                                <Clock size={10} />
+                                {new Date(order.created_at).toLocaleString('ru-RU')}
+                            </div>
+                            <div className="w-1 h-1 bg-white/20 rounded-full" />
+                            <div className="text-[10px] text-white/30 font-bold uppercase">
+                                {delivery.method === 'pickup' ? 'САМОВЫВОЗ' : 'ДОСТАВКА'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* БЛОК СТАТУСА И КОДА ОПЛАТЫ */}
+                <div className="flex items-center gap-4 relative z-10">
+                    {/* КОД ОПЛАТЫ */}
+                    <motion.div
+                        className="px-4 py-3 rounded-2xl bg-gradient-to-r from-[#00ffea]/10 to-[#00ffea]/5 border border-[#00ffea]/30"
+                        whileHover={{ scale: 1.05 }}
+                        animate={{ boxShadow: ['0 0 10px rgba(0,255,234,0.2)', '0 0 20px rgba(0,255,234,0.3)', '0 0 10px rgba(0,255,234,0.2)'] }}
+                        transition={{ repeat: Infinity, duration: 2 }}
+                    >
+                        <p className="text-[8px] font-black text-[#00ffea] uppercase tracking-widest mb-1">КОД ОПЛАТЫ</p>
+                        <p className="text-sm font-black text-white tracking-wider font-mono">
+                            {order.payment_code || 'N/A'}
+                        </p>
+                    </motion.div>
+
+                    {/* КНОПКА СТАТУСА */}
+                    <motion.button
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onStatusClick(order.id, order.status)
+                        }}
+                        className={`px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center gap-2 border backdrop-blur-sm ${getStatusColor(order.status)}`}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                    >
+                        <RefreshCw size={12} className="animate-spin-slow" />
+                        {order.status}
+                    </motion.button>
+
+                    {/* КНОПКА РАСКРЫТИЯ */}
+                    <motion.button
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onToggle()
+                        }}
+                        className="p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all border border-white/10"
+                        whileHover={{ rotate: 180 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        {expanded ? <ChevronUp /> : <ChevronDown />}
+                    </motion.button>
+                </div>
+            </div>
+
+            {/* РАСКРЫВАЮЩАЯСЯ ЧАСТЬ */}
+            <AnimatePresence>
+                {expanded && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.4 }}
+                        className="overflow-hidden border-t border-white/5 bg-black/20"
+                    >
+                        <div className="p-10 grid grid-cols-1 lg:grid-cols-3 gap-12">
+                            {/* БЛОК 1: ДАННЫЕ КЛИЕНТА */}
+                            <div className="space-y-6">
+                                <h4 className="flex items-center gap-3 text-[10px] font-black text-[#71b3c9] uppercase tracking-[0.3em] italic">
+                                    <User size={14} /> Данные клиента
+                                </h4>
+                                <div className="space-y-4">
+                                    <div className="bg-gradient-to-br from-white/5 to-transparent p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
+                                        <p className="text-[9px] text-white/20 uppercase font-black mb-1">ФИО</p>
+                                        <p className="font-black italic uppercase text-white">
+                                            {delivery.fullName || 'НЕ УКАЗАНО'}
+                                        </p>
+                                    </div>
+                                    <div className="bg-gradient-to-br from-white/5 to-transparent p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
+                                        <p className="text-[9px] text-white/20 uppercase font-black mb-1">Телефон</p>
+                                        <p className="font-black italic text-white flex items-center gap-2">
+                                            <Phone size={12} />
+                                            {delivery.phone || '—'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* БЛОК 2: АДРЕС И СПОСОБ ДОСТАВКИ */}
+                            <div className="space-y-6">
+                                <h4 className="flex items-center gap-3 text-[10px] font-black text-[#d67a9d] uppercase tracking-[0.3em] italic">
+                                    <Truck size={14} /> Доставка
+                                </h4>
+                                <div className="bg-gradient-to-br from-white/5 to-transparent p-6 rounded-2xl border border-white/10 backdrop-blur-sm min-h-[120px]">
+                                    <div className="flex items-start gap-3 mb-4">
+                                        <MapPin className="text-[#d67a9d]" size={16} />
+                                        <div>
+                                            <p className="text-[9px] text-white/20 uppercase font-black mb-2 tracking-widest">Адрес</p>
+                                            <p className="font-bold text-sm leading-relaxed italic uppercase text-white">
+                                                {delivery.address || '—'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                                        <span className="text-[8px] font-black uppercase text-white/30">Метод:</span>
+                                        <span className={`text-[9px] font-black uppercase ${delivery.method === 'pickup' ? 'text-[#00ffea]' : 'text-[#d67a9d]'}`}>
+                                            {delivery.method === 'pickup' ? 'САМОВЫВОЗ' : 'КУРЬЕР'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* БЛОК 3: СОСТАВ ЗАКАЗА */}
+                            <div className="space-y-6">
+                                <h4 className="flex items-center gap-3 text-[10px] font-black text-white uppercase tracking-[0.3em] italic">
+                                    <ShoppingBag size={14} /> Состав заказа
+                                </h4>
+
+                                {/* ПРОМОКОД И СКИДКА */}
+                                {(order.applied_promo || (order.discount_amount && order.discount_amount > 0)) && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="bg-gradient-to-r from-[#71b3c9]/10 to-transparent p-4 rounded-2xl border border-[#71b3c9]/20 backdrop-blur-sm"
+                                    >
+                                        <p className="text-[9px] font-black text-[#71b3c9] uppercase tracking-widest mb-1">Примененный бонус</p>
+                                        <div className="flex justify-between items-center">
+                                            <div className="flex items-center gap-2">
+                                                <Ticket className="text-[#71b3c9]" size={14} />
+                                                <p className="font-black italic text-sm uppercase text-white">{order.applied_promo || 'ПРОМОКОД'}</p>
+                                            </div>
+                                            <p className="font-black text-[#d67a9d] text-sm">-{order.discount_amount?.toLocaleString()} ₽</p>
+                                        </div>
+                                    </motion.div>
+                                )}
+
+                                {/* СПИСОК ТОВАРОВ */}
+                                <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {order.items?.map((item, index) => (
+                                        <motion.div
+                                            key={`${item.id}-${index}`}
+                                            initial={{ opacity: 0, x: -10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: index * 0.1 }}
+                                            className="flex justify-between items-center bg-gradient-to-r from-white/5 to-transparent p-4 rounded-xl border border-white/10 group hover:border-[#d67a9d]/30 transition-all"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 rounded-lg bg-black overflow-hidden border border-white/10 flex-shrink-0">
+                                                    <img
+                                                        src={item.image || (item.images && item.images[0]) || '/placeholder.jpg'}
+                                                        className="w-full h-full object-cover"
+                                                        alt={item.name}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black uppercase leading-none text-white">{item.name}</p>
+                                                    <div className="flex gap-2 mt-1">
+                                                        <span className="text-[9px] font-black bg-black/50 text-white px-2 py-0.5 rounded italic border border-white/10">
+                                                            РАЗМЕР: {item.size || item.selectedSize || 'OS'}
+                                                        </span>
+                                                        <span className="text-[9px] font-bold text-white/50 uppercase">
+                                                            ×{item.quantity || 1}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p className="font-black italic text-white ml-4">
+                                                {((item.price || 0) * (item.quantity || 1)).toLocaleString()} ₽
+                                            </p>
+                                        </motion.div>
+                                    ))}
+                                </div>
+
+                                {/* ИТОГО */}
+                                <div className="pt-4 border-t border-white/10">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-[10px] font-black uppercase text-white/30">ИТОГО:</span>
+                                        <span className="text-xl font-black italic text-white">{order.total_amount.toLocaleString()} ₽</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </motion.div>
+    )
+})
+
+OrderCard.displayName = 'OrderCard'
+
+// --- StatusModal как отдельный компонент ---
+const StatusModal = React.memo(({
+    statusModal,
+    setStatusModal,
+    updateOrderStatus
+}: {
+    statusModal: {
+        show: boolean
+        orderId: string
+        currentStatus: string
+    }
+    setStatusModal: (modal: { show: boolean, orderId: string, currentStatus: string }) => void
+    updateOrderStatus: (orderId: string, status: string) => Promise<void>
+}) => {
+    const STATUSES = [
+        'Оформлен',
+        'На сборке в другом городе',
+        'Приехал на склад',
+        'Отгружен на складе',
+        'Отправлен в город получателя',
+        'В пункте выдачи',
+        'Получен',
+        'ОТКЛОНЕН: НЕ ОПЛАЧЕН (48Ч)'
+    ]
+
+    const handleConfirmStatus = async (status: string) => {
+        if (!statusModal.orderId) return
+
+        try {
+            await updateOrderStatus(statusModal.orderId, status)
+            setStatusModal({ show: false, orderId: '', currentStatus: '' })
+        } catch (error) {
+            console.error('Ошибка обновления статуса:', error)
+        }
+    }
+
+    if (!statusModal.show) return null
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-lg"
+            onClick={() => setStatusModal({ show: false, orderId: '', currentStatus: '' })}
+        >
+            <motion.div
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+                className="bg-gradient-to-br from-black to-gray-900 border border-white/10 rounded-[2.5rem] p-8 max-w-lg w-full relative"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <button
+                    onClick={() => setStatusModal({ show: false, orderId: '', currentStatus: '' })}
+                    className="absolute top-6 right-6 p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all"
+                >
+                    <X size={20} />
+                </button>
+
+                <h3 className="text-2xl font-black italic uppercase mb-6 bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
+                    Обновить статус заказа
+                </h3>
+
+                <p className="text-sm text-white/50 mb-8 font-bold uppercase">
+                    Заказ: <span className="text-[#d67a9d]">{statusModal.orderId.slice(0, 12)}...</span>
+                    <br />
+                    Текущий статус: <span className="text-[#71b3c9]">{statusModal.currentStatus}</span>
+                </p>
+
+                <div className="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                    {STATUSES.map((status) => (
+                        <motion.button
+                            key={status}
+                            onClick={() => handleConfirmStatus(status)}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className={`p-5 rounded-2xl text-left font-black uppercase text-sm transition-all ${status === statusModal.currentStatus
+                                ? 'bg-[#d67a9d] text-white border-[#d67a9d]'
+                                : 'bg-white/5 border border-white/10 hover:border-[#d67a9d]/50'
+                                }`}
+                        >
+                            {status}
+                        </motion.button>
+                    ))}
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-white/10 flex justify-end">
+                    <button
+                        onClick={() => setStatusModal({ show: false, orderId: '', currentStatus: '' })}
+                        className="px-6 py-3 rounded-xl text-[10px] font-black uppercase border border-white/10 hover:bg-white/5 transition-all"
+                    >
+                        Отмена
+                    </button>
+                </div>
+            </motion.div>
+        </motion.div>
+    )
+})
+
+StatusModal.displayName = 'StatusModal'
+
 export default function AdminPage() {
+    // --- ВСЕ ХУКИ ДОЛЖНЫ БЫТЬ ЗДЕСЬ, БЕЗ УСЛОВИЙ ---
     const [isClient, setIsClient] = useState(false)
     const [pendingStatus, setPendingStatus] = useState<string | null>(null)
     const [statusModal, setStatusModal] = useState<{
@@ -122,7 +466,7 @@ export default function AdminPage() {
 
     const ADMIN_EMAIL = 'plutoset8@gmail.com'
 
-    // --- КОНСТАНТЫ ---
+    // Константы
     const CLOTHES_SIZES = [
         { size: 'S', inStock: true },
         { size: 'M', inStock: true },
@@ -134,17 +478,6 @@ export default function AdminPage() {
         size: (35 + i).toString(),
         inStock: true
     }))
-
-    const STATUSES = [
-        'Оформлен',
-        'На сборке в другом городе',
-        'Приехал на склад',
-        'Отгружен на складе',
-        'Отправлен в город получателя',
-        'В пункте выдачи',
-        'Получен',
-        'ОТКЛОНЕН: НЕ ОПЛАЧЕН (48Ч)'
-    ]
 
     // Формы
     const [form, setForm] = useState({
@@ -180,12 +513,6 @@ export default function AdminPage() {
         image_url: ''
     })
 
-    useEffect(() => {
-        setIsClient(true)
-    }, [])
-
-    if (!isClient) return null // Это спасет от Application Error при первой загрузке
-
     // --- TELEGRAM УВЕДОМЛЕНИЯ ---
     const sendTelegramNotify = useCallback(async (text: string) => {
         const BOT_TOKEN = '8394553082:AAHDgNAHq19eNtRY3JlWSqOlEFPt0halL44'
@@ -205,7 +532,12 @@ export default function AdminPage() {
         }
     }, [])
 
-    // --- ВОССТАНОВЛЕННЫЕ ФУНКЦИИ ИНВЕНТАРЯ ---
+    // --- Эффекты ---
+    useEffect(() => {
+        setIsClient(true)
+    }, [])
+
+    // --- Остальной код без изменений, но УДАЛИТЬ УСЛОВИЕ В НАЧАЛЕ ---
 
     // 1. ФУНКЦИЯ ЗАГРУЗКИ КАРТИНОК
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -496,7 +828,6 @@ export default function AdminPage() {
             ))
             toast.success('СТАТУС_ОБНОВЛЕН')
 
-
             await sendTelegramNotify(
                 `📦 <b>vsgiga LOGISTICS</b>\n` +
                 `Заказ: <code>${orderId.slice(0, 8)}...</code>\n` +
@@ -664,337 +995,7 @@ export default function AdminPage() {
         if (!error) fetchNews()
     }
 
-    // --- КОМПОНЕНТ КАРТОЧКИ ЗАКАЗА ---
-    const OrderCard = React.memo(({
-        order,
-        expanded,
-        onToggle,
-        onStatusClick
-    }: {
-        order: Order
-        expanded: boolean
-        onToggle: () => void
-        onStatusClick: (orderId: string, currentStatus: string) => void
-    }) => {
-        const delivery = order.delivery_info || {
-            fullName: 'НЕ УКАЗАНО',
-            phone: '—',
-            address: '—',
-            method: 'delivery'
-        }
-
-        const getStatusColor = (status: string) => {
-            if (status.includes('ОТКЛОНЕН')) return 'bg-red-500/20 border-red-500/30 text-red-400'
-            if (status.includes('Получен')) return 'bg-green-500/20 border-green-500/30 text-green-400'
-            if (status.includes('Отправлен')) return 'bg-blue-500/20 border-blue-500/30 text-blue-400'
-            return 'bg-cyan-500/20 border-cyan-500/30 text-cyan-400'
-        }
-
-        return (
-            <motion.div
-                layout
-                className="bg-gradient-to-br from-white/5 to-transparent border border-white/10 rounded-[2.5rem] overflow-hidden backdrop-blur-lg"
-                whileHover={{ scale: 1.005, borderColor: 'rgba(214,122,157,0.3)' }}
-                transition={{ duration: 0.3 }}
-            >
-                {/* ВЕРХНЯЯ ПАНЕЛЬ ЗАКАЗА */}
-                <div className="p-8 flex flex-wrap items-center justify-between gap-6 relative">
-                    <div className="absolute top-0 left-0 w-32 h-32 bg-[#ff007a]/5 blur-3xl -translate-x-1/2 -translate-y-1/2" />
-
-                    <div className="flex items-center gap-6 relative z-10">
-                        <motion.div
-                            className="w-16 h-16 bg-gradient-to-br from-[#d67a9d]/20 to-[#71b3c9]/20 rounded-2xl flex items-center justify-center border border-white/10 backdrop-blur-sm"
-                            whileHover={{ rotate: 10 }}
-                        >
-                            <Package className="text-white" size={28} />
-                        </motion.div>
-                        <div>
-                            <h3 className="font-black text-xl italic uppercase tracking-tighter bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
-                                ЗАКАЗ_{order.id.slice(0, 8)}
-                            </h3>
-                            <div className="flex items-center gap-3 mt-2">
-                                <div className="flex items-center gap-1 text-[10px] text-white/30">
-                                    <Clock size={10} />
-                                    {new Date(order.created_at).toLocaleString('ru-RU')}
-                                </div>
-                                <div className="w-1 h-1 bg-white/20 rounded-full" />
-                                <div className="text-[10px] text-white/30 font-bold uppercase">
-                                    {delivery.method === 'pickup' ? 'САМОВЫВОЗ' : 'ДОСТАВКА'}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* БЛОК СТАТУСА И КОДА ОПЛАТЫ */}
-                    <div className="flex items-center gap-4 relative z-10">
-                        {/* КОД ОПЛАТЫ */}
-                        <motion.div
-                            className="px-4 py-3 rounded-2xl bg-gradient-to-r from-[#00ffea]/10 to-[#00ffea]/5 border border-[#00ffea]/30"
-                            whileHover={{ scale: 1.05 }}
-                            animate={{ boxShadow: ['0 0 10px rgba(0,255,234,0.2)', '0 0 20px rgba(0,255,234,0.3)', '0 0 10px rgba(0,255,234,0.2)'] }}
-                            transition={{ repeat: Infinity, duration: 2 }}
-                        >
-                            <p className="text-[8px] font-black text-[#00ffea] uppercase tracking-widest mb-1">КОД ОПЛАТЫ</p>
-                            <p className="text-sm font-black text-white tracking-wider font-mono">
-                                {order.payment_code || 'N/A'}
-                            </p>
-                        </motion.div>
-
-                        {/* КНОПКА СТАТУСА */}
-                        <motion.button
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                onStatusClick(order.id, order.status)
-                            }}
-                            className={`px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center gap-2 border backdrop-blur-sm ${getStatusColor(order.status)}`}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                        >
-                            <RefreshCw size={12} className="animate-spin-slow" />
-                            {order.status}
-                        </motion.button>
-
-                        {/* КНОПКА РАСКРЫТИЯ */}
-                        <motion.button
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                onToggle()
-                            }}
-                            className="p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all border border-white/10"
-                            whileHover={{ rotate: 180 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            {expanded ? <ChevronUp /> : <ChevronDown />}
-                        </motion.button>
-                    </div>
-                </div>
-
-                {/* РАСКРЫВАЮЩАЯСЯ ЧАСТЬ */}
-                <AnimatePresence>
-                    {expanded && (
-                        <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.4 }}
-                            className="overflow-hidden border-t border-white/5 bg-black/20"
-                        >
-                            <div className="p-10 grid grid-cols-1 lg:grid-cols-3 gap-12">
-                                {/* БЛОК 1: ДАННЫЕ КЛИЕНТА */}
-                                <div className="space-y-6">
-                                    <h4 className="flex items-center gap-3 text-[10px] font-black text-[#71b3c9] uppercase tracking-[0.3em] italic">
-                                        <User size={14} /> Данные клиента
-                                    </h4>
-                                    <div className="space-y-4">
-                                        <div className="bg-gradient-to-br from-white/5 to-transparent p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
-                                            <p className="text-[9px] text-white/20 uppercase font-black mb-1">ФИО</p>
-                                            <p className="font-black italic uppercase text-white">
-                                                {delivery.fullName || 'НЕ УКАЗАНО'}
-                                            </p>
-                                        </div>
-                                        <div className="bg-gradient-to-br from-white/5 to-transparent p-4 rounded-2xl border border-white/10 backdrop-blur-sm">
-                                            <p className="text-[9px] text-white/20 uppercase font-black mb-1">Телефон</p>
-                                            <p className="font-black italic text-white flex items-center gap-2">
-                                                <Phone size={12} />
-                                                {delivery.phone || '—'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* БЛОК 2: АДРЕС И СПОСОБ ДОСТАВКИ */}
-                                <div className="space-y-6">
-                                    <h4 className="flex items-center gap-3 text-[10px] font-black text-[#d67a9d] uppercase tracking-[0.3em] italic">
-                                        <Truck size={14} /> Доставка
-                                    </h4>
-                                    <div className="bg-gradient-to-br from-white/5 to-transparent p-6 rounded-2xl border border-white/10 backdrop-blur-sm min-h-[120px]">
-                                        <div className="flex items-start gap-3 mb-4">
-                                            <MapPin className="text-[#d67a9d]" size={16} />
-                                            <div>
-                                                <p className="text-[9px] text-white/20 uppercase font-black mb-2 tracking-widest">Адрес</p>
-                                                <p className="font-bold text-sm leading-relaxed italic uppercase text-white">
-                                                    {delivery.address || '—'}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
-                                            <span className="text-[8px] font-black uppercase text-white/30">Метод:</span>
-                                            <span className={`text-[9px] font-black uppercase ${delivery.method === 'pickup' ? 'text-[#00ffea]' : 'text-[#d67a9d]'}`}>
-                                                {delivery.method === 'pickup' ? 'САМОВЫВОЗ' : 'КУРЬЕР'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* БЛОК 3: СОСТАВ ЗАКАЗА */}
-                                <div className="space-y-6">
-                                    <h4 className="flex items-center gap-3 text-[10px] font-black text-white uppercase tracking-[0.3em] italic">
-                                        <ShoppingBag size={14} /> Состав заказа
-                                    </h4>
-
-                                    {/* ПРОМОКОД И СКИДКА */}
-                                    {(order.applied_promo || (order.discount_amount && order.discount_amount > 0)) && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: -10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className="bg-gradient-to-r from-[#71b3c9]/10 to-transparent p-4 rounded-2xl border border-[#71b3c9]/20 backdrop-blur-sm"
-                                        >
-                                            <p className="text-[9px] font-black text-[#71b3c9] uppercase tracking-widest mb-1">Примененный бонус</p>
-                                            <div className="flex justify-between items-center">
-                                                <div className="flex items-center gap-2">
-                                                    <Ticket className="text-[#71b3c9]" size={14} />
-                                                    <p className="font-black italic text-sm uppercase text-white">{order.applied_promo || 'ПРОМОКОД'}</p>
-                                                </div>
-                                                <p className="font-black text-[#d67a9d] text-sm">-{order.discount_amount?.toLocaleString()} ₽</p>
-                                            </div>
-                                        </motion.div>
-                                    )}
-
-                                    {/* СПИСОК ТОВАРОВ */}
-                                    <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
-                                        {order.items?.map((item, index) => (
-                                            <motion.div
-                                                key={`${item.id}-${index}`}
-                                                initial={{ opacity: 0, x: -10 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                transition={{ delay: index * 0.1 }}
-                                                className="flex justify-between items-center bg-gradient-to-r from-white/5 to-transparent p-4 rounded-xl border border-white/10 group hover:border-[#d67a9d]/30 transition-all"
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 rounded-lg bg-black overflow-hidden border border-white/10 flex-shrink-0">
-                                                        <img
-                                                            src={item.image || (item.images && item.images[0]) || '/placeholder.jpg'}
-                                                            className="w-full h-full object-cover"
-                                                            alt={item.name}
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[10px] font-black uppercase leading-none text-white">{item.name}</p>
-                                                        <div className="flex gap-2 mt-1">
-                                                            <span className="text-[9px] font-black bg-black/50 text-white px-2 py-0.5 rounded italic border border-white/10">
-                                                                РАЗМЕР: {item.size || item.selectedSize || 'OS'}
-                                                            </span>
-                                                            <span className="text-[9px] font-bold text-white/50 uppercase">
-                                                                ×{item.quantity || 1}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <p className="font-black italic text-white ml-4">
-                                                    {((item.price || 0) * (item.quantity || 1)).toLocaleString()} ₽
-                                                </p>
-                                            </motion.div>
-                                        ))}
-                                    </div>
-
-                                    {/* ИТОГО */}
-                                    <div className="pt-4 border-t border-white/10">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-[10px] font-black uppercase text-white/30">ИТОГО:</span>
-                                            <span className="text-xl font-black italic text-white">{order.total_amount.toLocaleString()} ₽</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </motion.div>
-        )
-    })
-
-    OrderCard.displayName = 'OrderCard'
-
-    // --- КОМПОНЕНТ МОДАЛЬНОГО ОКНА СТАТУСА ---
-    const StatusModal = React.memo(() => {
-        const handleConfirmStatus = async (status: string) => {
-            if (!statusModal.orderId) return
-
-            try {
-                await updateOrderStatus(statusModal.orderId, status)
-                setStatusModal({ show: false, orderId: '', currentStatus: '' })
-            } catch (error) {
-                console.error('Ошибка обновления статуса:', error)
-            }
-        }
-
-        if (!statusModal.show) return null
-
-        return (
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-lg"
-                onClick={() => setStatusModal({ show: false, orderId: '', currentStatus: '' })}
-            >
-                <motion.div
-                    initial={{ scale: 0.9, y: 20 }}
-                    animate={{ scale: 1, y: 0 }}
-                    exit={{ scale: 0.9, y: 20 }}
-                    className="bg-gradient-to-br from-black to-gray-900 border border-white/10 rounded-[2.5rem] p-8 max-w-lg w-full relative"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <button
-                        onClick={() => setStatusModal({ show: false, orderId: '', currentStatus: '' })}
-                        className="absolute top-6 right-6 p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all"
-                    >
-                        <X size={20} />
-                    </button>
-
-                    <h3 className="text-2xl font-black italic uppercase mb-6 bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
-                        Обновить статус заказа
-                    </h3>
-
-                    <p className="text-sm text-white/50 mb-8 font-bold uppercase">
-                        Заказ: <span className="text-[#d67a9d]">{statusModal.orderId.slice(0, 12)}...</span>
-                        <br />
-                        Текущий статус: <span className="text-[#71b3c9]">{statusModal.currentStatus}</span>
-                    </p>
-
-                    <div className="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
-                        {STATUSES.map((status) => (
-                            <motion.button
-                                key={status}
-                                onClick={() => handleConfirmStatus(status)}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                className={`p-5 rounded-2xl text-left font-black uppercase text-sm transition-all ${status === statusModal.currentStatus
-                                    ? 'bg-[#d67a9d] text-white border-[#d67a9d]'
-                                    : 'bg-white/5 border border-white/10 hover:border-[#d67a9d]/50'
-                                    }`}
-                            >
-                                {status}
-                            </motion.button>
-                        ))}
-                    </div>
-
-                    <div className="mt-8 pt-6 border-t border-white/10 flex justify-end">
-                        <button
-                            onClick={() => setStatusModal({ show: false, orderId: '', currentStatus: '' })}
-                            className="px-6 py-3 rounded-xl text-[10px] font-black uppercase border border-white/10 hover:bg-white/5 transition-all"
-                        >
-                            Отмена
-                        </button>
-                    </div>
-                </motion.div>
-            </motion.div>
-        )
-    })
-
-    StatusModal.displayName = 'StatusModal'
-
-    if (loading) return (
-        <div className="min-h-screen bg-black flex items-center justify-center text-white font-black italic">
-            <div className="text-center">
-                <div className="text-6xl mb-4 animate-pulse">⚡</div>
-                <div className="text-xl">VSGIGA_TERMINAL_LOADING...</div>
-                <div className="text-xs text-white/30 mt-2">ACCESS: ADMIN_PRIVILEGES</div>
-            </div>
-        </div>
-    )
-
-    // ФИЛЬТРАЦИЯ ЗАКАЗОВ ПО НОМЕРУ (ID) - ТОЛЬКО ПО ID
+    // --- РАСЧЕТЫ И ФИЛЬТРАЦИЯ ---
     const filteredOrders = useMemo(() => {
         if (!userSearch.trim()) return orders;
 
@@ -1004,6 +1005,44 @@ export default function AdminPage() {
         );
     }, [orders, userSearch]);
 
+    // --- РЕНДЕРИНГ ---
+    // УСЛОВИЕ ТОЛЬКО ПОСЛЕ ВСЕХ ХУКОВ
+    if (!isClient) {
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-16 h-16 border-4 border-[#d67a9d] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-white/50 text-sm font-black uppercase tracking-widest">ИНИЦИАЛИЗАЦИЯ АДМИНКИ...</p>
+                </div>
+            </div>
+        )
+    }
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center text-white font-black italic">
+                <div className="text-center">
+                    <div className="text-6xl mb-4 animate-pulse">⚡</div>
+                    <div className="text-xl">VSGIGA_TERMINAL_LOADING...</div>
+                    <div className="text-xs text-white/30 mt-2">ACCESS: ADMIN_PRIVILEGES</div>
+                </div>
+            </div>
+        )
+    }
+
+    if (!isAdmin) {
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center">
+                <div className="text-center p-8 border border-red-500/30 rounded-3xl bg-red-500/10">
+                    <ShieldCheck className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                    <h1 className="text-2xl font-black text-red-500 mb-2">ДОСТУП ЗАПРЕЩЕН</h1>
+                    <p className="text-white/70">У вас нет прав для доступа к админ-панели</p>
+                </div>
+            </div>
+        )
+    }
+
+    // Основной рендеринг
     return (
         <div className="min-h-screen bg-black text-white pt-32 pb-20 px-6 font-sans relative overflow-hidden">
             {/* Фоновые эффекты */}
@@ -1627,30 +1666,34 @@ export default function AdminPage() {
             </div>
 
             {/* МОДАЛЬНОЕ ОКНО СТАТУСА */}
-            <StatusModal />
+            <StatusModal 
+                statusModal={statusModal}
+                setStatusModal={setStatusModal}
+                updateOrderStatus={updateOrderStatus}
+            />
 
             <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
-        .custom-scrollbar::-webkit-scrollbar-thumb { 
-          background: linear-gradient(to bottom, #d67a9d, #71b3c9);
-          border-radius: 10px; 
-        }
-        .animate-spin-slow {
-          animation: spin 3s linear infinite;
-        }
-        .animate-bounce-x {
-          animation: bounce-x 1s infinite;
-        }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        @keyframes bounce-x {
-          0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(5px); }
-        }
-      `}</style>
+                .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+                .custom-scrollbar::-webkit-scrollbar-thumb { 
+                    background: linear-gradient(to bottom, #d67a9d, #71b3c9);
+                    border-radius: 10px; 
+                }
+                .animate-spin-slow {
+                    animation: spin 3s linear infinite;
+                }
+                .animate-bounce-x {
+                    animation: bounce-x 1s infinite;
+                }
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+                @keyframes bounce-x {
+                    0%, 100% { transform: translateX(0); }
+                    50% { transform: translateX(5px); }
+                }
+            `}</style>
         </div>
     )
 }
