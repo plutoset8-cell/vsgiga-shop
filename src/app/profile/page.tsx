@@ -837,7 +837,7 @@ export default function ProfilePage() {
   const quickActions = useMemo(() => [
     { label: 'НОВЫЙ ЗАКАЗ', icon: ShoppingCart, color: '#d67a9d', link: '/catalog' },
     { label: 'ПОПОЛНИТЬ', icon: CreditCard, color: '#71b3c9', action: () => setTopUpModalOpen(true) },
-    { label: 'ПОДАРКИ', icon: Gift, color: '#ffd166', link: '/layout/BonusSystem' },
+    { label: 'ПОДАРКИ', icon: Gift, color: '#ffd166', link: '/#bonus-system' },
     { label: 'ПОМОЩЬ', icon: LifeBuoy, color: '#ff6b9d', link: '/contacts' },
   ], [])
 

@@ -2,29 +2,53 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import { useCart } from '@/context/CartContext'
-import toast from 'react-hot-toast' // ИЗМЕНЕНО: импорт напрямую из react-hot-toast
+import toast from 'react-hot-toast'
 import {
-  ArrowLeft, ShoppingBag, ShieldCheck, Truck, Star, Maximize2,
-  Info, Package, MapPin, Activity, Zap, Ruler, X, Eye, Crosshair, Cpu
+  ArrowLeft, 
+  ShoppingBag, 
+  ShieldCheck, 
+  Truck, 
+  Star, 
+  Maximize2,
+  Info, 
+  Package, 
+  MapPin, 
+  Activity, 
+  Zap, 
+  Ruler, 
+  X, 
+  Eye, 
+  Crosshair, 
+  Cpu
 } from 'lucide-react'
 
-// --- НОВЫЙ КОМПОНЕНТ: ТАБЛИЦА РАЗМЕРОВ (MODAL) ---
+// ======================================================================
+// КОМПОНЕНТ: ТАБЛИЦА РАЗМЕРОВ (МОДАЛЬНОЕ ОКНО)
+// ======================================================================
 function SizeGuideModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   if (!isOpen) return null
+  
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-[#111] border border-white/10 p-8 rounded-[2rem] max-w-2xl w-full relative overflow-hidden"
+        className="bg-[#111111] border border-white/10 p-8 rounded-[2rem] max-w-2xl w-full relative overflow-hidden"
       >
-        <button onClick={onClose} className="absolute top-6 right-6 text-white/40 hover:text-white transition-colors">
+        <button 
+          onClick={onClose} 
+          className="absolute top-6 right-6 text-white/40 hover:text-white transition-colors"
+        >
           <X size={24} />
         </button>
-        <h3 className="text-2xl font-black uppercase italic mb-6 text-[#d67a9d]">Калибровка_Размера_v2.0</h3>
+        
+        <h3 className="text-2xl font-black uppercase italic mb-6 text-[#d67a9d]">
+          Калибровка_Размера_v2.0
+        </h3>
+        
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -38,20 +62,37 @@ function SizeGuideModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
             </thead>
             <tbody className="text-[11px] font-bold uppercase text-white/80">
               <tr className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                <td className="p-4 text-[#d67a9d]">S / 46</td><td className="p-4">92-96</td><td className="p-4">80-84</td><td className="p-4">96-100</td><td className="p-4">170-176</td>
+                <td className="p-4 text-[#d67a9d]">S / 46</td>
+                <td className="p-4">92-96</td>
+                <td className="p-4">80-84</td>
+                <td className="p-4">96-100</td>
+                <td className="p-4">170-176</td>
               </tr>
               <tr className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                <td className="p-4 text-[#d67a9d]">M / 48</td><td className="p-4">96-100</td><td className="p-4">84-88</td><td className="p-4">100-104</td><td className="p-4">176-182</td>
+                <td className="p-4 text-[#d67a9d]">M / 48</td>
+                <td className="p-4">96-100</td>
+                <td className="p-4">84-88</td>
+                <td className="p-4">100-104</td>
+                <td className="p-4">176-182</td>
               </tr>
               <tr className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                <td className="p-4 text-[#d67a9d]">L / 50</td><td className="p-4">100-104</td><td className="p-4">88-92</td><td className="p-4">104-108</td><td className="p-4">182-188</td>
+                <td className="p-4 text-[#d67a9d]">L / 50</td>
+                <td className="p-4">100-104</td>
+                <td className="p-4">88-92</td>
+                <td className="p-4">104-108</td>
+                <td className="p-4">182-188</td>
               </tr>
               <tr className="hover:bg-white/5 transition-colors">
-                <td className="p-4 text-[#d67a9d]">XL / 52</td><td className="p-4">104-108</td><td className="p-4">92-96</td><td className="p-4">108-112</td><td className="p-4">188+</td>
+                <td className="p-4 text-[#d67a9d]">XL / 52</td>
+                <td className="p-4">104-108</td>
+                <td className="p-4">92-96</td>
+                <td className="p-4">108-112</td>
+                <td className="p-4">188+</td>
               </tr>
             </tbody>
           </table>
         </div>
+        
         <div className="mt-6 flex items-center gap-3 text-[9px] text-white/30 uppercase italic border-t border-white/5 pt-4">
           <Info size={14} />
           <span>Допустимая погрешность: +/- 1.5 CM (Cyber_Fiber elasticity)</span>
@@ -61,12 +102,83 @@ function SizeGuideModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
   )
 }
 
-// --- НОВЫЙ КОМПОНЕНТ: НЕЙРО-РЕКОМЕНДАЦИИ ---
-function NeuralRecommendations({ currentId }: { currentId: string }) {
+// ======================================================================
+// КОМПОНЕНТ: УЛУЧШЕННЫЙ ЗУМ ДЛЯ ФОТОГРАФИЙ
+// ======================================================================
+function EnhancedImageZoom({ imageUrl, alt }: { imageUrl: string, alt: string }) {
+  const [isZoomed, setIsZoomed] = useState(false)
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 })
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current || !isZoomed) return
+    
+    const { left, top, width, height } = containerRef.current.getBoundingClientRect()
+    const x = ((e.clientX - left) / width) * 100
+    const y = ((e.clientY - top) / height) * 100
+    
+    setZoomPosition({ x, y })
+  }
+
+  return (
+    <div className="relative">
+      <div
+        ref={containerRef}
+        className="relative aspect-[4/5] rounded-[2rem] md:rounded-[3rem] overflow-hidden bg-[#080808] border border-white/10 cursor-zoom-in group"
+        onMouseEnter={() => setIsZoomed(true)}
+        onMouseLeave={() => setIsZoomed(false)}
+        onMouseMove={handleMouseMove}
+        onClick={() => setIsZoomed(!isZoomed)}
+      >
+        <img
+          src={imageUrl}
+          alt={alt}
+          className="w-full h-full object-cover transition-transform duration-300"
+        />
+        
+        {/* Эффект увеличения */}
+        {isZoomed && (
+          <div 
+            className="absolute inset-0 bg-no-repeat pointer-events-none z-10"
+            style={{
+              backgroundImage: `url(${imageUrl})`,
+              backgroundSize: '250%',
+              backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
+              mixBlendMode: 'normal',
+              opacity: 1
+            }}
+          />
+        )}
+        
+        {/* Индикатор зума */}
+        <div className="absolute bottom-4 right-4 z-20">
+          <div className={`p-2 rounded-full bg-black/60 backdrop-blur-md border ${isZoomed ? 'border-[#d67a9d]' : 'border-white/10'}`}>
+            <Maximize2 size={16} className={isZoomed ? 'text-[#d67a9d]' : 'text-white/60'} />
+          </div>
+        </div>
+        
+        {/* Градиент для улучшения видимости */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+      </div>
+      
+      {/* Подсказка для пользователя */}
+      <div className="mt-2 text-center">
+        <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest">
+          {isZoomed ? 'Перемещайте курсор для увеличения' : 'Наведите курсор для увеличения'}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ======================================================================
+// КОМПОНЕНТ: РЕКОМЕНДАЦИИ ТОВАРОВ
+// ======================================================================
+function Recommendations({ currentId }: { currentId: string }) {
   const [items, setItems] = useState<any[]>([])
 
   useEffect(() => {
-    const fetchRecs = async () => {
+    const fetchRecommendations = async () => {
       const { data } = await supabase
         .from('products')
         .select('id, name, price, image, category')
@@ -75,7 +187,7 @@ function NeuralRecommendations({ currentId }: { currentId: string }) {
 
       if (data) setItems(data)
     }
-    fetchRecs()
+    fetchRecommendations()
   }, [currentId])
 
   if (items.length === 0) return null
@@ -83,30 +195,44 @@ function NeuralRecommendations({ currentId }: { currentId: string }) {
   return (
     <div className="mt-32 border-t border-white/10 pt-16 relative">
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#d67a9d] to-transparent opacity-50"></div>
+      
       <div className="flex items-center gap-4 mb-10">
         <Cpu className="text-[#d67a9d] animate-pulse" />
         <h3 className="text-2xl font-black italic uppercase tracking-widest text-white">
-          Нейросеть_Рекомендует
+          Рекомендации
         </h3>
       </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {items.map((item, idx) => (
+        {items.map((item, index) => (
           <motion.a
             href={`/product/${item.id}`}
             key={item.id}
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1 }}
+            transition={{ delay: index * 0.1 }}
             className="group block bg-white/[0.02] border border-white/5 hover:border-[#d67a9d]/50 p-4 rounded-[2rem] transition-all hover:-translate-y-2"
           >
             <div className="relative aspect-square rounded-[1.5rem] overflow-hidden mb-4 bg-black">
-              <img src={item.image} alt={item.name} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+              <img 
+                src={item.image} 
+                alt={item.name} 
+                className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" 
+              />
               <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
-                <span className="text-[8px] font-black text-[#d67a9d] uppercase tracking-widest">{item.category}</span>
+                <span className="text-[8px] font-black text-[#d67a9d] uppercase tracking-widest">
+                  {item.category}
+                </span>
               </div>
             </div>
-            <h4 className="text-[12px] font-black uppercase italic truncate mb-2 group-hover:text-[#d67a9d] transition-colors">{item.name}</h4>
-            <p className="text-[14px] font-bold text-white/60">{item.price.toLocaleString()} ₽</p>
+            
+            <h4 className="text-[12px] font-black uppercase italic truncate mb-2 group-hover:text-[#d67a9d] transition-colors">
+              {item.name}
+            </h4>
+            
+            <p className="text-[14px] font-bold text-white/60">
+              {item.price.toLocaleString()} ₽
+            </p>
           </motion.a>
         ))}
       </div>
@@ -114,13 +240,15 @@ function NeuralRecommendations({ currentId }: { currentId: string }) {
   )
 }
 
-// --- КОМПОНЕНТ ОТЗЫВОВ (Русифицирован) ---
+// ======================================================================
+// КОМПОНЕНТ: ОТЗЫВЫ О ТОВАРЕ
+// ======================================================================
 function ProductReviews({ productId }: { productId: string }) {
   const [reviews, setReviews] = useState<any[]>([])
-  const [name, setName] = useState('')
-  const [comment, setComment] = useState('')
+  const [userName, setUserName] = useState('')
+  const [userComment, setUserComment] = useState('')
   const [rating, setRating] = useState(5)
-  const [sending, setSending] = useState(false)
+  const [isSending, setIsSending] = useState(false)
 
   useEffect(() => {
     if (productId) fetchReviews()
@@ -132,59 +260,80 @@ function ProductReviews({ productId }: { productId: string }) {
       .select('*')
       .eq('product_id', productId)
       .order('created_at', { ascending: false })
+    
     if (data) setReviews(data)
   }
 
-  const handleSubmitReview = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!name || !comment) return
-    setSending(true)
+  const handleSubmitReview = async (event: React.FormEvent) => {
+    event.preventDefault()
+    
+    if (!userName || !userComment) return
+    
+    setIsSending(true)
 
     const { error } = await supabase.from('reviews').insert([
-      { product_id: productId, user_name: name, comment, rating }
+      { 
+        product_id: productId, 
+        user_name: userName, 
+        comment: userComment, 
+        rating 
+      }
     ])
 
     if (!error) {
-      setName('')
-      setComment('')
+      setUserName('')
+      setUserComment('')
       setRating(5)
       fetchReviews()
-      toast.success('ДАННЫЕ ОТПРАВЛЕНЫ В БЛОКЧЕЙН') // ИЗМЕНЕНО: используем toast напрямую
+      toast.success('ДАННЫЕ ОТПРАВЛЕНЫ В БЛОКЧЕЙН')
     } else {
-      toast.error('ОШИБКА ЗАПИСИ ДАННЫХ') // ИЗМЕНЕНО: используем toast напрямую
+      toast.error('ОШИБКА ЗАПИСИ ДАННЫХ')
     }
-    setSending(false)
+    
+    setIsSending(false)
   }
 
   return (
-    <div className="mt-32 border-t border-white/10 pt-20">
+    <div id="reviews" className="mt-32 border-t border-white/10 pt-20">
       <div className="max-w-3xl">
         <h3 className="text-4xl font-black italic uppercase mb-12 tracking-tighter flex items-center gap-4">
-          Обратная_Связь <span className="text-[#d67a9d] text-2xl font-mono">[{reviews.length}]</span>
+          Обратная_Связь 
+          <span className="text-[#d67a9d] text-2xl font-mono">
+            [{reviews.length}]
+          </span>
         </h3>
 
-        <form onSubmit={handleSubmitReview} className="bg-white/5 p-8 rounded-[2.5rem] border border-white/10 mb-16 backdrop-blur-xl relative overflow-hidden">
+        <form 
+          onSubmit={handleSubmitReview} 
+          className="bg-white/5 p-8 rounded-[2.5rem] border border-white/10 mb-16 backdrop-blur-xl relative overflow-hidden"
+        >
           <div className="absolute -right-10 -top-10 w-40 h-40 bg-[#d67a9d] blur-[100px] opacity-20 pointer-events-none"></div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 relative z-10">
+            {/* Поле для имени */}
             <div className="space-y-2">
               <label className="text-[8px] font-black uppercase text-white/30 ml-4 flex items-center gap-2">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
-                </svg> Идентификация_Пользователя
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg> 
+                Идентификация_Пользователя
               </label>
               <input
                 placeholder="ВАШЕ ИМЯ / НИКНЕЙМ"
                 className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl outline-none focus:border-[#d67a9d] text-[10px] font-bold uppercase tracking-widest placeholder:text-white/20 transition-all focus:bg-black/80"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
               />
             </div>
+            
+            {/* Рейтинг */}
             <div className="space-y-2">
               <label className="text-[8px] font-black uppercase text-white/30 ml-4 flex items-center gap-2">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                </svg> Система_Рейтинга
+                </svg> 
+                Система_Рейтинга
               </label>
               <div className="flex items-center justify-between bg-black/50 border border-white/10 p-4 rounded-2xl h-[62px] hover:border-white/20 transition-colors">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -192,7 +341,11 @@ function ProductReviews({ productId }: { productId: string }) {
                     key={star}
                     type="button"
                     onClick={() => setRating(star)}
-                    className={`transition-all duration-300 transform active:scale-90 ${rating >= star ? 'text-[#d67a9d] scale-110 drop-shadow-[0_0_10px_rgba(214,122,157,0.5)]' : 'text-white/10 hover:text-white/30'}`}
+                    className={`transition-all duration-300 transform active:scale-90 ${
+                      rating >= star 
+                        ? 'text-[#d67a9d] scale-110 drop-shadow-[0_0_10px_rgba(214,122,157,0.5)]' 
+                        : 'text-white/10 hover:text-white/30'
+                    }`}
                   >
                     <Star size={20} fill={rating >= star ? "currentColor" : "none"} />
                   </button>
@@ -200,53 +353,76 @@ function ProductReviews({ productId }: { productId: string }) {
               </div>
             </div>
           </div>
+          
+          {/* Поле для комментария */}
           <div className="space-y-2 mb-6 relative z-10">
             <label className="text-[8px] font-black uppercase text-white/30 ml-4 flex items-center gap-2">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-              </svg> Текст_Трансмиссии
+              </svg> 
+              Текст_Трансмиссии
             </label>
             <textarea
               placeholder="ОПИШИТЕ ВАШ ОПЫТ ИСПОЛЬЗОВАНИЯ ПРОДУКТА VSGIGA..."
               className="w-full bg-black/50 border border-white/10 p-5 rounded-2xl outline-none focus:border-[#d67a9d] text-[10px] font-bold h-32 resize-none placeholder:text-white/20 transition-all focus:bg-black/80"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
+              value={userComment}
+              onChange={(e) => setUserComment(e.target.value)}
             />
           </div>
+          
+          {/* Кнопка отправки */}
           <button
-            disabled={sending}
+            disabled={isSending}
             className="w-full py-5 bg-white text-black rounded-2xl font-black uppercase text-[10px] tracking-[0.3em] hover:bg-[#d67a9d] hover:text-white transition-all duration-500 disabled:opacity-50 relative overflow-hidden group"
           >
-            <span className="relative z-10">{sending ? 'ЗАГРУЗКА_ДАННЫХ...' : 'ОПУБЛИКОВАТЬ_ОТЗЫВ'}</span>
+            <span className="relative z-10">
+              {isSending ? 'ЗАГРУЗКА_ДАННЫХ...' : 'ОПУБЛИКОВАТЬ_ОТЗЫВ'}
+            </span>
             <div className="absolute inset-0 bg-[#d67a9d] translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
           </button>
         </form>
 
+        {/* Список отзывов */}
         <div className="space-y-6">
-          {reviews.map((rev) => (
+          {reviews.map((review) => (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              key={rev.id}
+              key={review.id}
               className="bg-white/[0.02] border border-white/5 p-8 rounded-3xl backdrop-blur-sm group hover:border-white/20 transition-all hover:bg-white/[0.04]"
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <span className="text-[10px] font-black uppercase italic text-[#71b3c9] tracking-widest glow-text">{rev.user_name}</span>
+                  <span className="text-[10px] font-black uppercase italic text-[#71b3c9] tracking-widest glow-text">
+                    {review.user_name}
+                  </span>
                   <div className="flex gap-1 mt-2">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={10} fill={i < rev.rating ? "#d67a9d" : "none"} className={i < rev.rating ? "text-[#d67a9d]" : "text-white/10"} />
+                    {[...Array(5)].map((_, index) => (
+                      <Star 
+                        key={index} 
+                        size={10} 
+                        fill={index < review.rating ? "#d67a9d" : "none"} 
+                        className={index < review.rating ? "text-[#d67a9d]" : "text-white/10"} 
+                      />
                     ))}
                   </div>
                 </div>
-                <span className="text-[8px] text-white/20 font-black font-mono">{new Date(rev.created_at).toLocaleDateString()}</span>
+                <span className="text-[8px] text-white/20 font-black font-mono">
+                  {new Date(review.created_at).toLocaleDateString()}
+                </span>
               </div>
-              <p className="text-white/70 text-xs leading-relaxed font-medium uppercase tracking-tight">{rev.comment}</p>
+              
+              <p className="text-white/70 text-xs leading-relaxed font-medium uppercase tracking-tight">
+                {review.comment}
+              </p>
             </motion.div>
           ))}
+          
           {reviews.length === 0 && (
             <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-[3rem] bg-white/[0.01]">
-              <p className="text-white/20 italic text-[10px] font-black uppercase tracking-[0.4em]">БАЗА_ДАННЫХ_ПУСТА</p>
+              <p className="text-white/20 italic text-[10px] font-black uppercase tracking-[0.4em]">
+                БАЗА_ДАННЫХ_ПУСТА
+              </p>
             </div>
           )}
         </div>
@@ -255,32 +431,35 @@ function ProductReviews({ productId }: { productId: string }) {
   )
 }
 
-// --- ОСНОВНАЯ СТРАНИЦА ---
+// ======================================================================
+// ОСНОВНАЯ СТРАНИЦА ПРОДУКТА
+// ======================================================================
 export default function ProductPage() {
   const { addToCart } = useCart();
   const { id } = useParams()
   const router = useRouter()
 
   const [product, setProduct] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [adding, setAdding] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [showSizeGuide, setShowSizeGuide] = useState(false)
-
   const [activeImage, setActiveImage] = useState<string>('')
-  const [zoomStyle, setZoomStyle] = useState({ display: 'none', backgroundPosition: '0% 0%' })
-  const [liveViewers, setLiveViewers] = useState(0)
+  const [liveViewersCount, setLiveViewersCount] = useState(0)
 
+  // Генерация случайного количества зрителей
   useEffect(() => {
-    setLiveViewers(Math.floor(Math.random() * 15) + 3)
+    setLiveViewersCount(Math.floor(Math.random() * 15) + 3)
     const interval = setInterval(() => {
-      setLiveViewers(prev => Math.max(2, prev + Math.floor(Math.random() * 5) - 2))
+      setLiveViewersCount(prev => Math.max(2, prev + Math.floor(Math.random() * 5) - 2))
     }, 5000)
+    
     return () => clearInterval(interval)
   }, [])
 
+  // Загрузка данных о продукте
   useEffect(() => {
-    const fetchProduct = async () => {
+    const fetchProductData = async () => {
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -289,33 +468,37 @@ export default function ProductPage() {
 
       if (data) {
         setProduct(data)
-        const initialImage = (data.images && data.images.length > 0) ? data.images[0] : data.image
+        const initialImage = (data.images && data.images.length > 0) 
+          ? data.images[0] 
+          : data.image
         setActiveImage(initialImage)
       } else {
-        toast.error('ТОВАР НЕ НАЙДЕН В РЕЕСТРЕ') // ИЗМЕНЕНО: используем toast напрямую
+        toast.error('ТОВАР НЕ НАЙДЕН В РЕЕСТРЕ')
         router.push('/')
       }
-      setLoading(false)
+      
+      setIsLoading(false)
     }
 
-    if (id) fetchProduct()
+    if (id) fetchProductData()
   }, [id, router])
 
+  // Обработчик добавления в корзину
   const handleAddToCart = async () => {
     const hasSizes = product.sizes && product.sizes.length > 0 && product.category !== 'accessories';
 
     if (hasSizes && !selectedSize) {
-      toast.error('ОШИБКА: НЕ ВЫБРАН РАЗМЕР МОДУЛЯ') // ИЗМЕНЕНО: используем toast напрямую
+      toast.error('ОШИБКА: НЕ ВЫБРАН РАЗМЕР МОДУЛЯ')
       return
     }
 
-    setAdding(true)
+    setIsAddingToCart(true)
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        toast.error('ТРЕБУЕТСЯ АВТОРИЗАЦИЯ В СЕТИ') // ИЗМЕНЕНО: используем toast напрямую
+        toast.error('ТРЕБУЕТСЯ АВТОРИЗАЦИЯ В СЕТИ')
         sessionStorage.setItem('redirect_after_login', `/product/${id}`)
         router.push('/login')
         return
@@ -323,7 +506,7 @@ export default function ProductPage() {
 
       const sizeToSave = hasSizes ? selectedSize : 'OS'
 
-      const { error: dbError } = await supabase
+      const { error: databaseError } = await supabase
         .from('cart')
         .upsert({
           user_id: user.id,
@@ -335,7 +518,7 @@ export default function ProductPage() {
           ignoreDuplicates: false
         })
 
-      if (dbError) throw dbError;
+      if (databaseError) throw databaseError;
 
       if (typeof addToCart === 'function') {
         addToCart({
@@ -345,35 +528,35 @@ export default function ProductPage() {
         });
       }
 
-      toast.success('ОБЪЕКТ ИНТЕГРИРОВАН В КОРЗИНУ') // ИЗМЕНЕНО: используем toast напрямую
+      toast.success('ОБЪЕКТ ИНТЕГРИРОВАН В КОРЗИНУ')
 
-    } catch (err: any) {
-      console.error('Ошибка при добавлении в корзину:', err)
-      toast.error('КРИТИЧЕСКИЙ СБОЙ СИНХРОНИЗАЦИИ') // ИЗМЕНЕНО: используем toast напрямую
+    } catch (error: any) {
+      console.error('Ошибка при добавлении в корзину:', error)
+      toast.error('КРИТИЧЕСКИЙ СБОЙ СИНХРОНИЗАЦИИ')
     } finally {
-      setAdding(false)
+      setIsAddingToCart(false)
     }
   }
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const { left, top, width, height } = e.currentTarget.getBoundingClientRect()
-    const x = ((e.clientX - left) / width) * 100
-    const y = ((e.clientY - top) / height) * 100
-    setZoomStyle({
-      display: 'block',
-      backgroundPosition: `${x}% ${y}%`
-    })
+
+  // Функция для скролла к отзывам
+  const scrollToReviewsSection = () => {
+    const reviewsElement = document.getElementById('reviews')
+    if (reviewsElement) {
+      reviewsElement.scrollIntoView({ behavior: 'smooth' })
+    }
   }
 
-  const handleMouseLeave = () => {
-    setZoomStyle(prev => ({ ...prev, display: 'none' }))
+  // Состояние загрузки
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white space-y-4">
+        <div className="w-12 h-12 border-4 border-[#d67a9d] border-t-transparent rounded-full animate-spin"></div>
+        <p className="italic tracking-[0.5em] text-[10px] animate-pulse text-[#d67a9d]">
+          ДЕШИФРОВКА_ДАННЫХ_ТОВАРА...
+        </p>
+      </div>
+    )
   }
-
-  if (loading) return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white space-y-4">
-      <div className="w-12 h-12 border-4 border-[#d67a9d] border-t-transparent rounded-full animate-spin"></div>
-      <p className="italic tracking-[0.5em] text-[10px] animate-pulse text-[#d67a9d]">ДЕШИФРОВКА_ДАННЫХ_ТОВАРА...</p>
-    </div>
-  )
 
   if (!product) return null
 
@@ -383,12 +566,17 @@ export default function ProductPage() {
 
   return (
     <main className="min-h-screen bg-black text-white pt-20 md:pt-32 pb-10 md:pb-20 px-4 md:px-6 overflow-x-hidden relative">
-      <SizeGuideModal isOpen={showSizeGuide} onClose={() => setShowSizeGuide(false)} />
+      <SizeGuideModal 
+        isOpen={showSizeGuide} 
+        onClose={() => setShowSizeGuide(false)} 
+      />
 
+      {/* Декоративные фоновые элементы */}
       <div className="fixed top-20 right-0 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-[#71b3c9] opacity-5 blur-[100px] md:blur-[150px] pointer-events-none" />
       <div className="fixed bottom-0 left-0 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-[#d67a9d] opacity-5 blur-[100px] md:blur-[150px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto relative z-10">
+        {/* Кнопка возврата */}
         <button
           onClick={() => router.back()}
           className="flex items-center gap-2 text-white/40 hover:text-white transition-colors mb-6 md:mb-8 group uppercase text-[9px] md:text-[10px] font-black tracking-widest"
@@ -397,93 +585,92 @@ export default function ProductPage() {
           ВЕРНУТЬСЯ_В_КАТАЛОГ
         </button>
 
+        {/* Индикатор онлайн-зрителей */}
         <div className="mb-6 md:mb-10 flex items-center gap-3 md:gap-4 bg-white/[0.03] border border-white/5 p-2 md:p-3 rounded-full w-fit px-4 md:px-6 backdrop-blur-md">
-          <span className="relative flex h-1.5 w-1.5 md:h-2 w-2">
+          <span className="relative flex w-2 h-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 md:h-2 w-2 bg-green-500"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
           </span>
           <span className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-white/70">
-            LIVE: <span className="text-white">{liveViewers} СМОТРЯТ</span>
+            LIVE: <span className="text-white">{liveViewersCount} СМОТРЯТ</span>
           </span>
           <div className="h-3 w-px bg-white/10 mx-1"></div>
           <Eye size={10} className="text-[#d67a9d]" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-24 items-start">
-
+          {/* ЛЕВАЯ КОЛОНКА - ФОТОГРАФИИ ТОВАРА */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex flex-col gap-4 md:gap-6 sticky top-24 md:top-32"
           >
-            <div
-              className="relative aspect-[4/5] rounded-[2rem] md:rounded-[3rem] overflow-hidden bg-[#080808] border border-white/10 group cursor-crosshair shadow-2xl"
-              onMouseMove={handleMouseMove}
-              onMouseLeave={handleMouseLeave}
-            >
-              <div className="absolute top-4 left-4 md:top-6 left-6 z-20 flex flex-wrap gap-2">
-                <div className="bg-black/60 backdrop-blur-md px-2 md:px-3 py-1 rounded-full border border-white/10">
-                  <span className="text-[7px] md:text-[8px] font-black text-[#d67a9d] uppercase tracking-widest">VSGIGA_OFFICIAL</span>
-                </div>
-                {product.price > 10000 && (
-                  <div className="bg-black/60 backdrop-blur-md px-2 md:px-3 py-1 rounded-full border border-white/10">
-                    <span className="text-[7px] md:text-[8px] font-black text-[#71b3c9] uppercase tracking-widest">PREMIUM_GRADE</span>
-                  </div>
-                )}
-              </div>
+            {/* Основное изображение с зумом */}
+            <EnhancedImageZoom 
+              imageUrl={activeImage} 
+              alt={product.name} 
+            />
 
-              <img
-                src={activeImage}
-                alt={product.name}
-                className="w-full h-full object-cover pointer-events-none transition-transform duration-700 group-hover:scale-105"
-              />
-
-              <div
-                className="hidden md:block absolute inset-0 bg-no-repeat pointer-events-none z-10 mix-blend-hard-light"
-                style={{
-                  backgroundImage: `url(${activeImage})`,
-                  backgroundSize: '250%',
-                  ...zoomStyle
-                }}
-              />
-
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-            </div>
-
+            {/* Галерея миниатюр */}
             {galleryImages.length > 1 && (
               <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x">
-                {galleryImages.map((img: string, idx: number) => (
+                {galleryImages.map((image: string, index: number) => (
                   <button
-                    key={idx}
-                    onClick={() => setActiveImage(img)}
+                    key={index}
+                    onClick={() => setActiveImage(image)}
                     className={`
                       relative w-16 h-16 md:w-24 md:h-24 rounded-xl md:rounded-2xl overflow-hidden border transition-all shrink-0 snap-center
-                      ${activeImage === img ? 'border-[#d67a9d] shadow-[0_0_15px_rgba(214,122,157,0.3)] scale-100' : 'border-white/10 opacity-60 hover:opacity-100 scale-95'}
+                      ${activeImage === image 
+                        ? 'border-[#d67a9d] shadow-[0_0_15px_rgba(214,122,157,0.3)] scale-100' 
+                        : 'border-white/10 opacity-60 hover:opacity-100 scale-95'
+                      }
                     `}
                   >
-                    <img src={img} alt={`view-${idx}`} className="w-full h-full object-cover" />
+                    <img 
+                      src={image} 
+                      alt={`Просмотр-${index}`} 
+                      className="w-full h-full object-cover" 
+                    />
                   </button>
                 ))}
               </div>
             )}
+            
+            {/* Описание товара */}
+            <div className="mt-4 md:mt-6 p-6 bg-white/[0.02] border border-white/5 rounded-[2rem] backdrop-blur-sm">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#71b3c9] mb-4">
+                Описание товара
+              </h3>
+              <p className="text-white/70 text-sm leading-relaxed font-medium uppercase tracking-wide">
+                {product.description || "ОПИСАНИЕ ОТСУТСТВУЕТ В БАЗЕ ДАННЫХ. ЗАПРОСИТЕ ИНФОРМАЦИЮ У ОПЕРАТОРА."}
+              </p>
+            </div>
           </motion.div>
 
+          {/* ПРАВАЯ КОЛОНКА - ИНФОРМАЦИЯ О ТОВАРЕ */}
           <motion.div
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex flex-col pt-4"
           >
+            {/* Категория товара */}
             <div className="flex items-center gap-3 mb-6">
               <span className="w-2 h-2 bg-[#d67a9d] rounded-full animate-pulse"></span>
               <span className="text-[#d67a9d] font-black uppercase tracking-[0.3em] text-[10px]">
-                СЕКТОР: {product.category === 'apparel' ? 'ОДЕЖДА' : product.category === 'footwear' ? 'ОБУВЬ' : 'АКСЕССУАРЫ'}
+                СЕКТОР: {
+                  product.category === 'apparel' ? 'ОДЕЖДА' 
+                  : product.category === 'footwear' ? 'ОБУВЬ' 
+                  : 'АКСЕССУАРЫ'
+                }
               </span>
             </div>
 
+            {/* Название товара */}
             <h1 className="text-5xl lg:text-7xl font-black italic uppercase tracking-tighter mb-8 leading-[0.9] text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-white/40">
               {product.name}
             </h1>
 
+            {/* Цена товара */}
             <div className="flex items-end gap-5 mb-10 pb-8 border-b border-white/5">
               <span className="text-5xl font-black italic text-[#71b3c9] drop-shadow-[0_0_15px_rgba(113,179,201,0.3)]">
                 {product.price.toLocaleString()} ₽
@@ -492,36 +679,88 @@ export default function ProductPage() {
                 <span className="text-[#d67a9d] text-[10px] font-bold uppercase tracking-widest line-through decoration-[#d67a9d]">
                   {(product.price * 1.2).toLocaleString()} ₽
                 </span>
-                <span className="text-white/40 text-[9px] font-bold uppercase tracking-widest">ВКЛЮЧАЯ НАЛОГИ</span>
+                <span className="text-white/40 text-[9px] font-bold uppercase tracking-widest">
+                  ВКЛЮЧАЯ НАЛОГИ
+                </span>
               </div>
             </div>
 
+            {/* Информационные карточки */}
+            <div className="mb-10 space-y-4">
+              {/* Сроки доставки */}
+              <div className="p-5 rounded-3xl bg-white/[0.02] border border-white/10 flex items-start gap-5 hover:bg-white/[0.04] transition-colors group">
+                <div className="p-3 bg-[#71b3c9]/10 rounded-2xl group-hover:bg-[#71b3c9]/20 transition-colors">
+                  <Truck className="text-[#71b3c9]" size={22} />
+                </div>
+                <div>
+                  <span className="text-[11px] font-black uppercase block mb-1">
+                    Сроки доставки
+                  </span>
+                  <span className="text-[9px] text-white/40 uppercase font-bold italic">
+                    12-24 дня
+                  </span>
+                </div>
+              </div>
+              
+              {/* Кнопка перехода к отзывам */}
+              <button
+                onClick={scrollToReviewsSection}
+                className="p-5 rounded-3xl bg-white/[0.02] border border-white/10 flex items-start gap-5 hover:bg-white/[0.04] hover:border-[#d67a9d]/30 transition-all group w-full text-left"
+              >
+                <div className="p-3 bg-[#d67a9d]/10 rounded-2xl group-hover:bg-[#d67a9d]/20 transition-colors">
+                  <MapPin className="text-[#d67a9d]" size={22} />
+                </div>
+                <div>
+                  <span className="text-[11px] font-black uppercase block mb-1">
+                    Открыть отзывы о товаре
+                  </span>
+                  <span className="text-[9px] text-white/40 uppercase font-bold italic">
+                    Показать отзывы покупателей
+                  </span>
+                </div>
+              </button>
+            </div>
+
+            {/* Технические характеристики */}
             <div className="mb-12 bg-[#0a0a0a] rounded-[2rem] border border-white/10 overflow-hidden relative group">
               <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               <div className="p-8 relative z-10">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2">
                     <Crosshair size={16} className="text-[#d67a9d]" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-white/40">ТЕХНИЧЕСКИЕ_ДАННЫЕ</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
+                      ТЕХНИЧЕСКИЕ_ДАННЫЕ
+                    </span>
                   </div>
-                  <div className="px-2 py-1 border border-[#d67a9d]/30 rounded text-[8px] text-[#d67a9d] uppercase">Verified</div>
+                  <div className="px-2 py-1 border border-[#d67a9d]/30 rounded text-[8px] text-[#d67a9d] uppercase">
+                    Verified
+                  </div>
                 </div>
+                
                 <div className="space-y-4">
                   {[
                     { label: 'ПРОИСХОЖДЕНИЕ', value: product.origin || 'РЕСПУБЛИКА_КОРЕЯ' },
                     { label: 'СОСТАВ', value: product.material || 'CYBER_FIBER_SYNTH / COTTON' },
                     { label: 'АРТИКУЛ', value: product.article || product.id.slice(0, 8).toUpperCase() },
                     { label: 'СТАТУС', value: 'ГОТОВ К ОТПРАВКЕ' }
-                  ].map((spec, i) => (
-                    <div key={i} className="flex justify-between border-b border-white/5 pb-2 hover:pl-2 transition-all duration-300 cursor-default">
-                      <span className="text-[9px] font-bold text-white/30 uppercase italic">{spec.label}</span>
-                      <span className="text-[10px] font-black text-white uppercase">{spec.value}</span>
+                  ].map((specification, index) => (
+                    <div 
+                      key={index} 
+                      className="flex justify-between border-b border-white/5 pb-2 hover:pl-2 transition-all duration-300 cursor-default"
+                    >
+                      <span className="text-[9px] font-bold text-white/30 uppercase italic">
+                        {specification.label}
+                      </span>
+                      <span className="text-[10px] font-black text-white uppercase">
+                        {specification.value}
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
+            {/* Выбор размера (если применимо) */}
             {product.category !== 'accessories' && product.sizes && product.sizes.length > 0 && (
               <div className="mb-12">
                 <div className="flex justify-between items-center mb-6">
@@ -537,65 +776,54 @@ export default function ProductPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  {product.sizes.map((s: any) => (
+                  {product.sizes.map((sizeOption: any) => (
                     <button
-                      key={s.size}
-                      disabled={!s.inStock}
-                      onClick={() => setSelectedSize(s.size)}
+                      key={sizeOption.size}
+                      disabled={!sizeOption.inStock}
+                      onClick={() => setSelectedSize(sizeOption.size)}
                       className={`
                         relative w-16 h-16 rounded-2xl font-black text-sm uppercase italic transition-all duration-300 border-2 overflow-hidden group
-                        ${!s.inStock ? 'opacity-20 cursor-not-allowed border-white/5 bg-white/5' : 'cursor-pointer'}
-                        ${selectedSize === s.size
+                        ${!sizeOption.inStock 
+                          ? 'opacity-20 cursor-not-allowed border-white/5 bg-white/5' 
+                          : 'cursor-pointer'
+                        }
+                        ${selectedSize === sizeOption.size
                           ? 'border-[#d67a9d] text-white bg-[#d67a9d]/10 shadow-[0_0_20px_rgba(214,122,157,0.4)]'
-                          : 'border-white/10 bg-white/[0.02] text-white/60 hover:border-white/30 hover:bg-white/5'}
+                          : 'border-white/10 bg-white/[0.02] text-white/60 hover:border-white/30 hover:bg-white/5'
+                        }
                       `}
                     >
-                      <span className="relative z-10">{s.size}</span>
-                      {!s.inStock && <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="w-full h-px bg-white/30 rotate-45"></div></div>}
+                      <span className="relative z-10">
+                        {sizeOption.size}
+                      </span>
+                      {!sizeOption.inStock && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <div className="w-full h-px bg-white/30 rotate-45"></div>
+                        </div>
+                      )}
                     </button>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="mb-10 grid grid-cols-1 gap-4">
-              <div className="p-5 rounded-3xl bg-white/[0.02] border border-white/10 flex items-start gap-5 hover:bg-white/[0.04] transition-colors group">
-                <div className="p-3 bg-[#71b3c9]/10 rounded-2xl group-hover:bg-[#71b3c9]/20 transition-colors">
-                  <Package className="text-[#71b3c9]" size={22} />
-                </div>
-                <div>
-                  <span className="text-[11px] font-black uppercase block mb-1">ЛОГИСТИЧЕСКИЙ ТЕРМИНАЛ</span>
-                  <span className="text-[9px] text-white/40 uppercase font-bold italic">РАСЧЕТНОЕ ВРЕМЯ: 2-4 ЦИКЛА (ДНЯ)</span>
-                </div>
-              </div>
-              <div className="p-5 rounded-3xl bg-white/[0.02] border border-white/10 flex items-start gap-5 hover:bg-white/[0.04] transition-colors group">
-                <div className="p-3 bg-[#d67a9d]/10 rounded-2xl group-hover:bg-[#d67a9d]/20 transition-colors">
-                  <MapPin className="text-[#d67a9d]" size={22} />
-                </div>
-                <div>
-                  <span className="text-[11px] font-black uppercase block mb-1">ТОЧКИ ДОСТУПА</span>
-                  <span className="text-[9px] text-white/40 uppercase font-bold italic">ДОСТУПНА ГЛОБАЛЬНАЯ ТЕЛЕПОРТАЦИЯ (ПОЧТА/СДЭК)</span>
-                </div>
-              </div>
-            </div>
-
-            <p className="text-white/60 text-xs leading-loose mb-12 font-medium uppercase tracking-wide whitespace-pre-wrap border-l-2 border-[#d67a9d]/50 pl-6">
-              {product.description || "ОПИСАНИЕ ОТСУТСТВУЕТ В БАЗЕ ДАННЫХ. ЗАПРОСИТЕ ИНФОРМАЦИЮ У ОПЕРАТОРА."}
-            </p>
-
+            {/* Кнопка добавления в корзину */}
             <div className="flex flex-col gap-4">
               <button
                 onClick={handleAddToCart}
-                disabled={adding}
+                disabled={isAddingToCart}
                 className={`
                   group relative w-full py-7 rounded-[2rem] font-black uppercase italic tracking-[0.25em] text-sm transition-all duration-500 overflow-hidden shadow-2xl
-                  ${adding ? 'bg-green-500 text-white' : 'bg-white text-black hover:bg-[#d67a9d] hover:text-white hover:scale-[1.01] hover:shadow-[0_10px_40px_rgba(214,122,157,0.4)]'}
+                  ${isAddingToCart 
+                    ? 'bg-green-500 text-white' 
+                    : 'bg-white text-black hover:bg-[#d67a9d] hover:text-white hover:scale-[1.01] hover:shadow-[0_10px_40px_rgba(214,122,157,0.4)]'
+                  }
                 `}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                 <span className="flex items-center justify-center gap-4 relative z-10">
-                  <ShoppingBag size={20} className={adding ? 'animate-bounce' : ''} />
-                  {adding ? 'ПРОТОКОЛ_ЗАГРУЗКИ...' : 'ИНИЦИАЛИЗИРОВАТЬ ПОКУПКУ'}
+                  <ShoppingBag size={20} className={isAddingToCart ? 'animate-bounce' : ''} />
+                  {isAddingToCart ? 'ПРОТОКОЛ_ЗАГРУЗКИ...' : 'ИНИЦИАЛИЗИРОВАТЬ ПОКУПКУ'}
                 </span>
               </button>
 
@@ -605,6 +833,7 @@ export default function ProductPage() {
               </div>
             </div>
 
+            {/* Футер с ID товара */}
             <div className="mt-12 pt-8 border-t border-white/5">
               <div className="flex justify-between text-[8px] font-black text-white/20 uppercase tracking-[0.5em] font-mono">
                 <span>ID: {product.id.slice(0, 18)}...</span>
@@ -614,8 +843,10 @@ export default function ProductPage() {
           </motion.div>
         </div>
 
-        <NeuralRecommendations currentId={product.id} />
+        {/* Рекомендации */}
+        <Recommendations currentId={product.id} />
 
+        {/* Отзывы */}
         <ProductReviews productId={product.id} />
       </div>
     </main>

@@ -197,6 +197,45 @@ const Toast = ({ message, type, onClose }: { message: string, type: 'error' | 's
 )
 
 // ======================================================================
+// ФУНКЦИЯ ФОРМАТИРОВАНИЯ ТЕЛЕФОНА
+// ======================================================================
+const formatPhoneNumber = (value: string): string => {
+    const numbers = value.replace(/\D/g, '')
+    
+    // Если номер начинается с 7 или 8, убираем первую цифру
+    let digits = numbers
+    if (digits.startsWith('7') || digits.startsWith('8')) {
+        digits = digits.substring(1)
+    }
+    
+    // Ограничиваем 10 цифрами
+    digits = digits.substring(0, 10)
+    
+    // Форматируем по маске
+    if (digits.length === 0) return '+7'
+    if (digits.length <= 3) {
+        return `+7 (${digits}`
+    } else if (digits.length <= 6) {
+        return `+7 (${digits.substring(0, 3)}) ${digits.substring(3)}`
+    } else if (digits.length <= 8) {
+        return `+7 (${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6)}`
+    } else {
+        return `+7 (${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6, 8)}-${digits.substring(8, 10)}`
+    }
+}
+
+// ======================================================================
+// ФУНКЦИЯ ВАЛИДАЦИИ ТЕЛЕФОНА
+// ======================================================================
+const isValidRussianPhone = (phone: string): boolean => {
+    const digits = phone.replace(/\D/g, '')
+    // Проверяем что номер содержит 11 цифр и начинается с 7 или 8
+    if (digits.length !== 11) return false
+    if (!digits.startsWith('7') && !digits.startsWith('8')) return false
+    return true
+}
+
+// ======================================================================
 // [MAIN_COMPONENT]: CART_PAGE
 // ======================================================================
 export default function CartPage() {
@@ -235,6 +274,7 @@ export default function CartPage() {
     const [toasts, setToasts] = useState<{ id: number, message: string, type: 'error' | 'success' }[]>([])
     const [promoInput, setPromoInput] = useState('')
     const [appliedPromo, setAppliedPromo] = useState<any>(null)
+    const [phoneError, setPhoneError] = useState<string | null>(null)
 
     // 3. СИСТЕМА УВЕДОМЛЕНИЙ (TOASTS) - ЕДИНАЯ ЛОГИКА
     const addToast = useCallback((message: string, type: 'error' | 'success') => {
@@ -253,6 +293,10 @@ export default function CartPage() {
         const timer = setTimeout(() => setIsLoading(false), 1000);
         return () => clearTimeout(timer);
     }, []);
+
+    // Расчеты на основе dbCart
+    const totalItems = dbCart.reduce((sum, item) => sum + item.quantity, 0)
+    const totalPrice = dbCart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
 
     // 5. ЛОГИКА ОФОРМЛЕНИЯ И ОПЛАТЫ - ЕДИНАЯ ФУНКЦИЯ
     // ======================================================================
@@ -275,6 +319,14 @@ export default function CartPage() {
                 return;
             }
 
+            // ВАЛИДАЦИЯ ТЕЛЕФОНА
+            const phoneDigits = phone.replace(/\D/g, '')
+            if (!isValidRussianPhone(phoneDigits)) {
+                addToast('НЕКОРРЕКТНЫЙ НОМЕР ТЕЛЕФОНА', 'error')
+                setIsOrdering(false)
+                return
+            }
+
             // Расчет 5% кэшбека от общей суммы заказа
             const pointsToAward = Math.floor(totalPrice * 0.05);
             
@@ -284,7 +336,7 @@ export default function CartPage() {
             // Формируем delivery_info для БД
             const deliveryInfo = {
                 fullName,
-                phone,
+                phone: phoneDigits,
                 address,
                 method: deliveryMethod,
                 created_at: new Date().toISOString()
@@ -403,6 +455,14 @@ export default function CartPage() {
                 return;
             }
 
+            // ВАЛИДАЦИЯ ТЕЛЕФОНА
+            const phoneDigits = phone.replace(/\D/g, '')
+            if (!isValidRussianPhone(phoneDigits)) {
+                setPhoneError('Введите корректный российский номер телефона (+7 XXX XXX-XX-XX)')
+                addToast('НЕКОРРЕКТНЫЙ НОМЕР ТЕЛЕФОНА', 'error')
+                return
+            }
+
             // Расчет финальной суммы с учетом бонусов и промокода
             const spendAmount = useBonuses ? Math.min(userBonuses, Math.floor(totalPrice * 0.3)) : 0;
             const finalPrice = Math.max(0, totalPrice - spendAmount - (appliedPromo ? Number(appliedPromo.discount) : 0));
@@ -416,6 +476,31 @@ export default function CartPage() {
             setShowPaymentModal(true);
         }
     };
+
+    // ======================================================================
+    // ОБРАБОТЧИК ИЗМЕНЕНИЯ ТЕЛЕФОНА С МАСКОЙ
+    // ======================================================================
+    const handlePhoneChange = (value: string) => {
+        const formatted = formatPhoneNumber(value)
+        setPhone(formatted)
+        
+        // Валидация при вводе
+        const digits = formatted.replace(/\D/g, '')
+        if (digits.length === 11 && !isValidRussianPhone(digits)) {
+            setPhoneError('Номер должен начинаться с 7 или 8 и содержать 11 цифр')
+        } else {
+            setPhoneError(null)
+        }
+    }
+
+    // ======================================================================
+    // ОБРАБОТЧИК ФОКУСА НА ПОЛЕ ТЕЛЕФОНА
+    // ======================================================================
+    const handlePhoneFocus = () => {
+        if (!phone || phone === '+7') {
+            setPhone('+7')
+        }
+    }
 
     // ======================================================================
     // [DATABASE_LOGIC]: ZERO_ZERO_SYNC (Фикс 0 при загрузке)
@@ -472,10 +557,6 @@ export default function CartPage() {
 
         fetchCartData()
     }, [router, addToast])
-
-    // Расчеты на основе dbCart
-    const totalItems = dbCart.reduce((sum, item) => sum + item.quantity, 0)
-    const totalPrice = dbCart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
 
     // ======================================================================
     // [LOGIC_HANDLER_01]: QUANTITY_SYNC_PROTOCOL
@@ -560,6 +641,7 @@ export default function CartPage() {
             </div>
         );
     }
+    
     return (
         <main className="min-h-screen bg-black text-white pt-40 pb-32 px-8 relative overflow-hidden">
             <XmasSnowBackground />
@@ -897,19 +979,22 @@ export default function CartPage() {
                                                     />
                                                 </div>
 
-                                                {/* ПОЛЕ: ТЕЛЕФОН */}
+                                                {/* ПОЛЕ: ТЕЛЕФОН С МАСКОЙ */}
                                                 <div className="relative group/input">
                                                     <Phone className="absolute left-8 top-1/2 -translate-y-1/2 text-white/10 group-focus-within/input:text-[#ff007a] transition-all" size={20} />
                                                     <input
                                                         type="tel"
                                                         value={phone}
-                                                        onChange={(e) => {
-                                                            const val = e.target.value.replace(/\D/g, '').slice(0, 11);
-                                                            setPhone(val.length > 0 ? (val.startsWith('7') ? '+' + val : val) : '');
-                                                        }}
+                                                        onChange={(e) => handlePhoneChange(e.target.value)}
+                                                        onFocus={handlePhoneFocus}
                                                         placeholder="+7 (999) 000-00-00"
-                                                        className="w-full bg-white/5 border border-white/10 p-8 pl-24 rounded-[2.5rem] font-black text-xs outline-none focus:border-[#ff007a] shadow-lg transition-all"
+                                                        className={`w-full bg-white/5 border ${phoneError ? 'border-red-500/50' : 'border-white/10'} p-8 pl-24 rounded-[2.5rem] font-black text-xs outline-none focus:border-[#ff007a] shadow-lg transition-all`}
                                                     />
+                                                    {phoneError && (
+                                                        <div className="absolute -bottom-6 left-0 text-red-500 text-[10px] font-bold uppercase tracking-widest">
+                                                            {phoneError}
+                                                        </div>
+                                                    )}
                                                 </div>
 
                                                 {/* ПОЛЕ: АДРЕС */}
@@ -1137,7 +1222,7 @@ export default function CartPage() {
             {/* --- [PAYMENT_MODAL: NEURAL_TRANSACTION] --- */}
             <AnimatePresence>
                 {showPaymentModal && (
-                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="absolute inset-0 bg-black/95 backdrop-blur-2xl"

@@ -116,6 +116,18 @@ export default function Home() {
     }
   }
 
+  // ФУНКЦИЯ ДЛЯ ОТКРЫТИЯ БОНУСНОЙ СИСТЕМЫ
+  const handleOpenBonusSystem = () => {
+    setActiveTab('bonuses')
+    // Плавный скролл к бонусной системе
+    setTimeout(() => {
+      const element = document.querySelector('#bonus-system')
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' })
+      }
+    }, 100)
+  }
+
   return (
     <main className="relative w-full min-h-screen overflow-hidden bg-black text-white">
       
@@ -234,9 +246,7 @@ export default function Home() {
                 </motion.div>
 
                 <span 
-                  className={`relative z-10 text-sm md:text-base font-black tracking-[0.3em] md:tracking-[0.4em] italic transition-all duration-500 ${
-                    isActive ? 'text-white' : 'text-white/60'
-                  }`}
+                  className={`relative z-10 text-sm md:text-base font-black tracking-[0.3em] md:tracking-[0.4em] italic transition-all duration-500 ${isActive ? 'text-white' : 'text-white/60'}`}
                   style={{ 
                     textShadow: isActive ? `0 0 15px #d67a9d` : 'none',
                   }}
@@ -300,9 +310,21 @@ export default function Home() {
                   ))}
                 </div>
 
-                {/* НОВЫЙ БЛОК НОВОСТЕЙ (ДОБАВЛЕН В КОНЕЦ ТАБА 'MAIN') */}
+                {/* КНОПКА ДЛЯ ОТКРЫТИЯ БОНУСНОЙ СИСТЕМЫ */}
+                <div className="mt-12 w-full max-w-2xl">
+                  <motion.button
+                    onClick={handleOpenBonusSystem}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-full py-8 bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] rounded-[2.5rem] font-black uppercase italic tracking-[0.3em] text-lg shadow-[0_0_50px_rgba(214,122,157,0.3)] hover:shadow-[0_0_80px_rgba(214,122,157,0.5)] transition-all"
+                  >
+                    ОТКРЫТЬ БОНУСНУЮ СИСТЕМУ
+                  </motion.button>
+                </div>
+
+                {/* НОВЫЙ БЛОК НОВОСТЕЙ */}
                 {dbNews.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl">
+                  <div className="mt-24 grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl">
                     {dbNews.map((item) => (
                       <div key={item.id} className="bg-white/5 border border-white/10 p-8 rounded-[2.5rem] backdrop-blur-sm group hover:border-[#d67a9d]/50 transition-all">
                         {item.image_url && (
@@ -320,6 +342,7 @@ export default function Home() {
             {activeTab === 'bonuses' && (
               <motion.div 
                 key="bonuses"
+                id="bonus-system"
                 initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
                 animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
                 exit={{ opacity: 0, scale: 1.05, filter: 'blur(10px)' }}

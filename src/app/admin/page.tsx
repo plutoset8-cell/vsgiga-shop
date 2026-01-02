@@ -987,6 +987,16 @@ export default function AdminPage() {
         </div>
     )
     
+    // ФИЛЬТРАЦИЯ ЗАКАЗОВ ПО НОМЕРУ (ID) - ТОЛЬКО ПО ID
+    const filteredOrders = useMemo(() => {
+        if (!userSearch.trim()) return orders;
+        
+        const searchTerm = userSearch.toLowerCase().trim();
+        return orders.filter(order => 
+            order.id.toLowerCase().includes(searchTerm)
+        );
+    }, [orders, userSearch]);
+    
     return (
         <div className="min-h-screen bg-black text-white pt-32 pb-20 px-6 font-sans relative overflow-hidden">
             {/* Фоновые эффекты */}
@@ -1260,15 +1270,15 @@ export default function AdminPage() {
                             animate={{ opacity: 1 }}
                             className="space-y-8"
                         >
-                            {/* ПАНЕЛЬ ФИЛЬТРОВ И ПОИСКА */}
+                            {/* ПАНЕЛЬ ФИЛЬТРОВ И ПОИСКА - ТОЛЬКО ПО НОМЕРУ ЗАКАЗА */}
                             <div className="bg-gradient-to-br from-white/5 to-transparent border border-white/10 rounded-[2.5rem] p-6 backdrop-blur-lg">
                                 <div className="flex flex-col md:flex-row gap-6 items-center justify-between">
 
-                                    {/* ПОИСК */}
+                                    {/* ПОИСК - ТОЛЬКО ПО НОМЕРУ ЗАКАЗА */}
                                     <div className="relative flex-1 max-w-xl">
                                         <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20" size={20} />
                                         <input
-                                            placeholder="ПОИСК ПО ID, ФИО, ТЕЛЕФОНУ ИЛИ КОДУ ОПЛАТЫ..."
+                                            placeholder="ПОИСК ПО НОМЕРУ ЗАКАЗА (ID)..."
                                             className="w-full bg-black/30 border border-white/10 p-5 pl-16 rounded-2xl outline-none font-black italic uppercase tracking-widest text-sm focus:border-[#00ffea]/50 transition-all"
                                             value={userSearch}
                                             onChange={(e) => setUserSearch(e.target.value)}
@@ -1279,12 +1289,12 @@ export default function AdminPage() {
                                     <div className="flex items-center gap-4">
                                         <div className="text-center">
                                             <p className="text-[8px] font-black text-white/30 uppercase tracking-widest">Всего</p>
-                                            <p className="text-xl font-black italic text-white">{orders.length}</p>
+                                            <p className="text-xl font-black italic text-white">{filteredOrders.length}</p>
                                         </div>
                                         <div className="w-px h-6 bg-white/10" />
                                         <div className="text-center">
                                             <p className="text-[8px] font-black text-white/30 uppercase tracking-widest">Активные</p>
-                                            <p className="text-xl font-black italic text-cyan-400">{orders.filter(o => !o.status.includes('Получен') && !o.status.includes('ОТКЛОНЕН')).length}</p>
+                                            <p className="text-xl font-black italic text-cyan-400">{filteredOrders.filter(o => !o.status.includes('Получен') && !o.status.includes('ОТКЛОНЕН')).length}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1292,8 +1302,8 @@ export default function AdminPage() {
 
                             {/* СПИСОК ЗАКАЗОВ */}
                             <div className="space-y-6">
-                                {orders.length > 0 ? (
-                                    orders.map((order) => (
+                                {filteredOrders.length > 0 ? (
+                                    filteredOrders.map((order) => (
                                         <OrderCard
                                             key={order.id}
                                             order={order}
@@ -1314,7 +1324,9 @@ export default function AdminPage() {
                                     >
                                         <Database className="w-16 h-16 text-white/10 mx-auto mb-4" />
                                         <p className="text-white/10 font-black italic uppercase text-lg">ЗАКАЗЫ НЕ НАЙДЕНЫ</p>
-                                        <p className="text-white/5 text-[10px] font-black uppercase mt-2">Измените параметры фильтрации</p>
+                                        <p className="text-white/5 text-[10px] font-black uppercase mt-2">
+                                            {userSearch.trim() ? 'Измените параметры поиска' : 'Заказов пока нет'}
+                                        </p>
                                     </motion.div>
                                 )}
                             </div>
