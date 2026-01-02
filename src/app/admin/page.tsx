@@ -91,6 +91,7 @@ type UserProfile = {
 }
 
 export default function AdminPage() {
+    const [isClient, setIsClient] = useState(false)
     const [pendingStatus, setPendingStatus] = useState<string | null>(null)
     const [statusModal, setStatusModal] = useState<{
         show: boolean
@@ -178,6 +179,12 @@ export default function AdminPage() {
         content: '',
         image_url: ''
     })
+
+    useEffect(() => {
+        setIsClient(true)
+    }, [])
+
+    if (!isClient) return null // Это спасет от Application Error при первой загрузке
 
     // --- TELEGRAM УВЕДОМЛЕНИЯ ---
     const sendTelegramNotify = useCallback(async (text: string) => {
@@ -902,7 +909,7 @@ export default function AdminPage() {
     const StatusModal = React.memo(() => {
         const handleConfirmStatus = async (status: string) => {
             if (!statusModal.orderId) return
-            
+
             try {
                 await updateOrderStatus(statusModal.orderId, status)
                 setStatusModal({ show: false, orderId: '', currentStatus: '' })
@@ -953,8 +960,8 @@ export default function AdminPage() {
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 className={`p-5 rounded-2xl text-left font-black uppercase text-sm transition-all ${status === statusModal.currentStatus
-                                        ? 'bg-[#d67a9d] text-white border-[#d67a9d]'
-                                        : 'bg-white/5 border border-white/10 hover:border-[#d67a9d]/50'
+                                    ? 'bg-[#d67a9d] text-white border-[#d67a9d]'
+                                    : 'bg-white/5 border border-white/10 hover:border-[#d67a9d]/50'
                                     }`}
                             >
                                 {status}
@@ -986,17 +993,17 @@ export default function AdminPage() {
             </div>
         </div>
     )
-    
+
     // ФИЛЬТРАЦИЯ ЗАКАЗОВ ПО НОМЕРУ (ID) - ТОЛЬКО ПО ID
     const filteredOrders = useMemo(() => {
         if (!userSearch.trim()) return orders;
-        
+
         const searchTerm = userSearch.toLowerCase().trim();
-        return orders.filter(order => 
+        return orders.filter(order =>
             order.id.toLowerCase().includes(searchTerm)
         );
     }, [orders, userSearch]);
-    
+
     return (
         <div className="min-h-screen bg-black text-white pt-32 pb-20 px-6 font-sans relative overflow-hidden">
             {/* Фоновые эффекты */}
