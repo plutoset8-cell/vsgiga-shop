@@ -5,72 +5,32 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { Suspense, useRef, useMemo, useState, useEffect } from 'react'
 import * as THREE from 'three'
 
-// 1. СИСТЕМА ЧАСТИЦ ДЛЯ ЗВЕЗДНОГО НЕБА
-const StarField = () => {
-  const meshRef = useRef<THREE.Points>(null!)
-  const count = 2000
-  
-  const positions = useMemo(() => {
-    const positions = new Float32Array(count * 3)
-    
-    for (let i = 0; i < count * 3; i += 3) {
-      // Равномерное распределение в сфере
-      const radius = 50 + Math.random() * 250
-      const theta = Math.random() * Math.PI * 2
-      const phi = Math.acos(2 * Math.random() - 1)
-      
-      positions[i] = radius * Math.sin(phi) * Math.cos(theta)
-      positions[i + 1] = radius * Math.sin(phi) * Math.sin(theta)
-      positions[i + 2] = radius * Math.cos(phi)
-    }
-    
-    return positions
-  }, [count])
-
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += 0.0001
-    }
-  })
-
-  return (
-    <points ref={meshRef}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={count}
-          array={positions}
-          itemSize={3}
-        />
-      </bufferGeometry>
-      <pointsMaterial
-        size={0.5}
-        sizeAttenuation
-        transparent
-        opacity={1}
-        color="#ffffff"
-        blending={THREE.AdditiveBlending}
-      />
-    </points>
-  )
-}
-
-// 2. НАСТОЯЩИЕ ПЛАВНЫЕ СНЕЖИНКИ
-const RealSnowflakes = () => {
+// ==================== УЛУЧШЕННЫЙ КОМПОНЕНТ СНЕЖИНОК ====================
+const EnhancedSnowflakes = () => {
   const groupRef = useRef<THREE.Group>(null!)
-  const count = 400 // Оптимальное количество для плавности
+  const count = 600 // Увеличили для более плотного снега
   
+  // Оптимизированное создание снежинок с разными параметрами
   const snowflakes = useMemo(() => {
     return Array.from({ length: count }, (_, i) => {
-      const speed = Math.random() * 0.02 + 0.01 // Скорость падения
-      const drift = (Math.random() - 0.5) * 0.02 // Случайный дрейф
-      const rotationSpeed = Math.random() * 0.02 + 0.005 // Скорость вращения
+      // Разные скорости падения
+      const speed = Math.random() * 0.015 + 0.01
+      // Разный горизонтальный дрейф
+      const drift = (Math.random() - 0.5) * 0.015
+      // Разная скорость вращения
+      const rotationSpeed = Math.random() * 0.02 + 0.005
+      // Разные размеры (от маленьких к большим)
+      const size = Math.pow(Math.random(), 2) * 0.12 + 0.03
+      // Разная прозрачность
+      const opacity = Math.random() * 0.5 + 0.3
+      // Разные типы покачивания
+      const wobbleIntensity = Math.random() * 0.4 + 0.2
       
       return {
         position: new THREE.Vector3(
-          (Math.random() - 0.5) * 80,
-          30 + Math.random() * 40,
-          (Math.random() - 0.5) * 80
+          (Math.random() - 0.5) * 120, // Широкий охват по X
+          40 + Math.random() * 40,     // Начальная высота
+          (Math.random() - 0.5) * 80   // Глубина
         ),
         rotation: new THREE.Euler(
           Math.random() * Math.PI,
@@ -84,11 +44,14 @@ const RealSnowflakes = () => {
         ),
         speed,
         drift,
-        size: Math.random() * 0.08 + 0.04,
+        size,
+        opacity,
         wobble: {
-          frequency: Math.random() * 0.5 + 0.3,
-          amplitude: Math.random() * 0.3 + 0.1
-        }
+          frequency: Math.random() * 0.4 + 0.2,
+          amplitude: wobbleIntensity,
+          phase: Math.random() * Math.PI * 2 // Разная фаза покачивания
+        },
+        originalX: 0 // Для сохранения оригинальной позиции
       }
     })
   }, [count])
@@ -99,19 +62,29 @@ const RealSnowflakes = () => {
     const time = state.clock.elapsedTime
     
     snowflakes.forEach((flake) => {
+      // Плавное падение вниз
       flake.position.y -= flake.speed
-      flake.position.x += Math.sin(time * flake.wobble.frequency + flake.position.z) * flake.wobble.amplitude * 0.01
-      flake.position.z += Math.cos(time * flake.wobble.frequency + flake.position.x) * flake.wobble.amplitude * 0.01
-      flake.position.x += flake.drift * 0.1
       
+      // Реалистичное боковое покачивание (синусоидальное движение)
+      const wobbleX = Math.sin(time * flake.wobble.frequency + flake.wobble.phase) * flake.wobble.amplitude
+      const wobbleZ = Math.cos(time * flake.wobble.frequency * 0.8 + flake.wobble.phase) * flake.wobble.amplitude * 0.5
+      
+      flake.position.x += wobbleX * 0.02
+      flake.position.z += wobbleZ * 0.01
+      
+      // Легкий горизонтальный дрейф
+      flake.position.x += flake.drift * 0.05
+      
+      // Вращение снежинок
       flake.rotation.x += flake.rotationSpeed.x
       flake.rotation.y += flake.rotationSpeed.y
       flake.rotation.z += flake.rotationSpeed.z
       
-      if (flake.position.y < -30) {
+      // Перезапуск снежинок, когда они падают слишком низко
+      if (flake.position.y < -40) {
         flake.position.set(
-          (Math.random() - 0.5) * 80,
-          30 + Math.random() * 40,
+          (Math.random() - 0.5) * 120,
+          40 + Math.random() * 40,
           (Math.random() - 0.5) * 80
         )
         flake.rotation.set(
@@ -132,13 +105,19 @@ const RealSnowflakes = () => {
           rotation={flake.rotation}
           scale={flake.size}
         >
-          <ringGeometry args={[0.5, 0.7, 6]} />
+          {/* Разные формы снежинок */}
+          {Math.random() > 0.5 ? (
+            <ringGeometry args={[0.4, 0.8, 6]} />
+          ) : (
+            <circleGeometry args={[0.6, 8]} />
+          )}
           <meshBasicMaterial
             color="#ffffff"
             transparent
-            opacity={0.9}
+            opacity={flake.opacity}
             side={THREE.DoubleSide}
             depthWrite={false}
+            blending={THREE.AdditiveBlending}
           />
         </mesh>
       ))}
@@ -146,102 +125,25 @@ const RealSnowflakes = () => {
   )
 }
 
-// 3. ОСВЕЩЕНИЕ
-const SceneLighting = () => {
+// ==================== МИНИМАЛЬНОЕ ОСВЕЩЕНИЕ ====================
+const MinimalLighting = () => {
   return (
     <>
-      <ambientLight intensity={0.3} color={0xffffff} />
+      {/* Мягкое окружающее освещение для объема */}
+      <ambientLight intensity={0.2} color={0xffffff} />
       
-      <pointLight 
-        position={[15, 10, 15]} 
-        intensity={0.6} 
-        color={0xd67a9d} 
-        distance={60}
-        decay={2}
-      />
-      <pointLight 
-        position={[-15, 8, 10]} 
-        intensity={0.5} 
-        color={0x71b3c9} 
-        distance={60}
-        decay={2}
-      />
-      <pointLight 
-        position={[10, 5, -15]} 
-        intensity={0.4} 
-        color={0xffd166} 
-        distance={50}
-        decay={2}
+      {/* Легкое направленное освещение сверху (как от неба) */}
+      <directionalLight 
+        position={[0, 30, 0]} 
+        intensity={0.1} 
+        color={0xffffff}
+        castShadow={false}
       />
     </>
   )
 }
 
-// 4. ПРОЗРАЧНЫЙ ФОН И АТМОСФЕРА
-const BackgroundAtmosphere = () => {
-  return (
-    <>
-      <mesh position={[0, 0, -100]}>
-        <sphereGeometry args={[90, 32, 32]} />
-        <meshBasicMaterial
-          color={0x000000}
-          side={THREE.BackSide}
-        />
-      </mesh>
-      
-      <mesh position={[0, 0, -80]}>
-        <sphereGeometry args={[70, 32, 32]} />
-        <meshBasicMaterial
-          color={0x0a1a2a}
-          side={THREE.BackSide}
-          transparent
-          opacity={0.1}
-        />
-      </mesh>
-    </>
-  )
-}
-
-// 5. ЭФФЕКТ ПАРАЛЛАКСА ДЛЯ ГЛУБИНЫ
-const ParallaxLayer = () => {
-  const groupRef = useRef<THREE.Group>(null!)
-  
-  useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.02) * 0.1
-    }
-  })
-
-  return (
-    <group ref={groupRef}>
-      {Array.from({ length: 50 }).map((_, i) => {
-        const radius = 20 + Math.random() * 60
-        const angle = Math.random() * Math.PI * 2
-        const height = Math.random() * 40 - 20
-        
-        return (
-          <mesh
-            key={i}
-            position={[
-              Math.cos(angle) * radius,
-              height,
-              Math.sin(angle) * radius - 50
-            ]}
-          >
-            <sphereGeometry args={[0.2, 8, 8]} />
-            <meshBasicMaterial
-              color={Math.random() > 0.5 ? 0xd67a9d : 0x71b3c9}
-              transparent
-              opacity={0.1}
-            />
-          </mesh>
-        )
-      })}
-    </group>
-  )
-}
-
-// 6. ОСНОВНОЙ КОМПОНЕНТ 3D СЦЕНЫ
+// ==================== ОСНОВНОЙ КОМПОНЕНТ 3D СЦЕНЫ ====================
 export default function Profile3DScene() {
   const [isMounted, setIsMounted] = useState(false)
 
@@ -256,13 +158,13 @@ export default function Profile3DScene() {
     <div 
       className="fixed inset-0 pointer-events-none"
       style={{
-        zIndex: -100, // УВЕЛИЧЕН до -100 чтобы был точно под всем
+        zIndex: -100, // Глубокий z-index для фона
       }}
     >
       <Canvas
         camera={{
-          position: [0, 5, 20],
-          fov: 60,
+          position: [0, 5, 30], // Отодвигаем камеру дальше
+          fov: 70,
           near: 0.1,
           far: 1000,
         }}
@@ -273,7 +175,7 @@ export default function Profile3DScene() {
           width: '100vw',
           height: '100vh',
           pointerEvents: 'none',
-          zIndex: -100, // УВЕЛИЧЕН до -100
+          zIndex: -100,
           background: 'transparent',
         }}
         gl={{
@@ -283,26 +185,24 @@ export default function Profile3DScene() {
         }}
         dpr={[1, 1.5]}
         onCreated={({ gl, scene }) => {
-          gl.setClearColor(0x000000, 1)
+          // Чистый черный прозрачный фон
+          gl.setClearColor(0x000000, 0)
           gl.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
-          scene.fog = new THREE.Fog(0x000000, 40, 120)
         }}
       >
-        <SceneLighting />
+        <MinimalLighting />
         
         <Suspense fallback={null}>
-          <BackgroundAtmosphere />
-          <StarField />
-          <ParallaxLayer />
-          <RealSnowflakes />
+          <EnhancedSnowflakes />
         </Suspense>
         
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -25, 0]}>
-          <planeGeometry args={[200, 200]} />
+        {/* Невидимая плоскость для создания глубины */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -40, 0]}>
+          <planeGeometry args={[400, 400]} />
           <meshBasicMaterial
             color={0x000000}
             transparent
-            opacity={0.05}
+            opacity={0}
             side={THREE.DoubleSide}
           />
         </mesh>

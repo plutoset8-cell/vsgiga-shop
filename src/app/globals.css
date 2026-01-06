@@ -48,7 +48,7 @@ canvas {
   height: 100vh !important;
   pointer-events: none !important;
   touch-action: none !important;
-  z-index: -100 !important; /* УВЕЛИЧЕН до -100 */
+  z-index: -100 !important;
   background: transparent !important;
   mix-blend-mode: normal !important;
   backdrop-filter: none !important;
@@ -56,10 +56,10 @@ canvas {
   display: block !important;
 }
 
-/* Контейнер для 3D сцены */
+/* Контейнер для 3D сцены профиля */
 .fixed.inset-0 {
   background: transparent !important;
-  z-index: -100 !important; /* УВЕЛИЧЕН до -100 */
+  z-index: -100 !important;
 }
 
 /* ==================== ПОЗИЦИОНИРОВАНИЕ И Z-INDEX ==================== */
@@ -249,6 +249,34 @@ img {
   }
 }
 
+/* Анимация плавного падения снежинки */
+@keyframes snowFall {
+  0% {
+    transform: translateY(-100px) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(100vh) translateX(20px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Анимация покачивания */
+@keyframes snowWobble {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(10px);
+  }
+}
+
 /* Анимация пульсации */
 @keyframes pulse {
   0%, 100% {
@@ -283,6 +311,14 @@ img {
   animation: slideDown 0.5s ease-out;
 }
 
+.animate-snowFall {
+  animation: snowFall linear infinite;
+}
+
+.animate-snowWobble {
+  animation: snowWobble ease-in-out infinite;
+}
+
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -296,6 +332,8 @@ img {
   .animate-gradient,
   .animate-slide,
   .animate-slideDown,
+  .animate-snowFall,
+  .animate-snowWobble,
   .animate-pulse,
   .animate-spin {
     animation: none;
