@@ -26,10 +26,10 @@ html {
   position: relative;
 }
 
-/* ОСНОВНОЙ ТЕМНЫЙ ФОН ТЕЛА */
+/* ОСНОВНОЙ ФОН ТЕЛА */
 body {
   color: rgb(var(--foreground-rgb));
-  background: #000000 !important;
+  background: #000000;
   min-height: 100vh;
   position: relative;
   width: 100%;
@@ -39,7 +39,6 @@ body {
 }
 
 /* ==================== СТИЛИ ДЛЯ 3D CANVAS ==================== */
-/* Контейнер для Canvas - должен быть под всем */
 canvas {
   position: fixed !important;
   top: 0 !important;
@@ -48,7 +47,7 @@ canvas {
   height: 100vh !important;
   pointer-events: none !important;
   touch-action: none !important;
-  z-index: -100 !important;
+  z-index: -50 !important;
   background: transparent !important;
   mix-blend-mode: normal !important;
   backdrop-filter: none !important;
@@ -56,14 +55,13 @@ canvas {
   display: block !important;
 }
 
-/* Контейнер для 3D сцены профиля */
+/* Контейнер для 3D сцены */
 .fixed.inset-0 {
   background: transparent !important;
-  z-index: -100 !important;
+  z-index: -50 !important;
 }
 
 /* ==================== ПОЗИЦИОНИРОВАНИЕ И Z-INDEX ==================== */
-/* Основной контент должен быть над Canvas */
 main {
   position: relative;
   z-index: 1 !important;
@@ -72,6 +70,10 @@ main {
 }
 
 /* Fixed элементы с разными уровнями z-index */
+.fixed.z-0 {
+  z-index: 0 !important;
+}
+
 .fixed.z-10 {
   z-index: 10 !important;
 }
@@ -93,6 +95,10 @@ main {
 }
 
 /* Отрицательные z-index для фонов */
+.z-\[-50\] {
+  z-index: -50 !important;
+}
+
 .z-\[-100\] {
   z-index: -100 !important;
 }
@@ -106,14 +112,110 @@ main {
   z-index: 99999 !important;
 }
 
-/* ==================== FIXED ЭЛЕМЕНТЫ ==================== */
-.fixed {
-  position: fixed !important;
-  transform: translate3d(0, 0, 0) !important;
-  backface-visibility: hidden !important;
-  -webkit-backface-visibility: hidden !important;
-  will-change: transform !important;
-  contain: layout style paint !important;
+/* ==================== АНИМАЦИИ СНЕГА ==================== */
+@keyframes snowFall {
+  0% {
+    transform: translate3d(0, -20px, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate3d(0, 100vh, 0) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes snowWobble {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  25% {
+    transform: translate3d(2px, 0, 0);
+  }
+  50% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  75% {
+    transform: translate3d(1px, 0, 0);
+  }
+}
+
+/* ==================== CSS АНИМАЦИИ ==================== */
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes slide {
+  0% {
+    transform: translateX(-100%) skewX(12deg);
+  }
+  100% {
+    transform: translateX(400%) skewX(12deg);
+  }
+}
+
+@keyframes slideDown {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Классы для анимаций */
+.animate-gradient {
+  animation: gradient 6s ease infinite;
+  background-size: 400% 400%;
+}
+
+.animate-slide {
+  animation: slide 3s linear infinite;
+}
+
+.animate-slideDown {
+  animation: slideDown 0.5s ease-out;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
 }
 
 /* ==================== GPU УСКОРЕНИЕ ==================== */
@@ -125,8 +227,17 @@ main {
   contain: layout style paint;
 }
 
+/* ==================== FIXED ЭЛЕМЕНТЫ ==================== */
+.fixed {
+  position: fixed !important;
+  transform: translate3d(0, 0, 0) !important;
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+  will-change: transform !important;
+  contain: layout style paint !important;
+}
+
 /* ==================== ТИПОГРАФИКА И ТЕКСТ ==================== */
-/* Улучшение читаемости текста на темном фоне */
 .text-white {
   color: #ffffff;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
@@ -143,7 +254,6 @@ main {
 }
 
 /* ==================== КАРТОЧКИ И ЭЛЕМЕНТЫ UI ==================== */
-/* Полупрозрачные фоны для лучшей читаемости на темном фоне */
 .bg-white\/5 {
   background-color: rgba(0, 0, 0, 0.3) !important;
   backdrop-filter: blur(10px);
@@ -213,127 +323,11 @@ img {
   user-select: none;
 }
 
-/* ==================== CSS АНИМАЦИИ ==================== */
-/* Градиентная анимация */
-@keyframes gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-/* Скользящая анимация */
-@keyframes slide {
-  0% {
-    transform: translateX(-100%) skewX(12deg);
-  }
-  100% {
-    transform: translateX(400%) skewX(12deg);
-  }
-}
-
-/* Анимация появления сверху */
-@keyframes slideDown {
-  0% {
-    transform: translateY(-100%);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-/* Анимация плавного падения снежинки */
-@keyframes snowFall {
-  0% {
-    transform: translateY(-100px) translateX(0) rotate(0deg);
-    opacity: 0;
-  }
-  10% {
-    opacity: 0.8;
-  }
-  90% {
-    opacity: 0.8;
-  }
-  100% {
-    transform: translateY(100vh) translateX(20px) rotate(360deg);
-    opacity: 0;
-  }
-}
-
-/* Анимация покачивания */
-@keyframes snowWobble {
-  0%, 100% {
-    transform: translateX(0);
-  }
-  50% {
-    transform: translateX(10px);
-  }
-}
-
-/* Анимация пульсации */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-/* Анимация вращения */
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Классы для анимаций */
-.animate-gradient {
-  animation: gradient 6s ease infinite;
-  background-size: 400% 400%;
-}
-
-.animate-slide {
-  animation: slide 3s linear infinite;
-}
-
-.animate-slideDown {
-  animation: slideDown 0.5s ease-out;
-}
-
-.animate-snowFall {
-  animation: snowFall linear infinite;
-}
-
-.animate-snowWobble {
-  animation: snowWobble ease-in-out infinite;
-}
-
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
 /* ==================== АДАПТИВНОСТЬ И ДОСТУПНОСТЬ ==================== */
 @media (prefers-reduced-motion: reduce) {
   .animate-gradient,
   .animate-slide,
   .animate-slideDown,
-  .animate-snowFall,
-  .animate-snowWobble,
   .animate-pulse,
   .animate-spin {
     animation: none;
@@ -425,18 +419,12 @@ img {
 }
 
 /* ==================== МОДАЛЬНЫЕ ОКНА ==================== */
-/* Фикс для модальных окон - должны быть выше всего */
 .modal-overlay {
   z-index: 99998 !important;
 }
 
 .modal-content {
   z-index: 99999 !important;
-}
-
-/* Гарантируем, что 3D сцена не мешает модалкам */
-.fixed.z-\[-100\] {
-  z-index: -100 !important;
 }
 
 /* ==================== КОНЕЦ ФАЙЛА ==================== */

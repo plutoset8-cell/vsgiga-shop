@@ -37,213 +37,69 @@ import {
   LifeBuoy,
   HelpCircle
 } from 'lucide-react'
-import Profile3DScene from '@/components/canvas/Profile3DScene'
 
-// ==================== ОПТИМИЗИРОВАННЫЙ МАГИЧЕСКИЙ ПОДАРОК ====================
-const MagicGift = () => {
-  const [isOpen, setIsOpen] = useState(false)
-  const [showConfetti, setShowConfetti] = useState(false)
-  const [promoCode, setPromoCode] = useState('')
-  const confettiRef = useRef<HTMLDivElement>(null)
+// ==================== CSS СНЕГОПАД ====================
+const CSSSnowfall = () => {
+  const [snowflakes, setSnowflakes] = useState<Array<{
+    id: number;
+    left: string;
+    size: number;
+    opacity: number;
+    duration: number;
+    delay: number;
+  }>>([]);
 
-  const handleClick = useCallback(() => {
-    if (isOpen) return
-
-    setShowConfetti(true)
-    setPromoCode('HAPPY2026')
-    setIsOpen(true)
-
-    toast.success(
-      <div className="text-center">
-        <p className="font-bold text-lg">🎉 ВАШ ПРОМОКОД АКТИВИРОВАН!</p>
-        <p className="text-sm mt-1">HAPPY2026 на 1000 ₽</p>
-      </div>,
-      {
-        duration: 5000,
-        style: {
-          background: 'linear-gradient(90deg, #d67a9d, #71b3c9)',
-          color: 'white',
-          border: '2px solid rgba(255,255,255,0.2)'
-        }
-      }
-    )
-
-    const timer = setTimeout(() => setShowConfetti(false), 3000)
-    return () => clearTimeout(timer)
-  }, [isOpen])
-
-  // Оптимизированный конфетти с useMemo
-  const confettiParticles = useMemo(() =>
-    Array.from({ length: 80 }, (_, i) => ({
+  useEffect(() => {
+    const flakes = Array.from({ length: 120 }, (_, i) => ({
       id: i,
-      xStart: 50 + Math.sin(i) * 20,
-      yStart: 100,
-      xEnd: Math.random() * 100,
-      yEnd: -100,
-      rotation: Math.random() * 720,
-      duration: Math.random() * 2 + 2,
-      delay: Math.random() * 2,
-      size: Math.random() * 20 + 10,
-      color: ['#d67a9d', '#71b3c9', '#ffd166', '#ff6b9d', '#4da6cc'][Math.floor(Math.random() * 5)],
-      emoji: ['🎉', '✨', '⭐', '🎁', '🎊'][Math.floor(Math.random() * 5)]
-    })), []
-  )
+      left: `${Math.random() * 100}vw`,
+      size: Math.random() * 6 + 3,
+      opacity: Math.random() * 0.7 + 0.3,
+      duration: Math.random() * 15 + 10,
+      delay: Math.random() * 5,
+    }));
+    setSnowflakes(flakes);
+  }, []);
 
   return (
-    <>
-      {/* Оптимизированный конфетти эффект */}
-      <AnimatePresence>
-        {showConfetti && (
-          <motion.div
-            ref={confettiRef}
-            className="fixed inset-0 pointer-events-none z-50 overflow-hidden"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            {confettiParticles.map((particle) => (
-              <motion.div
-                key={particle.id}
-                className="absolute text-2xl"
-                style={{
-                  left: `${particle.xStart}vw`,
-                  top: `${particle.yStart}vh`,
-                  color: particle.color,
-                  fontSize: `${particle.size}px`
-                }}
-                animate={{
-                  x: [`${particle.xStart}vw`, `${particle.xEnd}vw`],
-                  y: [`${particle.yStart}vh`, `${particle.yEnd}vh`],
-                  rotate: [0, particle.rotation],
-                  scale: [0, 1, 0.5],
-                  opacity: [0, 1, 1, 0]
-                }}
-                transition={{
-                  duration: particle.duration,
-                  delay: particle.delay,
-                  times: [0, 0.1, 0.9, 1],
-                  ease: "easeOut"
-                }}
-              >
-                {particle.emoji}
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Компонент подарка */}
-      <motion.div
-        className="fixed bottom-32 left-8 z-40 cursor-pointer"
-        animate={{
-          scale: [1, 1.15, 1],
-          rotate: [0, -8, 8, -8, 0],
-          y: [0, -10, 0]
-        }}
-        transition={{
-          duration: 3,
-          repeat: Infinity,
-          repeatDelay: 1,
-          ease: "easeInOut"
-        }}
-        onClick={handleClick}
-        style={{ transformStyle: 'preserve-3d' }}
-      >
-        {/* Аврора эффект */}
-        <motion.div
-          className="absolute inset-0 rounded-full blur-xl opacity-50"
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a1a] via-[#1a1a2a] to-[#0a0a2a]" />
+      <div className="absolute inset-0 bg-gradient-to-t from-transparent via-[#d67a9d]/5 to-transparent opacity-30" />
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#71b3c9]/5 to-transparent opacity-20" />
+      
+      {snowflakes.map((flake) => (
+        <div
+          key={flake.id}
+          className="absolute top-[-20px] pointer-events-none"
           style={{
-            background: 'linear-gradient(45deg, #d67a9d, #ff6b9d, #71b3c9, #4da6cc)',
-            backgroundSize: '400% 400%'
+            left: flake.left,
+            animation: `snowFall ${flake.duration}s linear ${flake.delay}s infinite`,
+            transform: 'translate3d(0, 0, 0)',
           }}
-          animate={{
-            backgroundPosition: ['0% 50%', '100% 50%', '0% 50%']
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            ease: "linear"
-          }}
-        />
-
-        <div className="relative bg-gradient-to-br from-[#d67a9d] via-[#71b3c9] to-[#ffd166] p-1.5 rounded-2xl shadow-2xl">
-          <div className="bg-black rounded-xl p-6">
-            <div className="flex flex-col items-center">
-              <div className="relative mb-4">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                  className="w-12 h-12"
-                >
-                  <Gift className="w-full h-full text-yellow-400" />
-                </motion.div>
-                <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 border-2 border-black flex items-center justify-center">
-                  <span className="text-[10px] font-black">!</span>
-                </div>
-              </div>
-              <p className="text-sm font-black tracking-widest text-center leading-tight">
-                МАГИЧЕСКИЙ<br />ПОДАРОК
-              </p>
-              <div className="mt-2 w-full h-1 bg-gradient-to-r from-transparent via-yellow-400 to-transparent rounded-full" />
-            </div>
+        >
+          <div
+            className="relative"
+            style={{
+              width: `${flake.size}px`,
+              height: `${flake.size}px`,
+              opacity: flake.opacity,
+              filter: 'blur(0.3px)',
+              transform: 'translate3d(0, 0, 0)',
+            }}
+          >
+            <div
+              className="absolute inset-0 bg-white rounded-full"
+              style={{
+                animation: `snowWobble ${Math.random() * 3 + 2}s ease-in-out infinite alternate`,
+                transform: 'translate3d(0, 0, 0)',
+              }}
+            />
           </div>
         </div>
-
-        {/* Всплывающее окно с промокодом */}
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8, y: 30 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              className="absolute left-full ml-4 bottom-0 min-w-[320px] z-50"
-            >
-              <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl border-2 border-yellow-500/50 p-6 shadow-2xl">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-black tracking-widest flex items-center gap-2">
-                    <Sparkles className="text-yellow-400" />
-                    ВАШ ПРОМОКОД
-                  </h3>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setIsOpen(false)
-                    }}
-                    className="text-white/60 hover:text-white transition-colors"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-
-                <div className="bg-black/50 rounded-xl p-6 border border-yellow-500/30 text-center mb-4">
-                  <p className="text-4xl font-black tracking-wider text-yellow-400 font-mono">
-                    {promoCode}
-                  </p>
-                  <p className="text-sm text-white/60 mt-2">1000 ₽ на первый заказ</p>
-                  <div className="mt-4 flex justify-center">
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(promoCode)
-                        toast.success('Промокод скопирован!')
-                      }}
-                      className="px-4 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-400 text-sm font-bold hover:bg-yellow-500/20 transition-colors"
-                    >
-                      КОПИРОВАТЬ
-                    </button>
-                  </div>
-                </div>
-
-                <p className="text-xs text-white/40 text-center">
-                  Промокод действителен до 31.01.2026
-                </p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-    </>
-  )
-}
+      ))}
+    </div>
+  );
+};
 
 // ==================== ОПТИМИЗИРОВАННЫЕ КОМПОНЕНТЫ ====================
 
@@ -261,7 +117,6 @@ const AnimatedSphere = ({ value }: { value: number }) => {
   return (
     <div className="relative flex items-center justify-center">
       <div className="relative w-56 h-56">
-        {/* Внешняя аура */}
         <motion.div
           className="absolute -inset-10 rounded-full bg-gradient-to-r from-[#d67a9d]/20 via-[#71b3c9]/20 to-[#ffd166]/20 blur-3xl"
           animate={{
@@ -275,14 +130,12 @@ const AnimatedSphere = ({ value }: { value: number }) => {
           }}
         />
 
-        {/* Средняя сфера */}
         <motion.div
           className="absolute inset-4 rounded-full bg-gradient-to-r from-[#d67a9d]/40 via-[#71b3c9]/40 to-transparent blur-lg"
           animate={{ rotate: 360 }}
           transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
         />
 
-        {/* Внутренняя сфера */}
         <div className="absolute inset-10 rounded-full bg-gradient-to-br from-black to-gray-900 border-2 border-white/10 flex items-center justify-center shadow-2xl">
           <div className="text-center">
             <p className="text-5xl font-black bg-gradient-to-r from-[#d67a9d] via-[#71b3c9] to-[#ffd166] bg-clip-text text-transparent">
@@ -292,7 +145,6 @@ const AnimatedSphere = ({ value }: { value: number }) => {
           </div>
         </div>
 
-        {/* Сияющие частицы */}
         {particles.map((particle) => (
           <motion.div
             key={particle.id}
@@ -407,7 +259,6 @@ const BorderBeam = () => {
 // ==================== CSS АНИМАЦИИ ДЛЯ ОПТИМИЗАЦИИ ====================
 const OptimizedAnimations = () => {
   useEffect(() => {
-    // Добавляем CSS анимации в документ только один раз
     if (document.querySelector('#optimized-animations')) return
 
     const style = document.createElement('style')
@@ -428,6 +279,28 @@ const OptimizedAnimations = () => {
         100% { transform: translateY(0); opacity: 1; }
       }
       
+      @keyframes snowFall {
+        0% {
+          transform: translate3d(0, -20px, 0) rotate(0deg);
+          opacity: 0;
+        }
+        10% {
+          opacity: 0.8;
+        }
+        90% {
+          opacity: 0.8;
+        }
+        100% {
+          transform: translate3d(0, 100vh, 0) rotate(360deg);
+          opacity: 0;
+        }
+      }
+      
+      @keyframes snowWobble {
+        0%, 100% { transform: translate3d(0, 0, 0); }
+        50% { transform: translate3d(3px, 0, 0); }
+      }
+      
       .animate-gradient {
         animation: gradient 6s ease infinite;
         background-size: 400% 400%;
@@ -441,7 +314,6 @@ const OptimizedAnimations = () => {
         animation: slideDown 0.5s ease-out;
       }
       
-      /* GPU оптимизации */
       .gpu-accelerated {
         transform: translateZ(0);
         backface-visibility: hidden;
@@ -450,12 +322,10 @@ const OptimizedAnimations = () => {
         contain: layout style paint;
       }
       
-      /* Оптимизация для изображений */
       img {
         content-visibility: auto;
       }
       
-      /* Улучшение производительности скролла */
       .overflow-auto {
         -webkit-overflow-scrolling: touch;
         scroll-behavior: smooth;
@@ -863,8 +733,7 @@ export default function ProfilePage() {
       {/* Модальные окна и фоновые компоненты */}
       <TopUpModal isOpen={topUpModalOpen} onClose={() => setTopUpModalOpen(false)} />
       <OptimizedAnimations />
-      <Profile3DScene />
-      <MagicGift />
+      <CSSSnowfall />
 
       {/* Новогодний топ-баннер */}
       <motion.div 
