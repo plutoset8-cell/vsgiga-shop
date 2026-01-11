@@ -1,3 +1,15 @@
+/* ЯДЕРНЫЙ FIX для z-index */
+.portal-fix {
+  position: fixed;
+  isolation: isolate;
+}
+
+/* Гарантированно поверх всего */
+.z-max {
+  z-index: 2147483647 !important;
+  /* Максимальное значение z-index */
+}
+
 /* src/app/globals.css */
 @tailwind base;
 @tailwind components;
@@ -118,12 +130,15 @@ main {
     transform: translate3d(0, -20px, 0) rotate(0deg);
     opacity: 0;
   }
+
   10% {
     opacity: 0.8;
   }
+
   90% {
     opacity: 0.8;
   }
+
   100% {
     transform: translate3d(0, 100vh, 0) rotate(360deg);
     opacity: 0;
@@ -131,15 +146,20 @@ main {
 }
 
 @keyframes snowWobble {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translate3d(0, 0, 0);
   }
+
   25% {
     transform: translate3d(2px, 0, 0);
   }
+
   50% {
     transform: translate3d(-1px, 0, 0);
   }
+
   75% {
     transform: translate3d(1px, 0, 0);
   }
@@ -150,9 +170,11 @@ main {
   0% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
+
   100% {
     background-position: 0% 50%;
   }
@@ -162,6 +184,7 @@ main {
   0% {
     transform: translateX(-100%) skewX(12deg);
   }
+
   100% {
     transform: translateX(400%) skewX(12deg);
   }
@@ -172,6 +195,7 @@ main {
     transform: translateY(-100%);
     opacity: 0;
   }
+
   100% {
     transform: translateY(0);
     opacity: 1;
@@ -179,9 +203,12 @@ main {
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
@@ -191,6 +218,7 @@ main {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -325,6 +353,7 @@ img {
 
 /* ==================== АДАПТИВНОСТЬ И ДОСТУПНОСТЬ ==================== */
 @media (prefers-reduced-motion: reduce) {
+
   .animate-gradient,
   .animate-slide,
   .animate-slideDown,
@@ -332,7 +361,7 @@ img {
   .animate-spin {
     animation: none;
   }
-  
+
   * {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
@@ -346,12 +375,12 @@ img {
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
   }
-  
+
   .bg-white\/10 {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
   }
-  
+
   .text-white {
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
   }
@@ -404,15 +433,15 @@ img {
   .card-glass {
     @apply bg-black/30 backdrop-blur-xl border border-white/10 rounded-2xl;
   }
-  
+
   .btn-primary {
     @apply bg-gradient-to-r from-[#d67a9d] to-[#71b3c9] text-white font-bold py-3 px-6 rounded-xl hover:opacity-90 transition-opacity;
   }
-  
+
   .btn-secondary {
     @apply bg-black/40 backdrop-blur-sm text-white font-bold py-3 px-6 rounded-xl border border-white/20 hover:bg-black/60 transition-colors;
   }
-  
+
   .input-glass {
     @apply bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:border-[#d67a9d] focus:outline-none transition-colors;
   }
