@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useCart } from '@/context/CartContext'
 import { supabase } from '@/lib/supabase'
+import PaymentModal from '@/components/PaymentModal'
 import Link from 'next/link'
 import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'framer-motion'
 import { useRouter } from 'next/navigation'
@@ -201,16 +202,16 @@ const Toast = ({ message, type, onClose }: { message: string, type: 'error' | 's
 // ======================================================================
 const formatPhoneNumber = (value: string): string => {
     const numbers = value.replace(/\D/g, '')
-    
+
     // Если номер начинается с 7 или 8, убираем первую цифру
     let digits = numbers
     if (digits.startsWith('7') || digits.startsWith('8')) {
         digits = digits.substring(1)
     }
-    
+
     // Ограничиваем 10 цифрами
     digits = digits.substring(0, 10)
-    
+
     // Форматируем по маске
     if (digits.length === 0) return '+7'
     if (digits.length <= 3) {
@@ -329,10 +330,10 @@ export default function CartPage() {
 
             // Расчет 5% кэшбека от общей суммы заказа
             const pointsToAward = Math.floor(totalPrice * 0.05);
-            
+
             // Расчет суммы списания бонусов (если использовались)
             const spendAmount = useBonuses ? Math.min(userBonuses, Math.floor(totalPrice * 0.3)) : 0;
-            
+
             // Формируем delivery_info для БД
             const deliveryInfo = {
                 fullName,
@@ -378,7 +379,7 @@ export default function CartPage() {
             // ОБНОВЛЕНИЕ БАЛАНСА ПОЛЬЗОВАТЕЛЯ (5% КЭШБЕК + СПИСАНИЕ ИСПОЛЬЗОВАННЫХ БОНУСОВ)
             const { error: profileError } = await supabase
                 .from('profiles')
-                .update({ 
+                .update({
                     available_points: userBonuses + pointsToAward - spendAmount
                 })
                 .eq('id', user.id);
@@ -389,11 +390,11 @@ export default function CartPage() {
             } else {
                 // Обновляем локальное состояние бонусов
                 setUserBonuses(prev => prev + pointsToAward - spendAmount);
-                
+
                 if (pointsToAward > 0) {
                     addToast(`НАЧИСЛЕНО ${pointsToAward} БОНУСНЫХ БАЛЛОВ (5%)`, 'success');
                 }
-                
+
                 if (spendAmount > 0) {
                     addToast(`СПИСАНО ${spendAmount} БОНУСНЫХ БАЛЛОВ`, 'success');
                 }
@@ -431,7 +432,7 @@ export default function CartPage() {
             setIsOrdering(false);
         }
     };
-    
+
     // ======================================================================
     // ЛОГИКА ОТМЕНЫ ЗАКАЗА (КОММЕНТАРИЙ ДЛЯ АДМИНКИ)
     // ======================================================================
@@ -483,7 +484,7 @@ export default function CartPage() {
     const handlePhoneChange = (value: string) => {
         const formatted = formatPhoneNumber(value)
         setPhone(formatted)
-        
+
         // Валидация при вводе
         const digits = formatted.replace(/\D/g, '')
         if (digits.length === 11 && !isValidRussianPhone(digits)) {
@@ -641,7 +642,7 @@ export default function CartPage() {
             </div>
         );
     }
-    
+
     return (
         <main className="min-h-screen bg-black text-white pt-40 pb-32 px-8 relative overflow-hidden">
             <XmasSnowBackground />
@@ -1220,101 +1221,15 @@ export default function CartPage() {
             </div>
 
             {/* --- [PAYMENT_MODAL: NEURAL_TRANSACTION] --- */}
-            <AnimatePresence>
-                {showPaymentModal && (
-                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-black/95 backdrop-blur-2xl"
-                            onClick={() => setShowPaymentModal(false)}
-                        />
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="w-full max-w-md bg-[#0a0a0a] border border-white/10 p-8 rounded-[3rem] shadow-[0_0_100px_rgba(255,0,122,0.1)] relative overflow-hidden"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <div className="absolute -top-24 -left-24 w-64 h-64 bg-[#ff007a]/10 blur-[100px] rounded-full pointer-events-none" />
-
-                            <div className="flex justify-between items-center mb-8 relative z-10">
-                                <div>
-                                    <h3 className="text-white font-black uppercase tracking-[0.3em] italic text-xl">Оплата</h3>
-                                    <p className="text-white/30 text-[9px] uppercase font-bold tracking-widest mt-1 italic text-left">Перевод по реквизитам</p>
-                                </div>
-                                <button
-                                    onClick={() => setShowPaymentModal(false)}
-                                    className="p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all text-white/50 hover:text-white border border-white/5"
-                                >
-                                    <X size={20} />
-                                </button>
-                            </div>
-
-                            <div className="space-y-6 relative z-10">
-                                {/* СУММА К ОПЛАТЕ */}
-                                <div className="bg-white/5 border border-white/5 p-5 rounded-[2rem] text-center">
-                                    <p className="text-[10px] font-black text-white/30 uppercase mb-1 tracking-widest text-center">Сумма к оплате</p>
-                                    <p className="text-4xl font-black text-[#ff007a] italic">
-                                        {frozenPrice.toLocaleString()} ₽
-                                    </p>
-                                </div>
-
-                                {/* КОД ДЛЯ КОММЕНТАРИЯ */}
-                                <div className="relative group text-center">
-                                    <div className="absolute -inset-1 bg-gradient-to-r from-[#ff007a] to-[#d67a9d] rounded-[2.5rem] blur opacity-20" />
-                                    <div className="relative bg-black border border-white/10 p-6 rounded-[2.5rem]">
-                                        <p className="text-[9px] font-black uppercase tracking-[0.4em] text-[#ff007a] mb-2 text-center">
-                                            КОД В КОММЕНТАРИЙ
-                                        </p>
-                                        <div className="flex items-center justify-center gap-3">
-                                            <span className="text-5xl font-black italic text-white tracking-tighter">
-                                                #{paymentCode}
-                                            </span>
-                                            <button
-                                                onClick={() => {
-                                                    navigator.clipboard.writeText(paymentCode);
-                                                    showToast('КОД_СКОПИРОВАН', 'success');
-                                                }}
-                                                className="p-3 bg-white/5 rounded-xl hover:bg-white/10 text-white/40 hover:text-[#ff007a] transition-all"
-                                            >
-                                                <Copy size={18} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* РЕКВИЗИТЫ */}
-                                <div className="space-y-3">
-                                    <div className="p-5 bg-white/5 border border-white/5 rounded-[2rem] text-left relative group">
-                                        <p className="text-[9px] font-black text-white/20 uppercase tracking-widest mb-1">Номер телефона / СБП</p>
-                                        <div className="flex justify-between items-center text-left">
-                                            <p className="text-white font-bold text-lg tracking-wider">79278552324</p>
-                                            <button onClick={() => { navigator.clipboard.writeText('79278552324'); showToast('НОМЕР_СКОПИРОВАН', 'success'); }}>
-                                                <Copy size={14} className="text-white/20 hover:text-white" />
-                                            </button>
-                                        </div>
-                                        <p className="text-[8px] text-white/30 font-bold uppercase mt-1 tracking-widest text-left">Банк: Любой (СБП)</p>
-                                    </div>
-                                </div>
-
-                                <div className="bg-[#ff007a]/10 border border-[#ff007a]/20 p-4 rounded-2xl text-[8px] font-black uppercase tracking-wider text-[#ff007a] leading-relaxed text-center">
-                                    ОБЯЗАТЕЛЬНО УКАЖИТЕ КОД #{paymentCode} В КОММЕНТАРИИ. <br />
-                                    БЕЗ КОДА ПЛАТЕЖ МОЖЕТ ПОТЕРЯТЬСЯ.
-                                </div>
-
-                                {/* КНОПКА "Я ОПЛАТИЛ" - ВЫЗЫВАЕТ handlePaymentConfirm */}
-                                <button
-                                    onClick={handlePaymentConfirm}
-                                    disabled={isOrdering}
-                                    className="w-full py-8 bg-white text-black hover:bg-[#ff007a] hover:text-white rounded-[2rem] font-black uppercase italic tracking-[0.4em] text-[10px] transition-all shadow-xl disabled:opacity-50"
-                                >
-                                    {isOrdering ? 'СИНХРОНИЗАЦИЯ...' : 'Я ОПЛАТИЛ'}
-                                </button>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+            <PaymentModal
+                show={showPaymentModal}
+                onClose={() => setShowPaymentModal(false)}
+                paymentCode={paymentCode}
+                frozenPrice={frozenPrice}
+                isOrdering={isOrdering}
+                onConfirm={handlePaymentConfirm}
+                showToast={addToast}
+            />
         </main>
     )
 }
